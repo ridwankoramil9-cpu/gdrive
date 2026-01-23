@@ -29,6 +29,7 @@
             padding: 2rem; border-radius: 20px; border: 1px solid var(--glass-border);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 600px;
             animation: fadeIn 0.8s ease-out;
+            transition: all 0.3s ease;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -38,7 +39,7 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             font-weight: 700; text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
         }
-        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 1rem; }
 
         .form-group { margin-bottom: 1.2rem; }
         label { display: block; margin-bottom: 0.6rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
@@ -165,30 +166,128 @@
         .result-info { font-size: 0.85rem; color: #ccc; }
         
         .hidden-input { display: none; margin-top: 10px; }
+
+        /* --- NEW: DRAG & DROP STYLES --- */
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            color: #d1d8e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+        }
+        .drop-zone:hover {
+            border-color: #00d2ff;
+            background: rgba(0, 210, 255, 0.05);
+        }
+        .drop-zone--over {
+            border-color: #2ed573;
+            background: rgba(46, 213, 115, 0.1);
+            transform: scale(1.01);
+        }
+        .drop-zone__icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 5px;
+            color: #00d2ff;
+        }
+        .drop-zone__text {
+            font-size: 0.85rem;
+            pointer-events: none; /* Allows click through */
+        }
+        .drop-zone__hint {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* --- NEW: MODE TOGGLE STYLES --- */
+        .mode-toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 30px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            position: relative;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px 15px;
+            border-radius: 25px;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            z-index: 2;
+        }
+        .mode-btn:hover { color: #ccc; }
+        .mode-btn.active {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+        
+        /* Elements Hidden in Simple Mode */
+        .advanced-only {
+            transition: all 0.5s ease;
+            opacity: 1;
+            max-height: 500px; /* Arbitrary height to allow content */
+            overflow: visible;
+        }
+        
+        .container.mode-simple .advanced-only {
+            display: none !important;
+            opacity: 0;
+            max-height: 0;
+            margin: 0;
+            padding: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
 <div id="tsparticles"></div>
 
-<div class="container">
+<div class="container mode-simple" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
     <p class="subtitle">Smart Filter & Secure Cloning</p>
     
+    <!-- MODE TOGGLE -->
+    <div class="mode-toggle-container">
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="setMode('simple')" id="btnSimple">⚡ Simple</button>
+            <button class="mode-btn" onclick="setMode('advanced')" id="btnAdvanced">🛠️ Advanced</button>
+        </div>
+    </div>
+
     <!-- AUTHENTICATION -->
     <div class="form-group">
         <label for="accessPin">PIN Akses (Wajib)</label>
         <input type="password" id="accessPin" placeholder="Masukkan PIN Rahasia Anda" value="12345">
     </div>
 
-    <!-- NEW: DESTINATION INPUT -->
-    <div class="form-group">
+    <!-- ADVANCED: DESTINATION INPUT -->
+    <div class="form-group advanced-only">
         <label for="destUrl">Folder Tujuan (Opsional)</label>
         <input type="text" id="destUrl" placeholder="Link folder tujuan (jika kosong = default)">
     </div>
 
-    <!-- NEW: SUBFOLDER INPUT -->
-    <div class="form-group">
+    <!-- ADVANCED: SUBFOLDER INPUT -->
+    <div class="form-group advanced-only">
         <label for="newFolderName">Buat Folder Baru (Opsional)</label>
         <input type="text" id="newFolderName" placeholder="Contoh: Gambarku (Semua file masuk ke sini)">
     </div>
@@ -196,13 +295,21 @@
     <div class="form-group">
         <div class="header-row">
             <label for="folderUrls">Daftar Link Sumber</label>
-            <button id="clearInputBtn" class="btn-clear">Clear</button>
+            <button id="clearInputBtn" class="btn-clear advanced-only">Clear</button>
         </div>
-        <textarea id="folderUrls" placeholder="Tempel banyak link di sini (pisahkan dengan koma atau baris baru)..."></textarea>
+        
+        <!-- DRAG & DROP AREA -->
+        <div id="dropZone" class="drop-zone">
+            <span class="drop-zone__icon">📂</span>
+            <span class="drop-zone__text">Drag & Drop Folder/Link Di Sini</span>
+            <div class="drop-zone__hint">Otomatis ekstrak ID dari link atau teks yang di-drop</div>
+        </div>
+
+        <textarea id="folderUrls" placeholder="Atau tempel banyak link di sini (pisahkan dengan koma atau baris baru)..." rows="4"></textarea>
     </div>
 
-    <div class="settings-toggle" onclick="toggleSettings()">⚙️ Pengaturan Lanjutan</div>
-    <div class="settings-panel" id="settingsPanel">
+    <div class="settings-toggle advanced-only" onclick="toggleSettings()">⚙️ Pengaturan Lanjutan</div>
+    <div class="settings-panel advanced-only" id="settingsPanel">
         <div class="form-group">
             <label for="duplicateMode">Metode Duplikasi:</label>
             <select id="duplicateMode" onchange="toggleRenameInput()">
@@ -243,7 +350,7 @@
         </div>
     </div>
 
-    <div class="toggle-container">
+    <div class="toggle-container advanced-only">
         <span class="toggle-label">Run in Background (Server-Side)</span>
         <label class="switch">
             <input type="checkbox" id="bgToggle">
@@ -252,7 +359,7 @@
     </div>
 
     <div class="btn-group">
-        <button id="checkBtn">🔍 Cek Semua Link</button>
+        <button id="checkBtn" class="advanced-only">🔍 Cek Semua Link</button>
         <button id="submitBtn">Mulai Proses</button>
         <button id="stopBtn">STOP 🛑</button>
     </div>
@@ -278,6 +385,7 @@
     const CONCURRENCY_LIMIT = 5; 
 
     // UI References
+    const mainContainer = document.getElementById('mainContainer');
     const submitBtn = document.getElementById('submitBtn');
     const checkBtn = document.getElementById('checkBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -293,6 +401,7 @@
     const logArea = document.getElementById('logArea');
     const globalStatus = document.getElementById('globalStatus');
     const timerDisplay = document.getElementById('timerDisplay');
+    const dropZone = document.getElementById('dropZone'); 
     
     // Setting Inputs
     const duplicateModeInput = document.getElementById('duplicateMode');
@@ -302,9 +411,30 @@
     const ignoredExtInput = document.getElementById('ignoredExt');
     const emailNotifInput = document.getElementById('emailNotif');
 
+    // Toggle Buttons
+    const btnSimple = document.getElementById('btnSimple');
+    const btnAdvanced = document.getElementById('btnAdvanced');
+
     let isStopRequested = false;
     let timerInterval;
     let currentSessionLogs = [];
+
+    // --- MODE TOGGLE LOGIC ---
+    function setMode(mode) {
+        if (mode === 'simple') {
+            mainContainer.classList.add('mode-simple');
+            btnSimple.classList.add('active');
+            btnAdvanced.classList.remove('active');
+            
+            // Reset Advanced Inputs specifically if needed, but keeping them populated is often better UX
+            // We just ensure toggle switches are safe
+            settingsPanel.style.display = 'none'; // Ensure panel hides even if toggled open
+        } else {
+            mainContainer.classList.remove('mode-simple');
+            btnSimple.classList.remove('active');
+            btnAdvanced.classList.add('active');
+        }
+    }
 
     function toggleSettings() {
         settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
@@ -321,6 +451,111 @@
 
     clearInputBtn.addEventListener('click', () => { folderUrlsInput.value = ''; folderUrlsInput.focus(); });
 
+    // --- DRAG & DROP LOGIC ---
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false); 
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('drop-zone--over');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('drop-zone--over');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const textData = dt.getData('text');
+        
+        let extractedLinks = [];
+
+        if (textData) {
+            const links = extractDriveLinks(textData);
+            if (links.length > 0) extractedLinks = extractedLinks.concat(links);
+        }
+
+        const files = dt.files;
+        if (files && files.length > 0) {
+            handleFiles(files, extractedLinks);
+        } else {
+            updateUrlInput(extractedLinks);
+        }
+    }
+
+    function handleFiles(files, existingLinks) {
+        let processedCount = 0;
+        
+        [...files].forEach(file => {
+            if (file.type === "text/plain" || file.name.endsWith('.txt') || file.name.endsWith('.csv')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    const fileLinks = extractDriveLinks(content);
+                    existingLinks = existingLinks.concat(fileLinks);
+                    processedCount++;
+                    if (processedCount === files.length) updateUrlInput(existingLinks);
+                };
+                reader.readAsText(file);
+            } else {
+                processedCount++;
+                if (processedCount === files.length) updateUrlInput(existingLinks);
+            }
+        });
+        
+        if (files.length > 0 && processedCount === 0 && existingLinks.length > 0) {
+             updateUrlInput(existingLinks);
+        }
+    }
+
+    function extractDriveLinks(text) {
+        const regex = /(?:https?:\/\/[\w.]+\/.*?(?:\/d\/|\/folders\/|id=)|[-\w]{25,})([-\w]{25,})/g;
+        let matches;
+        let links = [];
+        const tokens = text.split(/[\s,]+/);
+        tokens.forEach(token => {
+            const cleanToken = token.trim();
+            if (cleanToken.length < 20) return;
+            if (cleanToken.match(/(drive\.google\.com|docs\.google\.com)/)) {
+                 links.push(cleanToken);
+            } else if (cleanToken.match(/^[-\w]{25,}$/)) {
+                links.push(`https://drive.google.com/drive/folders/${cleanToken}`);
+            }
+        });
+        return [...new Set(links)]; 
+    }
+
+    function updateUrlInput(newLinks) {
+        if (newLinks.length === 0) return;
+        const currentVal = folderUrlsInput.value.trim();
+        const separator = currentVal.length > 0 ? '\n' : '';
+        folderUrlsInput.value = currentVal + separator + newLinks.join('\n');
+        
+        dropZone.style.borderColor = '#2ed573';
+        const originalText = dropZone.querySelector('.drop-zone__text').innerText;
+        dropZone.querySelector('.drop-zone__text').innerText = `✅ ${newLinks.length} Link Ditambahkan!`;
+        setTimeout(() => {
+            dropZone.style.borderColor = '';
+            dropZone.querySelector('.drop-zone__text').innerText = originalText;
+        }, 2000);
+    }
+
     // Particles (Visual)
     if (typeof tsParticles !== 'undefined') {
         tsParticles.load("tsparticles", {
@@ -336,7 +571,7 @@
         });
     }
 
-    // --- CHECK FOLDER FUNCTION (MULTI-URL SUPPORT) ---
+    // --- CHECK FOLDER FUNCTION ---
     checkBtn.addEventListener('click', async () => {
         const rawText = folderUrlsInput.value;
         const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
@@ -353,24 +588,19 @@
         for (let i = 0; i < urls.length; i++) {
             try {
                 const res = await sendRequest({ action: 'check_stats', url: urls[i], pin: pin });
-                
                 if (res.status === 'success') {
-                    // Cek Permission Read Only
-                    const accessColor = res.canEdit ? '#2ed573' : '#ff4757'; // Green if Edit, Red if ReadOnly
+                    const accessColor = res.canEdit ? '#2ed573' : '#ff4757';
                     const accessWeight = res.canEdit ? 'normal' : 'bold';
-
                     resultsHTML += `
                         <div class="result-box">
                             <div class="result-title">${i+1}. ${res.name} (${res.type === 'folder' ? '📁 Folder' : '📄 File'})</div>
                             <div class="result-info">
-                                📄 File: ${res.stats.files} | 
-                                💾 Size: <span style="color:#2ed573">${res.stats.size}</span><br>
+                                📄 File: ${res.stats.files} | 💾 Size: <span style="color:#2ed573">${res.stats.size}</span><br>
                                 🔒 Akses: <span style="color:${accessColor}; font-weight:${accessWeight}">${res.access}</span><br>
                                 🤖 Running As: <span style="color:#fff">${res.scriptUser}</span><br>
                                 👑 Owner File: <span style="color:#ccc">${res.ownerEmail}</span>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else {
                     resultsHTML += `<div class="result-box" style="border-color:#ff4757"><div class="result-title" style="color:#ff4757">${i+1}. Gagal</div><div class="result-info">${res.message}</div></div>`;
                     hasError = true;
@@ -379,16 +609,10 @@
                 resultsHTML += `<div class="result-box" style="border-color:#ff4757"><div class="result-title" style="color:#ff4757">${i+1}. Error</div><div class="result-info">${e.message}</div></div>`;
             }
         }
-
-        Swal.fire({
-            title: '📊 Hasil Scan Lengkap',
-            html: `<div style="max-height:300px; overflow-y:auto; padding-right:5px;">${resultsHTML}</div>`,
-            background: '#111', color: '#fff', confirmButtonText: 'Tutup', width: '600px'
-        });
+        Swal.fire({ title: '📊 Hasil Scan Lengkap', html: `<div style="max-height:300px; overflow-y:auto; padding-right:5px;">${resultsHTML}</div>`, background: '#111', color: '#fff', confirmButtonText: 'Tutup', width: '600px' });
     });
 
     // --- MAIN COPY LOGIC ---
-
     stopBtn.addEventListener('click', async () => {
         isStopRequested = true; stopBtn.disabled = true; stopBtn.textContent = "Stopping...";
         const pin = accessPinInput.value;
@@ -406,45 +630,28 @@
         const destUrl = destUrlInput.value.trim();
         const newFolderName = newFolderNameInput.value.trim();
         
-        // Capture Custom Rename
         let renamePrefix = renamePrefixInput.value.trim();
-        if (renamePrefix === "") renamePrefix = "[MOVED] "; // Default value if empty
-        // Ensure there is a space at the end if user didn't put one (optional but nice)
+        if (renamePrefix === "") renamePrefix = "[MOVED] "; 
         if (!renamePrefix.endsWith(" ") && !renamePrefix.endsWith("_") && !renamePrefix.endsWith("-")) renamePrefix += " ";
 
         if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong', text: 'Masukkan PIN akses Anda.' }); return; }
         if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong', text: 'Masukkan link file/folder!' }); return; }
 
-        // Gather Config
         const config = {
             mode: duplicateModeInput.value,
             destUrl: destUrl,
             newFolderName: newFolderName,
-            renamePrefix: renamePrefix, // Send prefix to backend
-            filters: {
-                maxSizeMB: parseInt(maxSizeInput.value) || 0,
-                ignoredExt: ignoredExtInput.value
-            },
+            renamePrefix: renamePrefix,
+            filters: { maxSizeMB: parseInt(maxSizeInput.value) || 0, ignoredExt: ignoredExtInput.value },
             email: emailNotifInput.value
         };
 
         if (config.mode.startsWith('rename_')) {
-            const confirmMove = await Swal.fire({
-                title: 'Konfirmasi Rename?',
-                text: `File sumber akan diganti namanya dengan awalan "${renamePrefix}". Pastikan Anda punya akses Editor!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Lanjutkan!',
-                cancelButtonText: 'Batal'
-            });
+            const confirmMove = await Swal.fire({ title: 'Konfirmasi Rename?', text: `File sumber akan diganti namanya dengan awalan "${renamePrefix}". Pastikan Anda punya akses Editor!`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Ya, Lanjutkan!', cancelButtonText: 'Batal' });
             if (!confirmMove.isConfirmed) return;
         }
 
         isStopRequested = false; setUIState('running'); clearLog(); startTimer();
-        
-        // Reset logs
         currentSessionLogs = [];
 
         addLog(`🔐 PIN: OK | Mode: ${config.mode.toUpperCase()}`, 'info');
@@ -457,13 +664,7 @@
         if (bgToggle.checked) {
             try {
                 addLog("Mengirim job ke server...", "info");
-                const res = await sendRequest({ 
-                    action: 'start_background_multi', 
-                    urls: urls, 
-                    pin: pin,
-                    ...config 
-                });
-                
+                const res = await sendRequest({ action: 'start_background_multi', urls: urls, pin: pin, ...config });
                 if (res.status === 'success') {
                     addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; 
                     if (typeof launchConfetti === 'function') launchConfetti();
@@ -490,9 +691,7 @@
             try {
                 addLog(`▶ [${i+1}/${urls.length}] Connecting...`, 'info');
                 const result = await processSingleFolder(currentUrl, pin, config);
-                
                 const itemType = result.type === 'file' ? 'File' : 'Folder';
-                
                 if (result.files > 0 || result.type === 'file') {
                      successCount++;
                      addLog(`✅ Selesai: ${itemType} "${result.name}" (${result.files} processed).`, 'success');
@@ -500,10 +699,7 @@
                 } else {
                      addLog(`⚠️ Selesai: ${result.name} (0 file disalin/kena filter).`, 'info');
                 }
-                
-                grandTotalFiles += result.files; 
-                grandTotalBytes += parseBytesToNum(result.sizeStr);
-
+                grandTotalFiles += result.files; grandTotalBytes += parseBytesToNum(result.sizeStr);
             } catch (error) {
                 failCount++; addLog(`❌ Gagal: ${error.message}`, 'error');
                 if(error.message.includes("PIN")) { setUIState('stopped'); stopTimer(); return; }
@@ -511,40 +707,23 @@
         }
 
         setUIState('stopped'); stopTimer();
-        
         if (isStopRequested) {
             addLog("⛔ Proses dihentikan.", "error"); globalStatus.textContent = "DIHENTIKAN";
         } else {
             globalStatus.textContent = "SELESAI"; 
-            
             addLog("📝 Mencatat Log...", "info");
             try {
-                const reportRes = await sendRequest({
-                    action: 'send_report',
-                    pin: pin,
-                    email: config.email || "", 
-                    urls: urls,
-                    stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) },
-                    details: currentSessionLogs 
-                });
-                
-                if (reportRes.emailStatus === 'sent') {
-                    addLog("📧 Email berhasil terkirim!", "success");
-                } else {
-                    addLog("✅ Log tersimpan.", "success");
-                }
-
+                const reportRes = await sendRequest({ action: 'send_report', pin: pin, email: config.email || "", urls: urls, stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) }, details: currentSessionLogs });
+                if (reportRes.emailStatus === 'sent') addLog("📧 Email berhasil terkirim!", "success");
+                else addLog("✅ Log tersimpan.", "success");
                 if (typeof launchConfetti === 'function') launchConfetti();
-                // Pass sheetUrl to showFinalReport
                 showFinalReport(successCount, failCount, grandTotalFiles, grandTotalBytes, resultLinks, reportRes.sheetUrl);
-
             } catch(e) { console.error("Gagal lapor: ", e); }
         }
     }
 
     async function processSingleFolder(url, pin, config) {
         if (isStopRequested) return { files: 0, sizeStr: "0 B", url: null, type: 'unknown' };
-        
         const initRes = await sendRequest({ action: 'initialize', url: url, name: "", pin: pin, ...config });
         if (initRes.status !== 'success') throw new Error(initRes.message);
 
@@ -552,12 +731,10 @@
         const sourceName = initRes.sourceName || "Item";
         let targetUrl = initRes.targetUrl; 
         const sourceType = initRes.type || 'folder';
-
         const actionText = sourceType === 'file' ? 'Menyalin File' : 'Menyalin Folder';
         document.getElementById('progressText').textContent = `${actionText}: ${sourceName}`;
 
         if (total === 0) return { files: 0, sizeStr: "0 B", url: targetUrl, name: sourceName, type: sourceType };
-
         let finalProcessed = 0; let finalSizeStr = "0 B"; let isFinished = false; let workers = [];
         
         const workerTask = async () => {
@@ -565,35 +742,22 @@
                 try {
                     const res = await sendRequest({ action: 'process_batch', jobId: jobId, pin: pin });
                     if (res.status !== 'success') throw new Error(res.message);
-                    
                     const p = res.progress;
                     updateProgress(p.percent, `${actionText}: ${p.processed}/${p.total}`);
                     finalProcessed = p.processed; finalSizeStr = p.currentSize;
-
                     if (res.processedList && res.processedList.length > 0) {
                         res.processedList.forEach(item => {
                             let type = 'success';
                             if(item.status === 'skipped') type = 'skip';
                             if(item.status === 'error') type = 'error';
                             if(item.status === 'warning') type = 'warning'; 
-                            
                             if (item.status === 'success' && sourceType === 'file') targetUrl = item.url;
-                            
                             let displayInfo = item.info; 
                             if(item.status === 'warning') displayInfo = "⚠️ " + item.info;
-
-                            // Simpan ke log global untuk dikirim nanti
-                            currentSessionLogs.push({
-                                name: item.name,
-                                url: (item.url && item.url !== '#') ? item.url : 'No Link',
-                                status: type.toUpperCase(),
-                                info: displayInfo
-                            });
-
+                            currentSessionLogs.push({ name: item.name, url: (item.url && item.url !== '#') ? item.url : 'No Link', status: type.toUpperCase(), info: displayInfo });
                             addLogHTML(item.name, item.url, item.size, type, displayInfo);
                         });
                     }
-
                     if (res.action === 'complete') isFinished = true;
                 } catch (e) { await new Promise(r => setTimeout(r, 2000)); }
             }
@@ -601,45 +765,21 @@
 
         for (let k = 0; k < CONCURRENCY_LIMIT; k++) workers.push(workerTask());
         await Promise.all(workers);
-
         return { files: finalProcessed, sizeStr: finalSizeStr, url: targetUrl, name: sourceName, type: sourceType };
     }
 
     function showFinalReport(success, fail, totalFiles, totalBytes, links, sheetUrl) {
         let linksHtml = "";
         if (links.length > 0) {
-            linksHtml += `<div class="result-btn-container" style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">`;
-            linksHtml += `<p style="font-size:0.8em; color:#aaa; margin-bottom:5px;">Hasil Copy (Folder Induk):</p>`
-            links.forEach(link => {
-                linksHtml += `<a href="${link.url}" target="_blank" class="result-link-btn">${link.name}</a>`;
-            });
+            linksHtml += `<div class="result-btn-container" style="margin-top:15px; border-top:1px solid #333; padding-top:10px;"><p style="font-size:0.8em; color:#aaa; margin-bottom:5px;">Hasil Copy (Folder Induk):</p>`;
+            links.forEach(link => { linksHtml += `<a href="${link.url}" target="_blank" class="result-link-btn">${link.name}</a>`; });
             linksHtml += `</div>`;
         }
-
         let sheetBtnHtml = "";
-        if (sheetUrl) {
-            sheetBtnHtml = `<a href="${sheetUrl}" target="_blank" class="sheet-btn">📂 Buka Log Sheet</a>`;
-        }
-
-        Swal.fire({
-            title: '🎉 Selesai 🎉',
-            html: `
-                <table class="swal-table">
-                    <tr><td>Link Sumber</td><td>${success + fail}</td></tr>
-                    <tr><td>Total Item</td><td>${totalFiles}</td></tr>
-                    <tr><td>Total Ukuran</td><td>${formatBytes(totalBytes)}</td></tr>
-                    <tr><td>Durasi</td><td>${timerDisplay.textContent}</td></tr>
-                </table>
-                ${linksHtml}
-                ${sheetBtnHtml}
-            `,
-            background: '#111116', color: '#fff', 
-            confirmButtonText: 'Tutup', confirmButtonColor: '#ff00de',
-            allowOutsideClick: false
-        });
+        if (sheetUrl) { sheetBtnHtml = `<a href="${sheetUrl}" target="_blank" class="sheet-btn">📂 Buka Log Sheet</a>`; }
+        Swal.fire({ title: '🎉 Selesai 🎉', html: `<table class="swal-table"><tr><td>Link Sumber</td><td>${success + fail}</td></tr><tr><td>Total Item</td><td>${totalFiles}</td></tr><tr><td>Total Ukuran</td><td>${formatBytes(totalBytes)}</td></tr><tr><td>Durasi</td><td>${timerDisplay.textContent}</td></tr></table>${linksHtml}${sheetBtnHtml}`, background: '#111116', color: '#fff', confirmButtonText: 'Tutup', confirmButtonColor: '#ff00de', allowOutsideClick: false });
     }
 
-    // --- UTILS ---
     function launchConfetti() { if (typeof confetti !== 'undefined') { var d = 3000; var e = Date.now() + d; var i = setInterval(function() { if (Date.now() > e) return clearInterval(i); confetti({ particleCount: 50, spread: 360, startVelocity: 30, origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); } }
     function parseBytesToNum(sizeStr) { if (!sizeStr) return 0; const units = { 'Bytes': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4 }; const parts = sizeStr.split(' '); return parseFloat(parts[0]) * (units[parts[1]] || 1); }
     function formatBytes(bytes) { if (bytes === 0) return '0 Bytes'; const i = Math.floor(Math.log(bytes) / Math.log(1024)); return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB', 'TB'][i]; }
@@ -655,28 +795,18 @@
     }
     function updateProgress(percent, text) { progressBar.style.width = percent + "%"; document.getElementById('progressPercent').textContent = percent + "%"; document.getElementById('progressText').textContent = text; }
     function addLog(msg, type) { const div = document.createElement('div'); div.className = 'log-item log-' + type; div.innerHTML = `<span class="log-icon">${getIcon(type)}</span> <span>${msg}</span>`; logArea.appendChild(div); logArea.scrollTop = logArea.scrollHeight; }
-    
-    // Updated to show detail message
     function addLogHTML(name, url, size, type, detailMsg) { 
-        const div = document.createElement('div'); 
-        div.className = 'log-item log-' + type; 
-        const icon = getIcon(type); 
+        const div = document.createElement('div'); div.className = 'log-item log-' + type; const icon = getIcon(type); 
         const content = url && url !== '#' ? `<a href="${url}" target="_blank">${name}</a>` : name; 
-        
-        let msg = content;
-        if(detailMsg && detailMsg !== "Success") msg += ` <span style="font-size:0.8em; opacity:0.8">(${detailMsg})</span>`;
-
+        let msg = content; if(detailMsg && detailMsg !== "Success") msg += ` <span style="font-size:0.8em; opacity:0.8">(${detailMsg})</span>`;
         div.innerHTML = `<span class="log-icon">${icon}</span> <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${msg}</span> <span class="log-size">${size}</span>`; 
-        logArea.appendChild(div); 
-        logArea.scrollTop = logArea.scrollHeight; 
+        logArea.appendChild(div); logArea.scrollTop = logArea.scrollHeight; 
     }
-    
     function getIcon(type) { if(type === 'success') return '✅'; if(type === 'error') return '❌'; if(type === 'skip') return '⏩'; if(type === 'info') return 'ℹ️'; if(type === 'warning') return '⚠️'; return '•'; }
     function clearLog() { logArea.innerHTML = ''; }
-    function shortUrl(url) { return url.length > 40 ? url.substring(0, 35) + "..." : url; }
+    function pad(n) { return n.toString().padStart(2, '0'); }
     function startTimer() { const s = Date.now(); timerDisplay.textContent = "00:00:00"; clearInterval(timerInterval); timerInterval = setInterval(() => { const e = Date.now() - s; const h = Math.floor(e / 3600000); const m = Math.floor((e % 3600000) / 60000); const sec = Math.floor((e % 60000) / 1000); timerDisplay.textContent = `${pad(h)}:${pad(m)}:${pad(sec)}`; }, 1000); }
     function stopTimer() { clearInterval(timerInterval); }
-    function pad(n) { return n.toString().padStart(2, '0'); }
 </script>
 
 </body>
