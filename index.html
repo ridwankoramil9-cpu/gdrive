@@ -147,9 +147,15 @@
         #checkBtn { background: #6c5ce7; }
         #stopBtn { background: #ff4757; display: none; }
         
-        /* Two buttons in schedule box */
+        /* UPDATED: Three buttons in schedule box */
         .schedule-btns { display: flex; gap: 8px; margin-top: 10px; }
         #saveScheduleBtn { background: #10ac84; padding: 10px; font-size: 0.85rem; flex: 2; }
+        #saveScheduleBtn:hover { background: #0e9471; }
+        
+        /* NEW: Delete Button Style */
+        #deleteScheduleBtn { background: #ff4757; padding: 10px; font-size: 0.85rem; flex: 1; display: none; /* Hidden by default */ }
+        #deleteScheduleBtn:hover { background: #e04050; }
+        
         #checkScheduleBtn { background: #34495e; padding: 10px; font-size: 0.85rem; flex: 1; }
         #checkScheduleBtn:hover { background: #2c3e50; }
         
@@ -344,8 +350,10 @@
             </div>
             
             <div class="schedule-btns">
-                <button id="saveScheduleBtn" type="button">💾 Simpan & Update Jadwal</button>
-                <button id="checkScheduleBtn" type="button">🔄 Cek Status</button>
+                <button id="saveScheduleBtn" type="button">💾 Simpan Jadwal</button>
+                <!-- NEW: DELETE BUTTON (Hidden by default) -->
+                <button id="deleteScheduleBtn" type="button">🗑️ Hapus</button>
+                <button id="checkScheduleBtn" type="button">🔄 Status</button>
             </div>
         </div>
     </div>
@@ -413,6 +421,7 @@
     const scheduleFreqInput = document.getElementById('scheduleFreq');
     const saveScheduleBtn = document.getElementById('saveScheduleBtn');
     const checkScheduleBtn = document.getElementById('checkScheduleBtn');
+    const deleteScheduleBtn = document.getElementById('deleteScheduleBtn'); // Reference new button
 
     let isStopRequested = false;
     let timerInterval;
@@ -447,6 +456,10 @@
                     scheduleBadge.classList.add('active');
                     scheduleFreqInput.value = 'daily';
                     
+                    // Show delete button and rename save button
+                    deleteScheduleBtn.style.display = 'block';
+                    saveScheduleBtn.textContent = "💾 Update Jadwal";
+                    
                     if(showPopup) {
                         Swal.fire({
                             icon: 'success',
@@ -461,6 +474,10 @@
                     scheduleBadge.textContent = "⚪ Jadwal Nonaktif";
                     scheduleBadge.classList.remove('active');
                     scheduleFreqInput.value = 'none';
+                    
+                    // Hide delete button and reset save button
+                    deleteScheduleBtn.style.display = 'none';
+                    saveScheduleBtn.textContent = "💾 Simpan Jadwal";
                     
                     if(showPopup) {
                         Swal.fire({
@@ -509,14 +526,12 @@
 
     clearInputBtn.addEventListener('click', () => { folderUrlsInput.value = ''; folderUrlsInput.focus(); });
     
-    // --- SCHEDULE SAVE LOGIC ---
+    // --- SCHEDULE LOGIC (Save & Delete) ---
     saveScheduleBtn.addEventListener('click', async () => {
         const pin = accessPinInput.value;
         if (!pin) { Swal.fire('Error', 'Masukkan PIN untuk menyimpan jadwal!', 'error'); return; }
 
         const freq = scheduleFreqInput.value;
-        
-        // Kumpulkan config saat ini untuk disimpan
         const rawText = folderUrlsInput.value;
         const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
         
@@ -555,12 +570,45 @@
 
             if (res.status === 'success') {
                 Swal.fire('Berhasil', res.message, 'success');
-                checkScheduleStatus(false); // Refresh badge silent
+                checkScheduleStatus(false);
             } else {
                 Swal.fire('Gagal', res.message, 'error');
             }
         } catch(e) {
             Swal.fire('Error', e.message, 'error');
+        }
+    });
+
+    // NEW: Delete Schedule Logic
+    deleteScheduleBtn.addEventListener('click', async () => {
+        const pin = accessPinInput.value;
+        if (!pin) { Swal.fire('Error', 'Masukkan PIN untuk menghapus jadwal!', 'error'); return; }
+
+        const confirm = await Swal.fire({
+            title: 'Hapus Jadwal?',
+            text: "Jadwal backup otomatis akan dihentikan permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        });
+
+        if (confirm.isConfirmed) {
+            Swal.fire({title: 'Menghapus...', didOpen:()=>{Swal.showLoading()}});
+            try {
+                const res = await sendRequest({ action: 'stop_schedule', pin: pin });
+                if (res.status === 'success') {
+                    Swal.fire('Terhapus', res.message, 'success');
+                    checkScheduleStatus(false); // Update UI
+                    scheduleFreqInput.value = 'none';
+                } else {
+                    Swal.fire('Gagal', res.message, 'error');
+                }
+            } catch(e) {
+                Swal.fire('Error', e.message, 'error');
+            }
         }
     });
 
