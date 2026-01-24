@@ -185,21 +185,6 @@
         .sheet-btn { background: #109869 !important; color: white !important; margin-top: 10px; display: block; width: 100%; text-decoration: none; text-align: center; padding: 10px; border-radius: 5px; font-weight: bold; }
         .sheet-btn:hover { background: #0c7a54 !important; }
 
-        /* Report Styles */
-        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 15px; }
-        .report-stat { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; text-align: center; }
-        .report-val { font-size: 1.1rem; font-weight: bold; color: #fff; display: block; }
-        .report-lbl { font-size: 0.7rem; color: #aaa; }
-        .report-list-container { max-height: 250px; overflow-y: auto; text-align: left; }
-        .report-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .report-item:last-child { border-bottom: none; }
-        .report-name { font-size: 0.85rem; color: #ddd; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .report-status-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-        .badge-success { background: rgba(46, 213, 115, 0.2); color: #2ed573; }
-        .badge-fail { background: rgba(255, 71, 87, 0.2); color: #ff4757; }
-        .badge-skip { background: rgba(255, 165, 2, 0.2); color: #ffa502; }
-        .report-link { text-decoration: none; font-size: 1rem; color: #00d2ff; }
-
         .progress-wrapper { margin-top: 20px; display: none; }
         .global-status { 
             text-align: center; margin-bottom: 5px; font-weight: 600; color: #f4b400; 
@@ -1055,7 +1040,7 @@
                     pin: pin,
                     email: config.email || "", 
                     urls: urls,
-                    destUrl: destUrlInput.value.trim(), // <--- ADDED THIS LINE
+                    destUrl: destUrlInput.value.trim(), 
                     stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) },
                     details: currentSessionLogs,
                     results: detailedResults // Send detailed results per link
