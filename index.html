@@ -38,7 +38,16 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             font-weight: 700; text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
         }
-        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem; }
+
+        /* STATUS BADGE */
+        .status-badge-container { text-align: center; margin-bottom: 1.5rem; min-height: 25px; }
+        .status-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: 600;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #aaa;
+            transition: all 0.3s ease;
+        }
+        .status-badge.active { background: rgba(46, 213, 115, 0.2); border-color: #2ed573; color: #2ed573; box-shadow: 0 0 10px rgba(46, 213, 115, 0.2); }
 
         /* MODE TOGGLE SWITCH STYLE */
         .mode-switch-container {
@@ -121,6 +130,10 @@
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #2ed573; } input:checked + .slider:before { transform: translateX(26px); }
 
+        /* SCHEDULE SECTION */
+        .schedule-box { border: 1px dashed rgba(255, 255, 255, 0.3); padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .schedule-title { font-size: 0.9rem; color: #f4b400; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        
         .btn-group { display: flex; gap: 10px; }
         button {
             width: 100%; border: none; padding: 14px; border-radius: 10px;
@@ -131,10 +144,15 @@
             background: linear-gradient(45deg, #00d2ff, #3a7bd5, #ff00de);
             background-size: 200% 200%; animation: gradientAnim 3s ease infinite;
         }
-        #checkBtn {
-            background: #6c5ce7;
-        }
+        #checkBtn { background: #6c5ce7; }
         #stopBtn { background: #ff4757; display: none; }
+        
+        /* Two buttons in schedule box */
+        .schedule-btns { display: flex; gap: 8px; margin-top: 10px; }
+        #saveScheduleBtn { background: #10ac84; padding: 10px; font-size: 0.85rem; flex: 2; }
+        #checkScheduleBtn { background: #34495e; padding: 10px; font-size: 0.85rem; flex: 1; }
+        #checkScheduleBtn:hover { background: #2c3e50; }
+        
         @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         button:disabled { background: #444; color: #aaa; cursor: not-allowed; animation: none; transform: none; box-shadow: none;}
@@ -216,6 +234,11 @@
     <h1>G-Drive Ultimate</h1>
     <p class="subtitle">Smart Filter & Secure Cloning</p>
     
+    <!-- STATUS BADGE -->
+    <div class="status-badge-container">
+        <span id="scheduleBadge" class="status-badge">Menunggu Status Jadwal...</span>
+    </div>
+
     <!-- MODE TOGGLE -->
     <div class="mode-switch-container">
         <div class="mode-switch-wrapper">
@@ -306,6 +329,25 @@
                 <span class="slider"></span>
             </label>
         </div>
+
+        <!-- NEW: SCHEDULE SECTION -->
+        <div class="schedule-box">
+            <div class="schedule-title">📅 Jadwal Backup Otomatis</div>
+            <div class="form-group">
+                <label for="scheduleFreq">Frekuensi (Jalan tiap Jam 01:00)</label>
+                <select id="scheduleFreq">
+                    <option value="none">⛔ Nonaktif (Stop Jadwal)</option>
+                    <option value="daily">☀️ Harian (Tiap hari)</option>
+                    <!-- Bisa ditambah weekly, dll nanti -->
+                </select>
+                <div style="font-size:0.7em; color:#aaa; margin-top:5px;">*Akan menjalankan settingan yang ada di form ini secara otomatis.</div>
+            </div>
+            
+            <div class="schedule-btns">
+                <button id="saveScheduleBtn" type="button">💾 Simpan & Update Jadwal</button>
+                <button id="checkScheduleBtn" type="button">🔄 Cek Status</button>
+            </div>
+        </div>
     </div>
 
     <div class="btn-group">
@@ -345,6 +387,7 @@
     const newFolderNameInput = document.getElementById('newFolderName'); 
     const clearInputBtn = document.getElementById('clearInputBtn');
     const accessPinInput = document.getElementById('accessPin');
+    const scheduleBadge = document.getElementById('scheduleBadge');
     
     // Mode Switch UI
     const advancedSection = document.getElementById('advancedSection');
@@ -365,6 +408,11 @@
     const maxSizeInput = document.getElementById('maxSize');
     const ignoredExtInput = document.getElementById('ignoredExt');
     const emailNotifInput = document.getElementById('emailNotif');
+    
+    // Schedule Inputs
+    const scheduleFreqInput = document.getElementById('scheduleFreq');
+    const saveScheduleBtn = document.getElementById('saveScheduleBtn');
+    const checkScheduleBtn = document.getElementById('checkScheduleBtn');
 
     let isStopRequested = false;
     let timerInterval;
@@ -374,6 +422,64 @@
     let currentPickerFolderId = 'root';
     let selectedPickerFolder = null;
 
+    // --- INIT ---
+    // Cek Status Jadwal saat load (Silent)
+    window.addEventListener('DOMContentLoaded', () => {
+       checkScheduleStatus(false);
+    });
+    
+    // Cek Status Manual (Popup)
+    checkScheduleBtn.addEventListener('click', () => {
+       checkScheduleStatus(true);
+    });
+
+    async function checkScheduleStatus(showPopup) {
+        if(showPopup) {
+            Swal.fire({title: 'Mengecek Jadwal...', didOpen:()=>{Swal.showLoading()}});
+        }
+
+        try {
+            const res = await sendRequest({ action: 'get_schedule_status', pin: accessPinInput.value || '0000' });
+            
+            if (res.status === 'success') {
+                if (res.isActive) {
+                    scheduleBadge.textContent = "📅 Jadwal Aktif: Harian";
+                    scheduleBadge.classList.add('active');
+                    scheduleFreqInput.value = 'daily';
+                    
+                    if(showPopup) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Jadwal Aktif!',
+                            html: `<div style="text-align:left; font-size:0.9em; background:#222; padding:10px; border-radius:5px;">
+                                   ${res.details || 'Jadwal berjalan normal.'}
+                                   </div>`,
+                            background: '#1a1a2e', color: '#fff'
+                        });
+                    }
+                } else {
+                    scheduleBadge.textContent = "⚪ Jadwal Nonaktif";
+                    scheduleBadge.classList.remove('active');
+                    scheduleFreqInput.value = 'none';
+                    
+                    if(showPopup) {
+                        Swal.fire({
+                            icon: 'info', title: 'Tidak Ada Jadwal', 
+                            text: 'Belum ada backup otomatis yang diatur.',
+                            background: '#1a1a2e', color: '#fff'
+                        });
+                    }
+                }
+            } else {
+                scheduleBadge.textContent = "❓ Status Unknown";
+                if(showPopup) Swal.fire('Info', 'Status tidak diketahui.', 'info');
+            }
+        } catch(e) {
+            console.log("Gagal cek jadwal:", e);
+            if(showPopup) Swal.fire('Error', 'Gagal koneksi ke server.', 'error');
+        }
+    }
+
     // --- MODE TOGGLE FUNCTION ---
     function setMode(mode) {
         if (mode === 'simple') {
@@ -381,10 +487,6 @@
             btnSimple.classList.add('active');
             btnAdvance.classList.remove('active');
             modeHighlighter.style.transform = 'translateX(0%)';
-            
-            // Optional: Reset advanced inputs to default safe values
-            // duplicateModeInput.value = 'copy_duplicate';
-            // bgToggle.checked = false;
         } else {
             advancedSection.style.display = 'block';
             btnSimple.classList.remove('active');
@@ -407,6 +509,62 @@
 
     clearInputBtn.addEventListener('click', () => { folderUrlsInput.value = ''; folderUrlsInput.focus(); });
     
+    // --- SCHEDULE SAVE LOGIC ---
+    saveScheduleBtn.addEventListener('click', async () => {
+        const pin = accessPinInput.value;
+        if (!pin) { Swal.fire('Error', 'Masukkan PIN untuk menyimpan jadwal!', 'error'); return; }
+
+        const freq = scheduleFreqInput.value;
+        
+        // Kumpulkan config saat ini untuk disimpan
+        const rawText = folderUrlsInput.value;
+        const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0);
+        
+        if (freq !== 'none' && urls.length === 0) {
+            Swal.fire('Warning', 'Masukkan minimal 1 Link Sumber untuk dijadwalkan!', 'warning');
+            return;
+        }
+
+        let renamePrefix = renamePrefixInput.value.trim();
+        if (renamePrefix === "") renamePrefix = "[MOVED] ";
+        if (!renamePrefix.endsWith(" ") && !renamePrefix.endsWith("_") && !renamePrefix.endsWith("-")) renamePrefix += " ";
+
+        const config = {
+            urls: urls,
+            destUrl: destUrlInput.value.trim(),
+            newFolderName: newFolderNameInput.value.trim(),
+            mode: duplicateModeInput.value,
+            renamePrefix: renamePrefix,
+            filters: {
+                maxSizeMB: parseInt(maxSizeInput.value) || 0,
+                ignoredExt: ignoredExtInput.value
+            },
+            email: emailNotifInput.value
+        };
+
+        Swal.fire({title: 'Menyimpan Jadwal...', didOpen:()=>{Swal.showLoading()}});
+
+        try {
+            let action = freq === 'none' ? 'stop_schedule' : 'set_schedule';
+            const res = await sendRequest({
+                action: action,
+                pin: pin,
+                frequency: freq,
+                config: config
+            });
+
+            if (res.status === 'success') {
+                Swal.fire('Berhasil', res.message, 'success');
+                checkScheduleStatus(false); // Refresh badge silent
+            } else {
+                Swal.fire('Gagal', res.message, 'error');
+            }
+        } catch(e) {
+            Swal.fire('Error', e.message, 'error');
+        }
+    });
+
+
     // --- FOLDER PICKER LOGIC ---
     browseBtn.addEventListener('click', () => {
         const pin = accessPinInput.value;
@@ -491,9 +649,6 @@
     };
 
     window.choosePickerFolder = (id, name) => {
-        // Construct link (Since we don't have full URL in browse list to save bandwidth, we use ID format or reconstruct)
-        // Better: let backend return URL or just use ID format if supported. 
-        // For user convenience, we put the full Drive URL format
         const url = `https://drive.google.com/drive/folders/${id}`;
         destUrlInput.value = url;
         Swal.close();
