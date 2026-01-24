@@ -59,6 +59,14 @@
         }
         textarea:focus, input:focus { outline: none; border-color: var(--primary); }
 
+        /* Picker Button Style */
+        .input-group { display: flex; gap: 10px; }
+        .btn-picker {
+            width: auto !important; white-space: nowrap; background: #6c5ce7;
+            padding: 0 20px !important; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-picker:hover { background: #5649c0; }
+
         select {
             width: 100%; padding: 12px 15px; background: var(--input-bg);
             border: 1px solid var(--glass-border); border-radius: 10px;
@@ -165,6 +173,21 @@
         .result-info { font-size: 0.85rem; color: #ccc; }
         
         .hidden-input { display: none; margin-top: 10px; }
+
+        /* FOLDER PICKER STYLES */
+        .picker-container { text-align: left; max-height: 300px; overflow-y: auto; }
+        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .picker-item { 
+            padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s;
+            border: 1px solid transparent; color: #ddd;
+        }
+        .picker-item:hover { background: rgba(255,255,255,0.1); }
+        .picker-item.selected { background: rgba(0, 210, 255, 0.2); border-color: #00d2ff; }
+        .picker-icon { font-size: 1.2rem; }
+        .picker-back { cursor: pointer; color: #f4b400; font-weight: bold; margin-right: 10px; }
+        .picker-back:hover { text-decoration: underline; }
+        .picker-actions { display: flex; gap: 5px; margin-top: 15px; }
+        .picker-btn-sm { padding: 8px; font-size: 0.8rem; border-radius: 5px; border:none; cursor: pointer; flex: 1; color: white;}
     </style>
 </head>
 <body>
@@ -181,16 +204,20 @@
         <input type="password" id="accessPin" placeholder="Masukkan PIN Rahasia Anda" value="12345">
     </div>
 
-    <!-- NEW: DESTINATION INPUT -->
+    <!-- NEW: DESTINATION INPUT WITH PICKER -->
     <div class="form-group">
         <label for="destUrl">Folder Tujuan (Opsional)</label>
-        <input type="text" id="destUrl" placeholder="Link folder tujuan (jika kosong = default)">
+        <div class="input-group">
+            <input type="text" id="destUrl" placeholder="Link folder tujuan (jika kosong = default)">
+            <button type="button" class="btn-picker" id="browseBtn">📂 Pilih</button>
+        </div>
+        <div style="font-size:0.75rem; color:#aaa; margin-top:4px;">*Klik "Pilih" untuk mencari folder atau buat baru.</div>
     </div>
 
     <!-- NEW: SUBFOLDER INPUT -->
     <div class="form-group">
-        <label for="newFolderName">Buat Folder Baru (Opsional)</label>
-        <input type="text" id="newFolderName" placeholder="Contoh: Gambarku (Semua file masuk ke sini)">
+        <label for="newFolderName">Buat Folder Baru (Sub-folder)</label>
+        <input type="text" id="newFolderName" placeholder="Contoh: Gambarku (Dibuat di dalam folder tujuan)">
     </div>
 
     <div class="form-group">
@@ -284,6 +311,7 @@
     const bgToggle = document.getElementById('bgToggle');
     const folderUrlsInput = document.getElementById('folderUrls');
     const destUrlInput = document.getElementById('destUrl');
+    const browseBtn = document.getElementById('browseBtn'); // New Picker Btn
     const newFolderNameInput = document.getElementById('newFolderName'); 
     const clearInputBtn = document.getElementById('clearInputBtn');
     const accessPinInput = document.getElementById('accessPin');
@@ -305,6 +333,10 @@
     let isStopRequested = false;
     let timerInterval;
     let currentSessionLogs = [];
+    
+    // PICKER VARIABLES
+    let currentPickerFolderId = 'root';
+    let selectedPickerFolder = null;
 
     function toggleSettings() {
         settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
@@ -320,6 +352,136 @@
     }
 
     clearInputBtn.addEventListener('click', () => { folderUrlsInput.value = ''; folderUrlsInput.focus(); });
+    
+    // --- FOLDER PICKER LOGIC ---
+    browseBtn.addEventListener('click', () => {
+        const pin = accessPinInput.value;
+        if(!pin) { Swal.fire('Error', 'Masukkan PIN Akses terlebih dahulu!', 'error'); return; }
+        openFolderPicker(pin);
+    });
+
+    function openFolderPicker(pin) {
+        currentPickerFolderId = 'root';
+        selectedPickerFolder = null;
+        
+        Swal.fire({
+            title: 'Pilih Folder Tujuan',
+            html: `<div id="pickerContent"><div style="color:#aaa;">Memuat folder...</div></div>`,
+            showConfirmButton: false,
+            showCloseButton: true,
+            width: '600px',
+            background: '#1a1a2e', color: '#fff',
+            didOpen: () => {
+                loadPickerContent(currentPickerFolderId, pin);
+            }
+        });
+    }
+
+    async function loadPickerContent(parentId, pin) {
+        const container = document.getElementById('pickerContent');
+        if(!container) return;
+        
+        container.innerHTML = '<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div></div>';
+        
+        try {
+            const res = await sendRequest({ action: 'browse_folders', parentId: parentId, pin: pin });
+            
+            if(res.status === 'success') {
+                let html = `
+                    <div class="picker-header">
+                        <div style="font-size:0.9rem; font-weight:bold; color:#00d2ff;">📂 ${res.currentName}</div>
+                        ${res.parentId ? `<div class="picker-back" onclick="navPicker('${res.parentId}', '${pin}')">⬅ Kembali</div>` : ''}
+                    </div>
+                    <div class="picker-container">`;
+                
+                if(res.folders.length === 0) {
+                    html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
+                } else {
+                    res.folders.forEach(f => {
+                        html += `
+                        <div class="picker-item" onclick="clickPickerItem(this, '${f.id}', '${f.name}')" ondblclick="navPicker('${f.id}', '${pin}')">
+                            <span class="picker-icon">📁</span>
+                            <span>${f.name}</span>
+                        </div>`;
+                    });
+                }
+                
+                html += `</div>
+                    <div class="picker-actions">
+                        <button class="picker-btn-sm" style="background:#444;" onclick="createNewFolderPicker('${res.currentId}', '${pin}')">➕ Buat Folder Baru Disini</button>
+                        <button class="picker-btn-sm" style="background:#2ed573;" id="selectCurrentBtn" onclick="choosePickerFolder('${res.currentId}', '${res.currentName}')">✅ Pilih Folder Ini ("${res.currentName}")</button>
+                    </div>`;
+                
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<div style="color:red;">Error: ${res.message}</div>`;
+            }
+        } catch(e) {
+            container.innerHTML = `<div style="color:red;">Koneksi Error: ${e.message}</div>`;
+        }
+    }
+
+    // Fungsi global agar bisa dipanggil dari onclick string HTML
+    window.navPicker = (id, pin) => { loadPickerContent(id, pin); };
+    
+    window.clickPickerItem = (el, id, name) => {
+        // Hapus seleksi lama
+        document.querySelectorAll('.picker-item').forEach(i => i.classList.remove('selected'));
+        // Tambah seleksi baru
+        el.classList.add('selected');
+        
+        // Update tombol pilih
+        const btn = document.getElementById('selectCurrentBtn');
+        btn.innerText = `✅ Pilih "${name}"`;
+        btn.onclick = () => { choosePickerFolder(id, name); };
+    };
+
+    window.choosePickerFolder = (id, name) => {
+        // Construct link (Since we don't have full URL in browse list to save bandwidth, we use ID format or reconstruct)
+        // Better: let backend return URL or just use ID format if supported. 
+        // For user convenience, we put the full Drive URL format
+        const url = `https://drive.google.com/drive/folders/${id}`;
+        destUrlInput.value = url;
+        Swal.close();
+        
+        // Animasi flash input
+        destUrlInput.style.borderColor = '#2ed573';
+        setTimeout(() => { destUrlInput.style.borderColor = 'rgba(255, 255, 255, 0.1)'; }, 1000);
+    };
+
+    window.createNewFolderPicker = async (parentId, pin) => {
+        const { value: folderName } = await Swal.fire({
+            title: 'Nama Folder Baru',
+            input: 'text',
+            inputLabel: 'Dibuat di dalam folder yang sedang terbuka',
+            inputPlaceholder: 'Folder Baru',
+            showCancelButton: true,
+            background: '#222', color: '#fff'
+        });
+
+        if (folderName) {
+             Swal.fire({title: 'Membuat Folder...', didOpen:()=>{Swal.showLoading()}});
+             try {
+                 const res = await sendRequest({ 
+                     action: 'create_folder_tool', 
+                     parentId: parentId, 
+                     name: folderName, 
+                     pin: pin 
+                 });
+                 if(res.status === 'success') {
+                     // Refresh view
+                     loadPickerContent(parentId, pin);
+                     Swal.fire({icon: 'success', title: 'Folder Dibuat', text: `Folder "${folderName}" berhasil dibuat!`, timer: 1500, showConfirmButton: false});
+                 } else {
+                     Swal.fire('Gagal', res.message, 'error');
+                 }
+             } catch(e) {
+                 Swal.fire('Error', e.message, 'error');
+             }
+        }
+    };
+    // --- END PICKER LOGIC ---
+
 
     // Particles (Visual)
     if (typeof tsParticles !== 'undefined') {
@@ -647,10 +809,10 @@
     function setUIState(state) {
         if (state === 'running') {
             submitBtn.style.display = 'none'; checkBtn.style.display = 'none'; stopBtn.style.display = 'block'; stopBtn.disabled = false; stopBtn.textContent = "STOP 🛑";
-            folderUrlsInput.disabled = true; destUrlInput.disabled = true; bgToggle.disabled = true; accessPinInput.disabled = true;
+            folderUrlsInput.disabled = true; destUrlInput.disabled = true; bgToggle.disabled = true; accessPinInput.disabled = true; browseBtn.disabled = true;
             progressWrapper.style.display = 'block'; logArea.style.display = 'block';
         } else {
-            submitBtn.style.display = 'block'; checkBtn.style.display = 'block'; stopBtn.style.display = 'none'; folderUrlsInput.disabled = false; destUrlInput.disabled = false; bgToggle.disabled = false; accessPinInput.disabled = false;
+            submitBtn.style.display = 'block'; checkBtn.style.display = 'block'; stopBtn.style.display = 'none'; folderUrlsInput.disabled = false; destUrlInput.disabled = false; bgToggle.disabled = false; accessPinInput.disabled = false; browseBtn.disabled = false;
         }
     }
     function updateProgress(percent, text) { progressBar.style.width = percent + "%"; document.getElementById('progressPercent').textContent = percent + "%"; document.getElementById('progressText').textContent = text; }
