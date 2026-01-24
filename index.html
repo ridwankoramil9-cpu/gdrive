@@ -185,6 +185,21 @@
         .sheet-btn { background: #109869 !important; color: white !important; margin-top: 10px; display: block; width: 100%; text-decoration: none; text-align: center; padding: 10px; border-radius: 5px; font-weight: bold; }
         .sheet-btn:hover { background: #0c7a54 !important; }
 
+        /* Report Styles */
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .report-stat { background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; text-align: center; }
+        .report-val { font-size: 1.1rem; font-weight: bold; color: #fff; display: block; }
+        .report-lbl { font-size: 0.7rem; color: #aaa; }
+        .report-list-container { max-height: 250px; overflow-y: auto; text-align: left; }
+        .report-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .report-item:last-child { border-bottom: none; }
+        .report-name { font-size: 0.85rem; color: #ddd; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .report-status-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .badge-success { background: rgba(46, 213, 115, 0.2); color: #2ed573; }
+        .badge-fail { background: rgba(255, 71, 87, 0.2); color: #ff4757; }
+        .badge-skip { background: rgba(255, 165, 2, 0.2); color: #ffa502; }
+        .report-link { text-decoration: none; font-size: 1rem; color: #00d2ff; }
+
         .progress-wrapper { margin-top: 20px; display: none; }
         .global-status { 
             text-align: center; margin-bottom: 5px; font-weight: 600; color: #f4b400; 
@@ -1055,7 +1070,12 @@
 
                 if (typeof launchConfetti === 'function') launchConfetti();
                 // Pass sheetUrl to showFinalReport
-                showFinalReport(successCount, failCount, grandTotalFiles, grandTotalBytes, resultLinks, reportRes.sheetUrl);
+                showFinalReport(detailedResults, {
+                    successCount: successCount,
+                    failCount: failCount,
+                    totalFiles: grandTotalFiles,
+                    totalBytes: grandTotalBytes
+                }, reportRes.sheetUrl);
 
             } catch(e) { console.error("Gagal lapor: ", e); }
         }
@@ -1147,37 +1167,49 @@
         };
     }
 
-    function showFinalReport(success, fail, totalFiles, totalBytes, links, sheetUrl) {
-        let linksHtml = "";
-        if (links.length > 0) {
-            linksHtml += `<div class="result-btn-container" style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">`;
-            linksHtml += `<p style="font-size:0.8em; color:#aaa; margin-bottom:5px;">Hasil Copy (Folder Induk):</p>`
-            links.forEach(link => {
-                linksHtml += `<a href="${link.url}" target="_blank" class="result-link-btn">${link.name}</a>`;
-            });
-            linksHtml += `</div>`;
-        }
+    function showFinalReport(results, grandStats, sheetUrl) {
+        // Build the detailed list
+        let listHtml = `<div class="report-list-container">`;
+        
+        results.forEach(res => {
+            const statusClass = res.files > 0 ? 'badge-success' : 'badge-skip';
+            const statusText = res.files > 0 ? 'Sukses' : '0 File';
+            
+            listHtml += `
+                <div class="report-item">
+                    <div style="flex:1;">
+                        <div class="report-name">${res.name}</div>
+                        <div style="font-size:0.75rem; color:#888;">${res.files} Files | ${res.sizeStr}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span class="report-status-badge ${statusClass}">${statusText}</span>
+                        ${res.url ? `<br><a href="${res.url}" target="_blank" class="report-link" style="font-size:0.8rem; margin-top:4px; display:inline-block;">🔗 Buka</a>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        listHtml += `</div>`;
 
         let sheetBtnHtml = "";
         if (sheetUrl) {
-            sheetBtnHtml = `<a href="${sheetUrl}" target="_blank" class="sheet-btn">📂 Buka Log Sheet</a>`;
+            sheetBtnHtml = `<a href="${sheetUrl}" target="_blank" class="sheet-btn" style="margin-top:15px;">📂 Buka Log Sheet Lengkap</a>`;
         }
 
         Swal.fire({
-            title: '🎉 Selesai 🎉',
+            title: '🎉 Laporan Selesai',
             html: `
-                <table class="swal-table">
-                    <tr><td>Link Sumber</td><td>${success + fail}</td></tr>
-                    <tr><td>Total Item</td><td>${totalFiles}</td></tr>
-                    <tr><td>Total Ukuran</td><td>${formatBytes(totalBytes)}</td></tr>
-                    <tr><td>Durasi</td><td>${timerDisplay.textContent}</td></tr>
-                </table>
-                ${linksHtml}
+                <div class="report-grid">
+                    <div class="report-stat"><span class="report-val" style="color:#2ed573;">${grandStats.successCount}</span><span class="report-lbl">Sukses</span></div>
+                    <div class="report-stat"><span class="report-val" style="color:#ff4757;">${grandStats.failCount}</span><span class="report-lbl">Gagal</span></div>
+                    <div class="report-stat"><span class="report-val">${grandStats.totalFiles}</span><span class="report-lbl">Total File</span></div>
+                    <div class="report-stat"><span class="report-val">${formatBytes(grandStats.totalBytes)}</span><span class="report-lbl">Total Size</span></div>
+                </div>
+                ${listHtml}
                 ${sheetBtnHtml}
             `,
-            background: '#111116', color: '#fff', 
+            background: '#1a1a2e', color: '#fff', 
             confirmButtonText: 'Tutup', confirmButtonColor: '#ff00de',
-            allowOutsideClick: false
+            allowOutsideClick: false, width: '550px'
         });
     }
 
