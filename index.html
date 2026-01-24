@@ -138,10 +138,17 @@
         .schedule-info { flex: 1; padding-right: 10px; }
         .schedule-name { font-weight: bold; color: #00d2ff; display: block; margin-bottom: 2px;}
         .schedule-meta { color: #888; font-size: 0.75rem; }
+        
+        .sched-btn-group { display: flex; gap: 5px; }
         .btn-del-sched { 
             background: #ff4757 !important; width: auto !important; padding: 5px 10px !important; 
-            font-size: 0.7rem !important; border-radius: 5px; 
+            font-size: 0.7rem !important; border-radius: 5px; color:white; border:none; cursor:pointer;
         }
+        .btn-detail-sched { 
+            background: #3498db !important; width: auto !important; padding: 5px 10px !important; 
+            font-size: 0.7rem !important; border-radius: 5px; color:white; border:none; cursor:pointer;
+        }
+        .btn-detail-sched:hover { background: #2980b9 !important; }
 
         .btn-group { display: flex; gap: 10px; }
         button {
@@ -419,6 +426,9 @@
     let timerInterval;
     let currentSessionLogs = [];
     
+    // Store active schedules locally
+    let activeSchedules = [];
+    
     // PICKER VARIABLES
     let currentPickerFolderId = 'root';
     let selectedPickerFolder = null;
@@ -437,6 +447,7 @@
             
             if (res.status === 'success') {
                 if (res.list && res.list.length > 0) {
+                    activeSchedules = res.list; // Simpan ke variable global
                     let html = '';
                     res.list.forEach(item => {
                         const lastRun = item.lastRun ? new Date(item.lastRun).toLocaleString() : 'Belum pernah';
@@ -447,7 +458,10 @@
                                 <div class="schedule-meta">Destinasi: ...${item.destUrl.substr(-15)}</div>
                                 <div class="schedule-meta">Mode: ${item.mode} | Run Terakhir: ${lastRun}</div>
                             </div>
-                            <button class="btn-del-sched" onclick="deleteSchedule('${item.id}', '${item.label}')">🗑️ Hapus</button>
+                            <div class="sched-btn-group">
+                                <button class="btn-detail-sched" onclick="viewScheduleDetail('${item.id}')">ℹ️ Detail</button>
+                                <button class="btn-del-sched" onclick="deleteSchedule('${item.id}', '${item.label}')">🗑️ Hapus</button>
+                            </div>
                         </div>`;
                     });
                     scheduleListContainer.innerHTML = html;
@@ -460,6 +474,53 @@
         } catch(e) {
             scheduleListContainer.innerHTML = '<div style="color:red; text-align:center;">Error koneksi.</div>';
         }
+    };
+
+    window.viewScheduleDetail = function(id) {
+        const item = activeSchedules.find(s => s.id === id);
+        if (!item) return;
+
+        const config = item.config;
+        const sourceLinksHtml = config.urls.map((u, i) => `<div>${i+1}. <a href="${u}" target="_blank" style="color:#00d2ff; text-decoration:none;">${shortUrl(u)}</a></div>`).join('');
+        
+        let filterHtml = "Tidak ada filter aktif.";
+        if (config.filters && (config.filters.maxSizeMB > 0 || config.filters.ignoredExt)) {
+            filterHtml = `Max Size: ${config.filters.maxSizeMB || 'Unlimited'} MB<br>Ignore Ext: ${config.filters.ignoredExt || '-'}`;
+        }
+
+        Swal.fire({
+            title: `📋 Detail Jadwal`,
+            html: `
+                <div style="text-align:left; font-size:0.85rem; background:#222; padding:15px; border-radius:8px; border:1px solid #444; max-height:300px; overflow-y:auto;">
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">🏷️ Label:</strong> ${item.label}
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">🔗 Link Sumber (${config.urls.length}):</strong>
+                        <div style="padding-left:10px; font-size:0.8rem;">${sourceLinksHtml}</div>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">📂 Tujuan:</strong><br>
+                        <a href="${config.destUrl}" target="_blank" style="color:#00d2ff;">Buka Folder Tujuan</a><br>
+                        Sub-folder: ${config.newFolderName || "(Tidak ada)"}
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">⚙️ Setting:</strong><br>
+                        Mode: ${config.mode}<br>
+                        Rename Prefix: ${config.renamePrefix || "-"}<br>
+                        Email: ${config.email || "-"}
+                    </div>
+                    <div>
+                        <strong style="color:#f4b400;">🔍 Filter:</strong><br>
+                        ${filterHtml}
+                    </div>
+                </div>
+            `,
+            background: '#1a1a2e',
+            color: '#fff',
+            showConfirmButton: true,
+            confirmButtonText: 'Tutup'
+        });
     };
 
     window.deleteSchedule = async function(id, name) {
