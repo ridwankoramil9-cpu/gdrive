@@ -345,6 +345,13 @@
                 <input type="text" id="scheduleLabel" placeholder="Contoh: Backup Dokumen Kerja">
             </div>
             
+            <!-- NEW: RETENTION INPUT -->
+            <div class="form-group">
+                <label for="maxBackups">Jumlah Max Backup (Retention)</label>
+                <input type="number" id="maxBackups" value="30" min="1" max="100">
+                <div style="font-size:0.7em; color:#aaa; margin-top:5px;">*Jika jumlah backup > 30, yang terlama dihapus.</div>
+            </div>
+            
             <button id="addScheduleBtn" type="button">➕ Tambahkan ke Daftar Jadwal</button>
             
             <!-- LIST JADWAL -->
@@ -419,6 +426,7 @@
     
     // Multi Schedule Inputs
     const scheduleLabelInput = document.getElementById('scheduleLabel');
+    const maxBackupsInput = document.getElementById('maxBackups'); // New Input
     const addScheduleBtn = document.getElementById('addScheduleBtn');
     const scheduleListContainer = document.getElementById('scheduleListContainer');
 
@@ -507,7 +515,7 @@
                     <div style="margin-bottom:10px;">
                         <strong style="color:#f4b400;">⚙️ Setting:</strong><br>
                         Mode: ${config.mode}<br>
-                        Rename Prefix: ${config.renamePrefix || "-"}<br>
+                        Retention (Max): ${config.maxBackups || 30}<br>
                         Email: ${config.email || "-"}
                     </div>
                     <div>
@@ -605,6 +613,7 @@
             newFolderName: newFolderNameInput.value.trim(),
             mode: duplicateModeInput.value,
             renamePrefix: renamePrefix,
+            maxBackups: parseInt(maxBackupsInput.value) || 30, // Save Max Backups
             filters: {
                 maxSizeMB: parseInt(maxSizeInput.value) || 0,
                 ignoredExt: ignoredExtInput.value
