@@ -172,6 +172,13 @@
         #checkBtn { background: #6c5ce7; }
         #stopBtn { background: #ff4757; display: none; }
         
+        /* New Quota Button */
+        #btnQuota {
+            background: #222; border: 1px solid #444; color: #aaa; margin-top: 15px; 
+            font-size: 0.8rem; padding: 8px;
+        }
+        #btnQuota:hover { background: #333; color: white; }
+
         @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         button:disabled { background: #444; color: #aaa; cursor: not-allowed; animation: none; transform: none; box-shadow: none;}
@@ -344,6 +351,9 @@
             </label>
         </div>
 
+        <!-- NEW: QUOTA CHECK BUTTON -->
+        <button id="btnQuota" type="button">📊 Cek Sisa Kuota</button>
+
         <!-- UPDATED: MULTI SCHEDULE SECTION -->
         <div class="schedule-box">
             <div class="schedule-title">📅 Manajemen Jadwal Backup</div>
@@ -438,6 +448,7 @@
     const maxBackupsInput = document.getElementById('maxBackups'); // New Input
     const addScheduleBtn = document.getElementById('addScheduleBtn');
     const scheduleListContainer = document.getElementById('scheduleListContainer');
+    const btnQuota = document.getElementById('btnQuota');
 
     let isStopRequested = false;
     let timerInterval;
@@ -454,6 +465,46 @@
     // Load list schedule saat halaman dibuka
     window.addEventListener('DOMContentLoaded', () => {
        refreshScheduleList();
+    });
+    
+    // NEW: Quota Check Listener with Updated UI
+    btnQuota.addEventListener('click', async () => {
+        Swal.fire({title: 'Mengecek Kuota...', didOpen:()=>{Swal.showLoading()}});
+        try {
+            const res = await sendRequest({ action: 'check_quota' });
+            if (res.status === 'success') {
+                const healthColor = res.drivePercent > 90 ? '#ff4757' : (res.drivePercent > 70 ? '#ffa502' : '#2ed573');
+                
+                let htmlContent = `
+                    <div style="text-align:left; color:#fff; background:#222; padding:15px; border-radius:10px;">
+                        <div style="margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
+                            <strong>📧 Email Quota:</strong> <span style="float:right; color:#2ed573;">${res.emailQuota} / hari</span>
+                        </div>
+                        <div style="margin-bottom:5px;">
+                            <strong>☁️ Drive Storage:</strong>
+                        </div>
+                        <div style="background:#444; border-radius:10px; overflow:hidden; height:20px; margin-bottom:5px; border:1px solid #555;">
+                            <div style="background:${healthColor}; width:${res.drivePercent}%; height:100%; transition:width 0.5s;"></div>
+                        </div>
+                        <div style="font-size:0.85em; color:#ccc; display:flex; justify-content:space-between;">
+                            <span>Terpakai: ${res.driveUsed}</span>
+                            <span>Total: ${res.driveLimit} (${res.drivePercent}%)</span>
+                        </div>
+                    </div>
+                `;
+                
+                Swal.fire({
+                    title: 'Status Akun',
+                    html: htmlContent,
+                    background: '#1a1a2e', color: '#fff',
+                    confirmButtonText: 'Tutup'
+                });
+            } else {
+                Swal.fire('Gagal', res.message, 'error');
+            }
+        } catch(e) {
+            Swal.fire('Error', 'Koneksi gagal', 'error');
+        }
     });
     
     window.refreshScheduleList = async function() {
@@ -941,6 +992,7 @@
 
     async function runForegroundQueue(urls, pin, config) {
         let successCount = 0; let failCount = 0; let grandTotalFiles = 0; let grandTotalBytes = 0; let resultLinks = [];
+        let detailedResults = []; // Store per-folder detail
 
         for (let i = 0; i < urls.length; i++) {
             if (isStopRequested) break;
@@ -951,6 +1003,9 @@
             try {
                 addLog(`▶ [${i+1}/${urls.length}] Connecting...`, 'info');
                 const result = await processSingleFolder(currentUrl, pin, config);
+                
+                // Add result for later report
+                detailedResults.push(result);
                 
                 const itemType = result.type === 'file' ? 'File' : 'Folder';
                 
@@ -986,7 +1041,8 @@
                     email: config.email || "", 
                     urls: urls,
                     stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) },
-                    details: currentSessionLogs 
+                    details: currentSessionLogs,
+                    results: detailedResults // Send detailed results per link
                 });
                 
                 if (reportRes.emailStatus === 'sent') {
@@ -1019,9 +1075,23 @@
         const actionText = sourceType === 'file' ? 'Menyalin File' : 'Menyalin Folder';
         document.getElementById('progressText').textContent = `${actionText}: ${sourceName}`;
 
-        if (total === 0) return { files: 0, sizeStr: "0 B", url: targetUrl, name: sourceName, type: sourceType };
+        let finalProcessed = 0; let finalSizeStr = "0 B";
 
-        let finalProcessed = 0; let finalSizeStr = "0 B"; let isFinished = false; let workers = [];
+        if (total === 0) {
+             // Even if 0 files, we return stats for reporting
+             return { 
+                 files: 0, 
+                 sizeStr: "0 B", 
+                 url: targetUrl, 
+                 name: sourceName, 
+                 type: sourceType,
+                 owner: initRes.sourceOwner,
+                 status: initRes.sourceStatus,
+                 sourceUrl: url
+             };
+        }
+
+        let isFinished = false; let workers = [];
         
         const workerTask = async () => {
             while (!isFinished && !isStopRequested) {
@@ -1065,7 +1135,16 @@
         for (let k = 0; k < CONCURRENCY_LIMIT; k++) workers.push(workerTask());
         await Promise.all(workers);
 
-        return { files: finalProcessed, sizeStr: finalSizeStr, url: targetUrl, name: sourceName, type: sourceType };
+        return { 
+            files: finalProcessed, 
+            sizeStr: finalSizeStr, 
+            url: targetUrl, 
+            name: sourceName, 
+            type: sourceType,
+            owner: initRes.sourceOwner,
+            status: initRes.sourceStatus,
+            sourceUrl: url
+        };
     }
 
     function showFinalReport(success, fail, totalFiles, totalBytes, links, sheetUrl) {
