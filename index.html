@@ -1055,6 +1055,7 @@
                     pin: pin,
                     email: config.email || "", 
                     urls: urls,
+                    destUrl: destUrlInput.value.trim(), // <--- ADDED THIS LINE
                     stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) },
                     details: currentSessionLogs,
                     results: detailedResults // Send detailed results per link
