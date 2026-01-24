@@ -40,6 +40,15 @@
         }
         p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem; }
 
+        /* STATUS BADGE */
+        .status-badge-container { text-align: center; margin-bottom: 1.5rem; min-height: 25px; }
+        .status-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: 600;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #aaa;
+            transition: all 0.3s ease;
+        }
+        .status-badge.active { background: rgba(46, 213, 115, 0.2); border-color: #2ed573; color: #2ed573; box-shadow: 0 0 10px rgba(46, 213, 115, 0.2); }
+
         /* MODE TOGGLE SWITCH STYLE */
         .mode-switch-container {
             display: flex; justify-content: center; margin-bottom: 20px;
@@ -982,8 +991,10 @@
                 
                 if (reportRes.emailStatus === 'sent') {
                     addLog("📧 Email berhasil terkirim!", "success");
+                } else if (reportRes.emailStatus === 'failed') {
+                    addLog("⚠️ Gagal kirim email: " + reportRes.emailError, "warning");
                 } else {
-                    addLog("✅ Log tersimpan.", "success");
+                    addLog("✅ Log tersimpan (Email: " + reportRes.emailStatus + ")", "success");
                 }
 
                 if (typeof launchConfetti === 'function') launchConfetti();
