@@ -40,6 +40,26 @@
         }
         p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 1.5rem; }
 
+        /* MODE TOGGLE SWITCH STYLE */
+        .mode-switch-container {
+            display: flex; justify-content: center; margin-bottom: 20px;
+        }
+        .mode-switch-wrapper {
+            background: rgba(0,0,0,0.3); border-radius: 30px; padding: 4px; display: flex;
+            border: 1px solid rgba(255,255,255,0.1); position: relative;
+        }
+        .mode-btn {
+            padding: 8px 25px; border-radius: 25px; border: none; background: transparent;
+            color: #aaa; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem;
+            z-index: 2; position: relative;
+        }
+        .mode-btn.active { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .mode-highlighter {
+            position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); width: 50%;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5); border-radius: 25px;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 1;
+        }
+
         .form-group { margin-bottom: 1.2rem; }
         label { display: block; margin-bottom: 0.6rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
         
@@ -79,16 +99,14 @@
         option { background: #1a1a2e; color: white; }
         optgroup { background: #000; color: #f4b400; font-weight: bold; }
 
-        /* Settings Panel */
-        .settings-panel {
+        /* ADVANCED SECTION WRAPPER */
+        .advanced-section {
             background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.05); display: none;
+            border: 1px solid rgba(255,255,255,0.05); display: none; /* Hidden by default in Simple Mode */
+            animation: slideDown 0.3s ease-out;
         }
-        .settings-toggle {
-            cursor: pointer; color: #00d2ff; font-size: 0.9rem; text-align: right;
-            margin-bottom: 10px; user-select: none;
-        }
-        .settings-toggle:hover { text-decoration: underline; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
         .two-col { display: flex; gap: 15px; }
         .col { flex: 1; }
 
@@ -198,13 +216,31 @@
     <h1>G-Drive Ultimate</h1>
     <p class="subtitle">Smart Filter & Secure Cloning</p>
     
-    <!-- AUTHENTICATION -->
+    <!-- MODE TOGGLE -->
+    <div class="mode-switch-container">
+        <div class="mode-switch-wrapper">
+            <div class="mode-highlighter" id="modeHighlighter"></div>
+            <button class="mode-btn active" id="btnSimple" onclick="setMode('simple')">Simple</button>
+            <button class="mode-btn" id="btnAdvance" onclick="setMode('advance')">Advance</button>
+        </div>
+    </div>
+    
+    <!-- AUTHENTICATION (COMMON) -->
     <div class="form-group">
         <label for="accessPin">PIN Akses (Wajib)</label>
         <input type="password" id="accessPin" placeholder="Masukkan PIN Rahasia Anda" value="12345">
     </div>
+    
+    <!-- SOURCE LINKS (COMMON) -->
+    <div class="form-group">
+        <div class="header-row">
+            <label for="folderUrls">Daftar Link Sumber</label>
+            <button id="clearInputBtn" class="btn-clear">Clear</button>
+        </div>
+        <textarea id="folderUrls" placeholder="Tempel banyak link di sini (pisahkan dengan koma atau baris baru)..."></textarea>
+    </div>
 
-    <!-- NEW: DESTINATION INPUT WITH PICKER -->
+    <!-- DESTINATION (COMMON) -->
     <div class="form-group">
         <label for="destUrl">Folder Tujuan (Opsional)</label>
         <div class="input-group">
@@ -214,22 +250,16 @@
         <div style="font-size:0.75rem; color:#aaa; margin-top:4px;">*Klik "Pilih" untuk mencari folder atau buat baru.</div>
     </div>
 
-    <!-- NEW: SUBFOLDER INPUT -->
+    <!-- SUBFOLDER (COMMON) -->
     <div class="form-group">
         <label for="newFolderName">Buat Folder Baru (Sub-folder)</label>
         <input type="text" id="newFolderName" placeholder="Contoh: Gambarku (Dibuat di dalam folder tujuan)">
     </div>
 
-    <div class="form-group">
-        <div class="header-row">
-            <label for="folderUrls">Daftar Link Sumber</label>
-            <button id="clearInputBtn" class="btn-clear">Clear</button>
-        </div>
-        <textarea id="folderUrls" placeholder="Tempel banyak link di sini (pisahkan dengan koma atau baris baru)..."></textarea>
-    </div>
-
-    <div class="settings-toggle" onclick="toggleSettings()">⚙️ Pengaturan Lanjutan</div>
-    <div class="settings-panel" id="settingsPanel">
+    <!-- ADVANCED SECTION (HIDDEN IN SIMPLE MODE) -->
+    <div class="advanced-section" id="advancedSection">
+        <div style="font-size:0.8rem; color:#f4b400; margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">🛠️ Pengaturan Advance</div>
+        
         <div class="form-group">
             <label for="duplicateMode">Metode Duplikasi:</label>
             <select id="duplicateMode" onchange="toggleRenameInput()">
@@ -268,14 +298,14 @@
             <label for="emailNotif">Email Notifikasi</label>
             <input type="email" id="emailNotif" placeholder="email.anda@gmail.com">
         </div>
-    </div>
-
-    <div class="toggle-container">
-        <span class="toggle-label">Run in Background (Server-Side)</span>
-        <label class="switch">
-            <input type="checkbox" id="bgToggle">
-            <span class="slider"></span>
-        </label>
+        
+        <div class="toggle-container">
+            <span class="toggle-label">Run in Background (Server-Side)</span>
+            <label class="switch">
+                <input type="checkbox" id="bgToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
     </div>
 
     <div class="btn-group">
@@ -311,11 +341,17 @@
     const bgToggle = document.getElementById('bgToggle');
     const folderUrlsInput = document.getElementById('folderUrls');
     const destUrlInput = document.getElementById('destUrl');
-    const browseBtn = document.getElementById('browseBtn'); // New Picker Btn
+    const browseBtn = document.getElementById('browseBtn'); 
     const newFolderNameInput = document.getElementById('newFolderName'); 
     const clearInputBtn = document.getElementById('clearInputBtn');
     const accessPinInput = document.getElementById('accessPin');
-    const settingsPanel = document.getElementById('settingsPanel');
+    
+    // Mode Switch UI
+    const advancedSection = document.getElementById('advancedSection');
+    const btnSimple = document.getElementById('btnSimple');
+    const btnAdvance = document.getElementById('btnAdvance');
+    const modeHighlighter = document.getElementById('modeHighlighter');
+
     const progressWrapper = document.getElementById('progressWrapper');
     const progressBar = document.getElementById('progressBar');
     const logArea = document.getElementById('logArea');
@@ -338,9 +374,27 @@
     let currentPickerFolderId = 'root';
     let selectedPickerFolder = null;
 
-    function toggleSettings() {
-        settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
+    // --- MODE TOGGLE FUNCTION ---
+    function setMode(mode) {
+        if (mode === 'simple') {
+            advancedSection.style.display = 'none';
+            btnSimple.classList.add('active');
+            btnAdvance.classList.remove('active');
+            modeHighlighter.style.transform = 'translateX(0%)';
+            
+            // Optional: Reset advanced inputs to default safe values
+            // duplicateModeInput.value = 'copy_duplicate';
+            // bgToggle.checked = false;
+        } else {
+            advancedSection.style.display = 'block';
+            btnSimple.classList.remove('active');
+            btnAdvance.classList.add('active');
+            modeHighlighter.style.transform = 'translateX(100%)';
+        }
     }
+    
+    // Default mode
+    setMode('simple');
     
     function toggleRenameInput() {
         const mode = duplicateModeInput.value;
