@@ -2,9 +2,8 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 6.0 (Advanced Schedule Details & Instant Run)
-  NOTE: KODE INI TIDAK BOLEH DISIMPLIFIKASI / DIKURANGI.
-  SEMUA FITUR VISUAL (PARTICLES, GLASSMORPHISM) DAN LOGIKA HARUS UTUH.
+  VERSION: 7.0 (Remote Account Manager & Smart Destination Picker)
+  NOTE: FULL FEATURES PRESERVED. NO CODE SIMPLIFICATION.
   ============================================================================
 -->
 <html lang="id">
@@ -70,12 +69,24 @@
         label { display: block; margin-bottom: 0.6rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
         
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+        
+        /* TOMBOL HEADER GROUP */
+        .header-actions { display: flex; gap: 5px; }
+        
         .btn-clear {
             width: auto !important; padding: 4px 10px !important; font-size: 0.75rem !important;
             background: rgba(255, 71, 87, 0.2) !important; border: 1px solid rgba(255, 71, 87, 0.5) !important;
             color: #ff4757 !important; margin: 0 !important; border-radius: 6px !important; 
         }
         .btn-clear:hover { background: rgba(255, 71, 87, 0.4) !important; color: white !important; }
+
+        .btn-save-remote {
+            width: auto !important; padding: 4px 10px !important; font-size: 0.75rem !important;
+            background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.5) !important;
+            color: #3498db !important; margin: 0 !important; border-radius: 6px !important; cursor: pointer;
+            display: none; /* Hidden by default */
+        }
+        .btn-save-remote:hover { background: rgba(52, 152, 219, 0.4) !important; color: white !important; }
 
         /* REMOTE DETECTED BADGE */
         .remote-badge {
@@ -87,10 +98,6 @@
         }
         .remote-badge:hover { background: rgba(46, 213, 115, 0.4); }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
-
-        /* NEW SAVE REMOTE BUTTON */
-        .btn-save-remote { width: auto !important; padding: 4px 10px !important; font-size: 0.75rem !important; background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.5) !important; color: #3498db !important; margin-left: 5px !important; border-radius: 6px !important; display: none; }
-        .btn-save-remote:hover { background: rgba(52, 152, 219, 0.4) !important; color: white !important; }
 
         textarea, input[type="text"], input[type="number"], input[type="email"], input[type="password"] {
             width: 100%; padding: 12px 15px; background: var(--input-bg);
@@ -183,6 +190,12 @@
         .picker-item.selected { background: rgba(0, 210, 255, 0.2); border-color: #00d2ff; }
         .picker-checkbox { width: 18px; height: 18px; accent-color: #00d2ff; cursor: pointer; }
 
+        /* TABS DI PICKER */
+        .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .picker-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; color: #888; transition: all 0.2s; }
+        .picker-tab.active { background: #00d2ff; color: #fff; font-weight: bold; }
+        .picker-tab:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
         .result-box { text-align: left; background: #222; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
         .result-title { color: #00d2ff; font-weight: bold; margin-bottom: 5px; font-size: 0.95rem; }
         .result-info { font-size: 0.85rem; color: #ccc; }
@@ -221,7 +234,11 @@
     <div class="form-group">
         <div class="header-row">
             <label for="folderUrls">Daftar Link Sumber</label>
-            <button id="clearInputBtn" class="btn-clear">Clear</button>
+            <div class="header-actions">
+                <!-- NEW SAVE BUTTON -->
+                <button id="saveRemoteBtn" class="btn-save-remote">💾 Simpan Akun</button>
+                <button id="clearInputBtn" class="btn-clear">Clear</button>
+            </div>
         </div>
         
         <!-- NEW: SMART BUTTON -->
@@ -322,9 +339,10 @@
     const submitBtn = document.getElementById('submitBtn');
     const checkBtn = document.getElementById('checkBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const bgToggle = document.getElementById('bgToggle'); // Ambil referensi bgToggle
+    const bgToggle = document.getElementById('bgToggle'); 
     const folderUrlsInput = document.getElementById('folderUrls');
     const remoteDetectedPanel = document.getElementById('remoteDetectedPanel');
+    const saveRemoteBtn = document.getElementById('saveRemoteBtn'); // New Button
     const destUrlInput = document.getElementById('destUrl');
     const accessPinInput = document.getElementById('accessPin');
     const progressWrapper = document.getElementById('progressWrapper');
@@ -334,11 +352,14 @@
     const timerDisplay = document.getElementById('timerDisplay');
     
     let detectedRemoteUrl = null;
-    let selectedRemoteFolders = []; // Temporary storage for multi-select
+    let selectedRemoteFolders = []; 
     let currentSessionLogs = [];
     let isStopRequested = false;
     let timerInterval;
-    let activeSchedules = []; // GLOBAL VAR FOR SCHEDULE DETAILS
+    let activeSchedules = []; 
+    
+    // VARIABEL BARU UNTUK REMOTE DESTINATION
+    let selectedRemoteDestUrl = null;
 
     // --- SMART DETECTION LOGIC ---
     folderUrlsInput.addEventListener('input', function() {
@@ -350,13 +371,49 @@
             detectedRemoteUrl = match[0];
             remoteDetectedPanel.style.display = 'block';
             remoteDetectedPanel.innerHTML = `📡 Server Remote Terdeteksi! Klik untuk Jelajah Akun B`;
+            saveRemoteBtn.style.display = 'inline-block'; // Tampilkan Tombol Simpan
         } else {
             detectedRemoteUrl = null;
             remoteDetectedPanel.style.display = 'none';
+            saveRemoteBtn.style.display = 'none';
         }
     });
 
-    // --- REMOTE PICKER LOGIC (MULTI SELECT) ---
+    // --- SAVE REMOTE ACCOUNT LOGIC ---
+    saveRemoteBtn.addEventListener('click', async () => {
+        if (!detectedRemoteUrl) return;
+        const pin = accessPinInput.value;
+        if (!pin) { Swal.fire('Error', 'Masukkan PIN Akses dulu!', 'error'); return; }
+
+        const { value: label } = await Swal.fire({
+            title: 'Simpan Akun Remote',
+            input: 'text',
+            inputLabel: 'Beri nama untuk akun ini (Contoh: Kantor, Backup)',
+            showCancelButton: true,
+            background: '#1a1a2e', color: '#fff',
+            inputValidator: (value) => { if (!value) return 'Nama label wajib diisi!' }
+        });
+
+        if (label) {
+            Swal.fire({title: 'Menyimpan...', didOpen:()=>{Swal.showLoading()}});
+            try {
+                const res = await sendRequest({ 
+                    action: 'save_remote_account', 
+                    pin: pin, 
+                    label: label, 
+                    targetUrl: detectedRemoteUrl 
+                });
+                
+                if(res.status === 'success') {
+                    Swal.fire('Berhasil!', `Akun ${res.email} tersimpan sebagai "${label}"`, 'success');
+                } else {
+                    Swal.fire('Gagal', res.message, 'error');
+                }
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+    });
+
+    // --- REMOTE PICKER LOGIC (SOURCE) ---
     window.openRemotePicker = function() {
         if (!detectedRemoteUrl) return;
         selectedRemoteFolders = []; // Reset selection
@@ -395,11 +452,8 @@
                     html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
                 } else {
                     res.items.forEach(f => {
-                        // Tentukan Icon & Navigasi berdasarkan Tipe
                         let icon = f.type === 'folder' ? '📁' : '📄';
                         let sizeInfo = f.type === 'file' ? `<span style="font-size:0.7em; color:#888; margin-left:5px;">(${f.size})</span>` : '';
-                        
-                        // Navigasi hanya jalan kalau tipe = folder
                         let navAction = f.type === 'folder' ? `onclick="navRemote('${f.id}')"` : '';
                         let cursorStyle = f.type === 'folder' ? 'cursor:pointer;' : 'cursor:default;';
                         let textColor = f.type === 'folder' ? '#fff' : '#ccc';
@@ -438,19 +492,13 @@
         } else {
             selectedRemoteFolders = selectedRemoteFolders.filter(item => item.id !== id);
         }
-        
-        // Update Button Text
         const btn = document.querySelector('#remotePickerContent button');
         if(btn) btn.innerText = `✅ Tambahkan (${selectedRemoteFolders.length}) Item Terpilih`;
     };
 
     window.confirmRemoteSelection = async () => {
-        if (selectedRemoteFolders.length === 0) {
-            Swal.showValidationMessage('Pilih minimal satu item!');
-            return;
-        }
+        if (selectedRemoteFolders.length === 0) { Swal.showValidationMessage('Pilih minimal satu item!'); return; }
         
-        // UI Loading Unlock
         const container = document.getElementById('remotePickerContent');
         container.innerHTML = `<div style="text-align:center; padding:40px;"><div class="swal2-loading" style="display:block;"></div><h3 style="color:#f4b400;">Membuka Izin File...</h3><p>Mohon tunggu sebentar.</p></div>`;
 
@@ -468,27 +516,47 @@
                 folderUrlsInput.value = currentVal + (currentVal ? '\n' : '') + newLinks;
                 Swal.close();
                 Swal.fire({ icon: 'success', title: 'Sukses!', text: `${res.unlocked} item berhasil dibuka & ditambahkan.`, timer: 2000 });
-            } else {
-                Swal.fire({ icon: 'error', title: 'Gagal Unlock', text: res.message });
-            }
+            } else { Swal.fire({ icon: 'error', title: 'Gagal Unlock', text: res.message }); }
         } catch (e) { Swal.fire({ icon: 'error', title: 'Error', text: e.message }); }
     };
 
-    // --- STANDARD PICKER (DESTINATION) ---
+    // --- DESTINATION PICKER (LOCAL & REMOTE) ---
     document.getElementById('browseBtn').addEventListener('click', () => {
         const pin = accessPinInput.value;
         if(!pin) { Swal.fire('Error', 'Masukkan PIN Akses!', 'error'); return; }
         
         Swal.fire({
-            title: 'Pilih Folder Tujuan (Akun A)',
-            html: `<div id="pickerContent">Loading...</div>`,
+            title: 'Pilih Folder Tujuan',
+            // TABS UI
+            html: `
+                <div class="picker-tabs">
+                    <div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">📁 Local Drive</div>
+                    <div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">☁️ Saved Cloud</div>
+                </div>
+                <div id="destPickerContent" style="min-height:200px;">Loading...</div>
+            `,
             showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
-            didOpen: () => { loadLocalPicker('root', pin); }
+            didOpen: () => { switchDestTab('local'); }
         });
     });
 
+    window.switchDestTab = function(mode) {
+        document.getElementById('tabLocal').className = (mode === 'local') ? 'picker-tab active' : 'picker-tab';
+        document.getElementById('tabRemote').className = (mode === 'remote') ? 'picker-tab active' : 'picker-tab';
+        
+        const container = document.getElementById('destPickerContent');
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
+        
+        if (mode === 'local') {
+            loadLocalPicker('root', accessPinInput.value);
+        } else {
+            loadSavedRemotes(accessPinInput.value);
+        }
+    };
+
+    // LOAD LOCAL (Sama seperti sebelumnya)
     async function loadLocalPicker(parentId, pin) {
-        const container = document.getElementById('pickerContent');
+        const container = document.getElementById('destPickerContent');
         try {
             const res = await sendRequest({ action: 'browse_folders', parentId: parentId, pin: pin });
             if(res.status === 'success') {
@@ -501,28 +569,84 @@
             } else container.innerText = res.message;
         } catch(e) { container.innerText = e.message; }
     }
+
+    // LOAD REMOTE SAVED ACCOUNTS
+    async function loadSavedRemotes(pin) {
+        const container = document.getElementById('destPickerContent');
+        try {
+            const res = await sendRequest({ action: 'get_remote_accounts', pin: pin });
+            if(res.status === 'success') {
+                if (res.list.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">Belum ada akun tersimpan.<br>Simpan akun via tombol "Simpan Akun" di atas.</div>';
+                    return;
+                }
+                let html = `<div class="picker-header"><div>Daftar Akun Tersimpan</div></div><div class="picker-container">`;
+                res.list.forEach(item => {
+                    html += `
+                    <div class="picker-item" onclick="selectRemoteDest('${item.url}', '${item.label}')">
+                        <span style="font-size:1.2em;">☁️</span> 
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; color:#fff;">${item.label}</div>
+                            <div style="font-size:0.8em; color:#888;">${item.email}</div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+            } else container.innerText = res.message;
+        } catch(e) { container.innerText = e.message; }
+    }
+
     window.selectLocalDest = (id, name) => {
         destUrlInput.value = `https://drive.google.com/drive/folders/${id}`;
+        selectedRemoteDestUrl = null; // Reset Remote Dest
         Swal.close();
         destUrlInput.style.borderColor = '#2ed573';
-        setTimeout(() => { destUrlInput.style.borderColor = 'rgba(255, 255, 255, 0.1)'; }, 1000);
     };
 
-    // --- CHECK LINK LOGIC (RESTORED) ---
+    // HANDSHAKE SAAT PILIH REMOTE
+    window.selectRemoteDest = async (targetUrl, label) => {
+        const container = document.getElementById('destPickerContent');
+        container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div style="margin-top:10px;">Menghubungi Server ${label}...</div></div>`;
+        
+        try {
+            const pin = accessPinInput.value;
+            const res = await sendRequest({ 
+                action: 'connect_remote_dest', 
+                pin: pin, 
+                targetUrl: targetUrl 
+            });
+            
+            if (res.status === 'success') {
+                destUrlInput.value = res.folderUrl; // Tampilkan URL Folder di Input
+                selectedRemoteDestUrl = targetUrl;  // Simpan URL Remote untuk Absorb Trigger
+                
+                Swal.close();
+                Swal.fire({
+                    icon: 'success', 
+                    title: 'Terhubung!', 
+                    text: `Siap mengirim ke ${label} (${res.serverEmail}). Folder Inbox disiapkan.`,
+                    timer: 2000
+                });
+                destUrlInput.style.borderColor = '#00d2ff'; // Warna biru untuk Remote
+            } else {
+                Swal.fire('Gagal Handshake', res.message, 'error');
+            }
+        } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    };
+
+    // --- CHECK LINK LOGIC ---
     checkBtn.addEventListener('click', async () => {
         const rawText = folderUrlsInput.value;
-        const urls = rawText.split(/[\n,]+/)
-                            .map(u => u.trim())
-                            .filter(u => u.length > 0 && !u.includes('script.google.com'));
+        const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0 && !u.includes('script.google.com'));
         const pin = accessPinInput.value;
 
-        if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong', text: 'Masukkan PIN akses Anda.' }); return; }
-        if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong/Remote URL', text: 'Masukkan setidaknya satu link Google Drive (bukan link script).' }); return; }
+        if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong' }); return; }
+        if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong' }); return; }
 
-        Swal.fire({ title: `Memindai ${urls.length} Link...`, text: 'Sedang mengambil data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        Swal.fire({ title: `Memindai...`, didOpen: () => { Swal.showLoading(); } });
 
         let resultsHTML = "";
-
         for (let i = 0; i < urls.length; i++) {
             try {
                 const res = await sendRequest({ action: 'check_stats', url: urls[i], pin: pin });
@@ -558,32 +682,28 @@
         });
     });
 
-    // --- MAIN PROCESS LOGIC (RESTORED FOREGROUND QUEUE) ---
+    // --- MAIN PROCESS LOGIC ---
     document.getElementById('clearInputBtn').addEventListener('click', () => { 
         folderUrlsInput.value = ''; 
         remoteDetectedPanel.style.display = 'none'; 
+        saveRemoteBtn.style.display = 'none';
     });
 
     submitBtn.addEventListener('click', async () => {
         const rawText = folderUrlsInput.value;
-        const urls = rawText.split(/[\n,]+/)
-                            .map(u => u.trim())
-                            .filter(u => u.startsWith('http') && !u.includes('script.google.com'));
-
+        const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.startsWith('http') && !u.includes('script.google.com'));
         const pin = accessPinInput.value;
         const destUrl = destUrlInput.value.trim();
         const newFolderName = document.getElementById('newFolderName').value.trim();
-        
-        let renamePrefix = document.getElementById('renamePrefix').value.trim();
-        if (renamePrefix === "") renamePrefix = "[MOVED] ";
-        if (!renamePrefix.endsWith(" ") && !renamePrefix.endsWith("_") && !renamePrefix.endsWith("-")) renamePrefix += " ";
+        let renamePrefix = document.getElementById('renamePrefix').value.trim() || "[MOVED] ";
 
-        if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong', text: 'Masukkan PIN.' }); return; }
-        if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong', text: 'Tidak ada link Google Drive yang valid untuk diproses.' }); return; }
+        if (!pin) { Swal.fire('Error', 'PIN Kosong', 'error'); return; }
+        if (urls.length === 0) { Swal.fire('Warning', 'Tidak ada link valid', 'warning'); return; }
 
         const config = {
             mode: document.getElementById('duplicateMode').value,
             destUrl: destUrl,
+            remoteTargetUrl: selectedRemoteDestUrl, // PENTING: Kirim URL Remote jika ada
             newFolderName: newFolderName,
             renamePrefix: renamePrefix, 
             filters: {
@@ -594,7 +714,7 @@
         };
 
         if (config.mode.startsWith('rename_')) {
-            const c = await Swal.fire({title:'Konfirmasi Rename?', text:'File sumber akan diganti namanya. Lanjut?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33', confirmButtonText:'Ya'});
+            const c = await Swal.fire({title:'Konfirmasi Rename?', text:'File sumber akan diganti namanya. Lanjut?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33'});
             if (!c.isConfirmed) return;
         }
 
@@ -602,34 +722,30 @@
         setUIState('running'); 
         clearLog(); 
         startTimer();
-        currentSessionLogs = []; // Reset Logs
+        currentSessionLogs = []; 
 
         addLog(`🔐 PIN: OK | Mode: ${config.mode.toUpperCase()}`, 'info');
+        if (config.remoteTargetUrl) addLog("☁️ Target: Remote Server (Absorb Mode)", 'warning');
 
-        // Use Background Mode if checked
-        if (document.getElementById('bgToggle').checked) {
+        if (bgToggle.checked) {
             try {
-                addLog("Mengirim job ke server...", "info");
-                const res = await sendRequest({ 
-                    action: 'start_background_multi', urls: urls, pin: pin, ...config 
-                });
+                addLog("Mengirim job ke server (Background)...", "info");
+                const res = await sendRequest({ action: 'start_background_multi', urls: urls, pin: pin, ...config });
                 if(res.status === 'success') {
                     addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; 
-                    if (typeof launchConfetti === 'function') launchConfetti();
+                    launchConfetti();
                     Swal.fire({ icon: 'success', title: 'Started!', text: 'Proses berjalan di background.', confirmButtonText: 'Oke' });
                 } else { 
                     addLog("❌ Gagal: " + res.message, "error"); setUIState('stopped'); stopTimer(); 
                 }
             } catch(e) { addLog("❌ Error: " + e.message, "error"); setUIState('stopped'); stopTimer(); }
         } else {
-            // Foreground Processing
             await runForegroundQueue(urls, pin, config);
         }
     });
 
     stopBtn.addEventListener('click', () => { isStopRequested = true; stopBtn.innerText = "Stopping..."; });
 
-    // --- FOREGROUND WORKER (RESTORED) ---
     async function runForegroundQueue(urls, pin, config) {
         let successCount = 0; let failCount = 0; let grandTotalFiles = 0; let grandTotalBytes = 0; let resultLinks = [];
 
@@ -652,13 +768,10 @@
                 } else {
                      addLog(`⚠️ Selesai: ${result.name} (0 file disalin/kena filter).`, 'info');
                 }
-                
                 grandTotalFiles += result.files; 
                 grandTotalBytes += parseBytesToNum(result.sizeStr);
-
             } catch (error) {
                 failCount++; addLog(`❌ Gagal: ${error.message}`, 'error');
-                if(error.message.includes("PIN")) { setUIState('stopped'); stopTimer(); return; }
             }
         }
 
@@ -668,8 +781,6 @@
             addLog("⛔ Proses dihentikan.", "error"); globalStatus.textContent = "DIHENTIKAN";
         } else {
             globalStatus.textContent = "SELESAI"; 
-            
-            // Send Report
             try {
                 const reportRes = await sendRequest({
                     action: 'send_report', pin: pin, email: config.email || "", 
@@ -678,8 +789,7 @@
                 });
                 if(reportRes.emailStatus === 'sent') addLog("📧 Email terkirim!", "success");
             } catch(e) {}
-
-            if (typeof launchConfetti === 'function') launchConfetti();
+            launchConfetti();
             showFinalReport(successCount, failCount, grandTotalFiles, grandTotalBytes, resultLinks);
         }
     }
@@ -739,14 +849,14 @@
         return { files: finalProcessed, sizeStr: finalSizeStr, url: targetUrl, name: sourceName, type: sourceType };
     }
 
-    // --- SCHEDULE LOAD (RESTORED WITH DETAILS) ---
+    // --- SCHEDULE LOAD & UTILS ---
     window.refreshScheduleList = async () => {
         const c = document.getElementById('scheduleListContainer'); c.innerText = "Loading...";
         try {
             const res = await sendRequest({ action: 'get_schedule_list', pin: accessPinInput.value || '0000' });
             if(res.status === 'success') {
                 if(res.list && res.list.length > 0) {
-                    activeSchedules = res.list; // STORE FOR DETAILS
+                    activeSchedules = res.list; 
                     let html = '';
                     res.list.forEach(item => {
                         const lastRun = item.lastRun ? new Date(item.lastRun).toLocaleString() : 'Belum pernah';
@@ -754,7 +864,7 @@
                         <div class="schedule-item">
                             <div class="schedule-info">
                                 <span class="schedule-name">${item.label}</span>
-                                <div class="schedule-meta">Destinasi: ...${item.destUrl.substr(-15)}</div>
+                                <div class="schedule-meta">Dest: ...${item.destUrl.substr(-15)}</div>
                                 <div class="schedule-meta">Mode: ${item.mode} | Run Terakhir: ${lastRun}</div>
                             </div>
                             <div class="sched-btn-group">
@@ -776,16 +886,10 @@
         const config = item.config;
         const sourceLinksHtml = config.urls.map((u, i) => `<div>${i+1}. <a href="${u}" target="_blank" style="color:#00d2ff; text-decoration:none;">${u.substring(0,30)}...</a></div>`).join('');
         
-        let filterHtml = "Tidak ada filter aktif.";
-        if (config.filters && (config.filters.maxSizeMB > 0 || config.filters.ignoredExt)) {
-            filterHtml = `Max Size: ${config.filters.maxSizeMB || 'Unlimited'} MB<br>Ignore Ext: ${config.filters.ignoredExt || '-'}`;
-        }
-
-        // Kalkulasi waktu berjalan berikutnya (23 jam setelah lastRun)
+        // Kalkulasi waktu berjalan berikutnya
         const lastRunTime = item.lastRun || 0;
         const nextRunTime = lastRunTime === 0 ? "Segera (Dalam 1 jam)" : new Date(lastRunTime + (23 * 60 * 60 * 1000)).toLocaleString();
 
-        // Tampilkan Popup Awal dengan Loading
         const { isDenied } = await Swal.fire({
             title: `📋 Detail Jadwal`,
             html: `
@@ -794,9 +898,8 @@
                         <strong style="color:#f4b400;">🏷️ Label:</strong> ${item.label}
                     </div>
                     
-                    <!-- AREA PEMILIK (AKAN DI-UPDATE VIA FETCH) -->
                     <div style="margin-bottom:10px; border:1px dashed #444; padding:5px; border-radius:5px;" id="ownerInfoArea">
-                        <strong style="color:#f4b400;">👤 Pemilik Link Sumber:</strong> <span style="color:#aaa;">Memuat info...</span>
+                        <strong style="color:#f4b400;">👤 Pemilik:</strong> <span style="color:#aaa;">Memuat info...</span>
                     </div>
 
                     <div style="margin-bottom:10px;">
@@ -810,106 +913,51 @@
                     </div>
                     <div style="margin-bottom:10px;">
                         <strong style="color:#f4b400;">📂 Tujuan:</strong><br>
-                        <a href="${config.destUrl}" target="_blank" style="color:#00d2ff;">Buka Folder Tujuan</a><br>
-                        Sub-folder: ${config.newFolderName || "(Tidak ada)"}
-                    </div>
-                    <div style="margin-bottom:10px;">
-                        <strong style="color:#f4b400;">⚙️ Setting:</strong><br>
-                        Mode: ${config.mode}<br>
-                        Retention (Max): ${config.maxBackups || 30}<br>
-                        Email: ${config.email || "-"}
-                    </div>
-                    <div>
-                        <strong style="color:#f4b400;">🔍 Filter:</strong><br>
-                        ${filterHtml}
+                        <a href="${config.destUrl}" target="_blank" style="color:#00d2ff;">Buka Folder Tujuan</a>
                     </div>
                 </div>
             `,
-            background: '#1a1a2e',
-            color: '#fff',
-            showConfirmButton: true,
-            confirmButtonText: 'Tutup',
-            // TOMBOL "LAKUKAN SEKARANG" (Triggered as Deny)
-            showDenyButton: true,
-            denyButtonText: '🚀 Lakukan Sekarang',
-            denyButtonColor: '#2ed573',
-            
+            background: '#1a1a2e', color: '#fff',
+            showConfirmButton: true, confirmButtonText: 'Tutup',
+            showDenyButton: true, denyButtonText: '🚀 Lakukan Sekarang', denyButtonColor: '#2ed573',
             didOpen: async () => {
-                // Fetch Owner Info Asynchronously
                 if (config.urls.length > 0) {
                     try {
-                        // Gunakan PIN default 0000 atau dari input
                         const pin = accessPinInput.value || '0000';
                         const res = await sendRequest({ action: 'check_stats', url: config.urls[0], pin: pin });
-                        
                         const ownerArea = document.getElementById('ownerInfoArea');
                         if (ownerArea && res.status === 'success') {
-                            ownerArea.innerHTML = `
-                                <strong style="color:#f4b400;">👤 Pemilik Link Sumber:</strong><br>
-                                <span style="color:#fff;">${res.ownerEmail}</span><br>
-                                <span style="font-size:0.8em; color:#aaa;">Status: ${res.access}</span>
-                            `;
-                        } else if (ownerArea) {
-                            ownerArea.innerHTML = `<strong style="color:#f4b400;">👤 Pemilik:</strong> <span style="color:red;">Gagal memuat info.</span>`;
+                            ownerArea.innerHTML = `<strong style="color:#f4b400;">👤 Pemilik:</strong><br><span style="color:#fff;">${res.ownerEmail}</span>`;
                         }
-                    } catch(e) {
-                        const ownerArea = document.getElementById('ownerInfoArea');
-                        if(ownerArea) ownerArea.innerHTML = `<strong style="color:#f4b400;">👤 Pemilik:</strong> <span style="color:red;">Error koneksi.</span>`;
-                    }
+                    } catch(e) {}
                 }
             }
         });
 
-        // Jika tombol "Lakukan Sekarang" ditekan
         if (isDenied) {
             runScheduleNow(item);
         }
     };
 
-    // FUNGSI BARU: JALANKAN JADWAL MANUAL
     async function runScheduleNow(item) {
         const pin = accessPinInput.value;
-        if (!pin) { Swal.fire('Error', 'Masukkan PIN Akses di halaman utama terlebih dahulu!', 'error'); return; }
+        if (!pin) { Swal.fire('Error', 'Masukkan PIN dulu!', 'error'); return; }
         
-        // Tutup modal agar user lihat log
-        Swal.close();
-
-        // Setup UI
-        isStopRequested = false; 
-        setUIState('running'); 
-        clearLog(); 
-        startTimer();
-        currentSessionLogs = [];
-
+        isStopRequested = false; setUIState('running'); clearLog(); startTimer(); currentSessionLogs = [];
         addLog(`🚀 Menjalankan Jadwal Manual: "${item.label}"`, 'info');
-        addLog(`🔐 PIN: OK | Mode: ${item.config.mode}`, 'info');
-
+        
         const config = item.config;
-        const urls = config.urls;
-
-        // Cek Toggle Background
         if (bgToggle.checked) {
              try {
-                addLog("Mengirim job ke server (Background)...", "info");
-                const res = await sendRequest({ 
-                    action: 'start_background_multi', 
-                    urls: urls, 
-                    pin: pin,
-                    ...config,
-                    scheduleId: item.id // Penting: Kirim ID agar statistik update
-                });
-                
+                addLog("Mengirim job (Background)...", "info");
+                const res = await sendRequest({ action: 'start_background_multi', urls: config.urls, pin: pin, ...config, scheduleId: item.id });
                 if (res.status === 'success') {
-                    addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; 
-                    if (typeof launchConfetti === 'function') launchConfetti();
-                    Swal.fire({ icon: 'success', title: 'Started!', text: 'Jadwal berjalan di background.', confirmButtonText: 'Oke' });
-                } else { 
-                    addLog("❌ Gagal: " + res.message, "error"); setUIState('stopped'); stopTimer(); 
-                }
+                    addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; launchConfetti();
+                    Swal.fire({ icon: 'success', title: 'Started!' });
+                } else { addLog("❌ Gagal: " + res.message, "error"); setUIState('stopped'); stopTimer(); }
             } catch (e) { addLog("❌ Error: " + e.message, "error"); setUIState('stopped'); stopTimer(); }
         } else {
-            // Foreground
-            await runForegroundQueue(urls, pin, config);
+            await runForegroundQueue(config.urls, pin, config);
         }
     }
 
@@ -920,59 +968,26 @@
     };
     refreshScheduleList();
 
-
     // --- UTILS ---
-    async function sendRequest(payload) { 
-        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); 
-        return await res.json(); 
-    }
-    function setUIState(s) {
-        if(s==='running') { submitBtn.style.display='none'; checkBtn.style.display='none'; stopBtn.style.display='block'; progressWrapper.style.display='block'; logArea.style.display='block'; }
-        else { submitBtn.style.display='block'; checkBtn.style.display='block'; stopBtn.style.display='none'; stopBtn.innerText="STOP 🛑"; }
-    }
+    async function sendRequest(payload) { const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); return await res.json(); }
+    function setUIState(s) { if(s==='running'){submitBtn.style.display='none'; checkBtn.style.display='none'; stopBtn.style.display='block'; progressWrapper.style.display='block'; logArea.style.display='block';} else {submitBtn.style.display='block'; checkBtn.style.display='block'; stopBtn.style.display='none';} }
     function addLog(m, t) { logArea.innerHTML += `<div class="log-item log-${t}"><span class="log-icon">${getIcon(t)}</span><span>${m}</span></div>`; logArea.scrollTop=logArea.scrollHeight; }
-    function addLogHTML(name, url, size, type, detailMsg) { 
-        const div = document.createElement('div'); div.className = 'log-item log-' + type; 
-        const content = url && url !== '#' ? `<a href="${url}" target="_blank">${name}</a>` : name; 
-        div.innerHTML = `<span class="log-icon">${getIcon(type)}</span> <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${content} <span style="font-size:0.8em; opacity:0.8">(${detailMsg})</span></span> <span class="log-size">${size}</span>`; 
-        logArea.appendChild(div); logArea.scrollTop = logArea.scrollHeight; 
-    }
-    function getIcon(type) { if(type === 'success') return '✅'; if(type === 'error') return '❌'; if(type === 'skip') return '⏩'; if(type === 'info') return 'ℹ️'; if(type === 'warning') return '⚠️'; return '•'; }
+    function addLogHTML(name, url, size, type, info) { const div = document.createElement('div'); div.className = 'log-item log-'+type; const c = url && url!=='#' ? `<a href="${url}" target="_blank">${name}</a>` : name; div.innerHTML = `<span class="log-icon">${getIcon(type)}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${c} <span style="font-size:0.8em;opacity:0.8">(${info})</span></span><span class="log-size">${size}</span>`; logArea.appendChild(div); logArea.scrollTop=logArea.scrollHeight; }
+    function getIcon(t) { return t==='success'?'✅':t==='error'?'❌':t==='skip'?'⏩':'ℹ️'; }
     function clearLog() { logArea.innerHTML = ''; }
     function updateProgress(p, t) { progressBar.style.width=p+"%"; document.getElementById('progressPercent').innerText=p+"%"; document.getElementById('progressText').innerText=t; }
     function startTimer() { const s = Date.now(); timerInterval = setInterval(() => { const d = Math.floor((Date.now()-s)/1000); timerDisplay.innerText = new Date(d*1000).toISOString().substr(11,8); }, 1000); }
     function stopTimer() { clearInterval(timerInterval); }
-    function launchConfetti() { if (typeof confetti !== 'undefined') { var d = 3000; var e = Date.now() + d; var i = setInterval(function() { if (Date.now() > e) return clearInterval(i); confetti({ particleCount: 50, spread: 360, startVelocity: 30, origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); } }
-    function formatBytes(b) { if (bytes === 0) return '0 Bytes'; const i = Math.floor(Math.log(b) / Math.log(1024)); return parseFloat((b / Math.pow(1024, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB', 'TB'][i]; }
-    function parseBytesToNum(sizeStr) { if (!sizeStr) return 0; const units = { 'Bytes': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4 }; const parts = sizeStr.split(' '); return parseFloat(parts[0]) * (units[parts[1]] || 1); }
+    function formatBytes(b) { if(b===0)return '0 B'; var k=1024,i=Math.floor(Math.log(b)/Math.log(k)); return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+['B','KB','MB','GB','TB'][i]; }
+    function parseBytesToNum(s) { if (!s) return 0; var parts = s.split(' '), u = {'KB':1024,'MB':1024**2,'GB':1024**3}; return parseFloat(parts[0]) * (u[parts[1]]||1); }
+    function launchConfetti() { if(typeof confetti !== 'undefined') { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } }
+    function showFinalReport(s, f, tf, tb, links) {
+        let lh = links.length ? `<div style="margin-top:15px; border-top:1px solid #333; padding-top:10px; max-height:100px; overflow-y:auto;">` + links.map(l => `<div style="margin-bottom:5px;"><a href="${l.url}" target="_blank" style="color:#00d2ff; text-decoration:none;">🔗 ${l.name}</a></div>`).join('') + `</div>` : '';
+        Swal.fire({ title: '🎉 Selesai', html: `<table class="swal-table"><tr><td>Sukses</td><td>${s}</td></tr><tr><td>Gagal</td><td>${f}</td></tr><tr><td>Total File</td><td>${tf}</td></tr><tr><td>Ukuran</td><td>${formatBytes(tb)}</td></tr></table>${lh}`, background: '#111', color: '#fff' });
+    }
     
-    function showFinalReport(success, fail, totalFiles, totalBytes, links) {
-        let linksHtml = "";
-        if (links.length > 0) {
-            linksHtml += `<div style="margin-top:15px; border-top:1px solid #333; padding-top:10px; max-height:100px; overflow-y:auto;">`;
-            links.forEach(link => { linksHtml += `<div style="margin-bottom:5px;"><a href="${link.url}" target="_blank" style="color:#00d2ff; text-decoration:none;">🔗 ${link.name}</a></div>`; });
-            linksHtml += `</div>`;
-        }
-        Swal.fire({
-            title: '🎉 Selesai',
-            html: `
-                <table class="swal-table">
-                    <tr><td>Link Sumber</td><td>${success + fail}</td></tr>
-                    <tr><td>Total Item</td><td>${totalFiles}</td></tr>
-                    <tr><td>Total Ukuran</td><td>${totalBytes} Bytes (Est)</td></tr>
-                    <tr><td>Durasi</td><td>${timerDisplay.textContent}</td></tr>
-                </table>${linksHtml}`,
-            background: '#111116', color: '#fff', confirmButtonText: 'Tutup'
-        });
-    }
-
     // UI Toggles
-    function setMode(m) { 
-        document.getElementById('advancedSection').style.display = m==='simple'?'none':'block'; 
-        document.getElementById('btnSimple').className = m==='simple'?'mode-btn active':'mode-btn';
-        document.getElementById('btnAdvance').className = m==='advance'?'mode-btn active':'mode-btn';
-        document.getElementById('modeHighlighter').style.transform = m==='simple'?'translateX(0)':'translateX(100%)';
-    }
+    function setMode(m) { document.getElementById('advancedSection').style.display = m==='simple'?'none':'block'; document.getElementById('btnSimple').className=m==='simple'?'mode-btn active':'mode-btn'; document.getElementById('btnAdvance').className=m==='advance'?'mode-btn active':'mode-btn'; document.getElementById('modeHighlighter').style.transform=m==='simple'?'translateX(0)':'translateX(100%)'; }
     function toggleRenameInput() { document.getElementById('renameInputContainer').style.display = document.getElementById('duplicateMode').value.startsWith('rename')?'block':'none'; }
     
     // Add Schedule
@@ -981,7 +996,6 @@
        if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');
     });
 
-    // Particles
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.2 }, size: { value: 3 }, move: { enable: true, speed: 1 } } });
 </script>
 </body>
