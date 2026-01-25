@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-Drive Ultimate v2</title>
+    <title>G-Drive Ultimate v2.2</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.0/tsparticles.bundle.min.js"></script>
@@ -104,6 +104,7 @@
             background-repeat: no-repeat; background-position: right 15px top 50%; background-size: 12px auto;
         }
         option { background: #1a1a2e; color: white; }
+        optgroup { background: #000; color: #f4b400; font-weight: bold; }
         
         /* ADVANCED & SCHEDULE */
         .advanced-section {
@@ -123,8 +124,26 @@
         input:checked + .slider { background-color: #2ed573; } input:checked + .slider:before { transform: translateX(26px); }
 
         .schedule-box { border: 1px dashed rgba(255, 255, 255, 0.3); padding: 15px; border-radius: 10px; margin-top: 15px; }
+        /* SCHEDULE LIST STYLING RESTORED */
         .schedule-list { margin-top: 15px; max-height: 200px; overflow-y: auto; }
-        .schedule-item { background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+        .schedule-item { 
+            background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding: 10px; display: flex; justify-content: space-between; align-items: center; 
+            font-size: 0.8rem;
+        }
+        .schedule-info { flex: 1; padding-right: 10px; }
+        .schedule-name { font-weight: bold; color: #00d2ff; display: block; margin-bottom: 2px;}
+        .schedule-meta { color: #888; font-size: 0.75rem; }
+        
+        .sched-btn-group { display: flex; gap: 5px; }
+        .btn-del-sched { 
+            background: #ff4757 !important; width: auto !important; padding: 5px 10px !important; 
+            font-size: 0.7rem !important; border-radius: 5px; color:white; border:none; cursor:pointer;
+        }
+        .btn-detail-sched { 
+            background: #3498db !important; width: auto !important; padding: 5px 10px !important; 
+            font-size: 0.7rem !important; border-radius: 5px; color:white; border:none; cursor:pointer;
+        }
         
         .btn-group { display: flex; gap: 10px; }
         button { width: 100%; border: none; padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; text-transform: uppercase; letter-spacing: 1px; color: white; }
@@ -133,13 +152,16 @@
         #stopBtn { background: #ff4757; display: none; }
         @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         button:hover { transform: translateY(-2px); }
+        .sheet-btn { background: #109869 !important; color: white !important; margin-top: 10px; display: block; width: 100%; text-decoration: none; text-align: center; padding: 10px; border-radius: 5px; font-weight: bold; }
 
         .progress-wrapper { margin-top: 20px; display: none; }
         .progress-container { width: 100%; height: 8px; background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; margin-top: 5px;}
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #f4b400, #ff00de, #00d2ff); border-radius: 10px; transition: width 0.4s ease; }
         .log-area { margin-top: 15px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; font-size: 0.8rem; font-family: 'Consolas', monospace; display: none; border: 1px solid rgba(255,255,255,0.05); }
-        .log-item { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; }
-        .log-success { color: #00d2ff; } .log-error { color: #ff4757; } .log-info { color: #ddd; }
+        .log-item { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; align-items:center; }
+        .log-icon { flex-shrink: 0; width: 20px; text-align: center; }
+        .log-size { font-size: 0.7em; color: #888; margin-left: auto; padding-left: 10px; }
+        .log-success { color: #00d2ff; } .log-error { color: #ff4757; } .log-info { color: #ddd; } .log-warning { color: #ffa502; font-weight: bold; } 
         
         /* PICKER STYLES */
         .picker-container { text-align: left; max-height: 300px; overflow-y: auto; }
@@ -147,12 +169,19 @@
         .picker-item { padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; }
         .picker-item:hover { background: rgba(255,255,255,0.1); }
         .picker-item.selected { background: rgba(0, 210, 255, 0.2); border-color: #00d2ff; }
-        
-        /* Multi-select check */
         .picker-checkbox { width: 18px; height: 18px; accent-color: #00d2ff; cursor: pointer; }
 
         .result-box { text-align: left; background: #222; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
+        .result-title { color: #00d2ff; font-weight: bold; margin-bottom: 5px; font-size: 0.95rem; }
+        .result-info { font-size: 0.85rem; color: #ccc; }
         .hidden-input { display: none; margin-top: 10px; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        .swal-table { width: 100%; font-size: 0.9em; margin-top: 10px; border-collapse: collapse; }
+        .swal-table td { padding: 5px; border-bottom: 1px solid #333; color: #ddd; text-align: left; }
+        .swal-table td:last-child { text-align: right; font-weight: bold; color: #fff; }
     </style>
 </head>
 <body>
@@ -211,10 +240,16 @@
         <div class="form-group">
             <label for="duplicateMode">Metode Duplikasi:</label>
             <select id="duplicateMode" onchange="toggleRenameInput()">
-                <option value="copy_duplicate">Copy & Duplikat (Default)</option>
-                <option value="copy_skip">Copy & Skip (Jika ada)</option>
-                <option value="copy_replace">Copy & Replace</option>
-                <option value="rename_duplicate">Rename & Duplikat</option>
+                <optgroup label="🔵 Mode Copy (File Sumber Tetap Aman)">
+                    <option value="copy_duplicate">Copy & Duplikat (Default)</option>
+                    <option value="copy_skip">Copy & Skip (Jika file ada, lewati)</option>
+                    <option value="copy_replace">Copy & Replace (Timpa file lama)</option>
+                </optgroup>
+                <optgroup label="✏️ Mode Rename (Ganti Nama Sumber)">
+                    <option value="rename_duplicate">Copy & Rename Sumber</option>
+                    <option value="rename_skip">Copy & Rename (Skip jika target ada)</option>
+                    <option value="rename_replace">Copy & Rename (Replace jika target ada)</option>
+                </optgroup>
             </select>
             <div id="renameInputContainer" class="hidden-input">
                 <input type="text" id="renamePrefix" placeholder="Prefix: [MOVED] ">
@@ -222,7 +257,7 @@
         </div>
         
         <div class="two-col">
-            <div class="col"><label>Max Size (MB)</label><input type="number" id="maxSize" placeholder="0"></div>
+            <div class="col"><label>Max Size (MB)</label><input type="number" id="maxSize" placeholder="0 = Unlimited"></div>
             <div class="col"><label>Ignore Ext</label><input type="text" id="ignoredExt" placeholder="mp4, exe"></div>
         </div>
 
@@ -267,6 +302,9 @@
 <script>
     // URL SCRIPT AKUN A (SERVER UTAMA)
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVMco1a7VA7GkY6OyxFm239RXZlqMsTUy9kheMJthucelNETE9Zu9B9jqMB9mgyWbr/exec"; 
+    
+    // GANTI DENGAN 5 AGAR LEBIH CEPAT
+    const CONCURRENCY_LIMIT = 5;
 
     // UI Variables
     const submitBtn = document.getElementById('submitBtn');
@@ -284,11 +322,14 @@
     
     let detectedRemoteUrl = null;
     let selectedRemoteFolders = []; // Temporary storage for multi-select
+    let currentSessionLogs = [];
+    let isStopRequested = false;
+    let timerInterval;
+    let activeSchedules = []; // GLOBAL VAR FOR SCHEDULE DETAILS
 
     // --- SMART DETECTION LOGIC ---
     folderUrlsInput.addEventListener('input', function() {
         const val = this.value;
-        // Regex untuk mendeteksi Link WebApp GAS
         const scriptRegex = /https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/;
         const match = val.match(scriptRegex);
 
@@ -322,11 +363,9 @@
         container.innerHTML = '<div class="swal2-loading" style="display:block;"></div>';
 
         try {
-            // Fetch ke Script Akun B (Cross-Origin)
-            // Karena GAS CORS, kita gunakan fetch standar. Script B harus return JSON.
             const response = await fetch(detectedRemoteUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Penting agar tidak preflight error
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({ action: 'browse_remote', parentId: parentId })
             });
             const res = await response.json();
@@ -363,10 +402,7 @@
         }
     }
 
-    // Navigasi Remote
     window.navRemote = (id) => { loadRemoteContent(id); };
-
-    // Handle Checkbox
     window.toggleRemoteSelect = (cb) => {
         const id = cb.value;
         const name = cb.getAttribute('data-name');
@@ -376,30 +412,16 @@
             selectedRemoteFolders = selectedRemoteFolders.filter(item => item.id !== id);
         }
     };
-
-    // Confirm Selection
     window.confirmRemoteSelection = () => {
         if (selectedRemoteFolders.length === 0) {
             Swal.showValidationMessage('Pilih minimal satu folder!');
             return;
         }
-
-        // Generate Drive Links
         let newLinks = selectedRemoteFolders.map(f => `https://drive.google.com/drive/folders/${f.id}`).join('\n');
-        
-        // Append to Textarea
         const currentVal = folderUrlsInput.value;
-        // Remove the script URL to clean up, or keep it? Let's append below it.
         folderUrlsInput.value = currentVal + '\n\n' + newLinks;
-        
         Swal.close();
-        Swal.fire({
-            icon: 'success', 
-            title: 'Berhasil', 
-            text: `${selectedRemoteFolders.length} folder dari Akun B berhasil ditambahkan ke antrian!`
-        });
-        
-        // Hide panel after selection? No, keep it in case user wants to browse again.
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: `${selectedRemoteFolders.length} folder ditambahkan ke antrian!` });
     };
 
     // --- STANDARD PICKER (DESTINATION) ---
@@ -432,84 +454,323 @@
     window.selectLocalDest = (id, name) => {
         destUrlInput.value = `https://drive.google.com/drive/folders/${id}`;
         Swal.close();
+        destUrlInput.style.borderColor = '#2ed573';
+        setTimeout(() => { destUrlInput.style.borderColor = 'rgba(255, 255, 255, 0.1)'; }, 1000);
     };
 
-    // --- CORE FUNCTIONS (SUBMIT, CHECK, STOP) ---
-    // (Keeping existing logic for processing)
-    
-    let isStopRequested = false;
-    let timerInterval;
+    // --- CHECK LINK LOGIC (RESTORED) ---
+    checkBtn.addEventListener('click', async () => {
+        const rawText = folderUrlsInput.value;
+        const urls = rawText.split(/[\n,]+/)
+                            .map(u => u.trim())
+                            .filter(u => u.length > 0 && !u.includes('script.google.com'));
+        const pin = accessPinInput.value;
 
+        if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong', text: 'Masukkan PIN akses Anda.' }); return; }
+        if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong/Remote URL', text: 'Masukkan setidaknya satu link Google Drive (bukan link script).' }); return; }
+
+        Swal.fire({ title: `Memindai ${urls.length} Link...`, text: 'Sedang mengambil data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
+        let resultsHTML = "";
+
+        for (let i = 0; i < urls.length; i++) {
+            try {
+                const res = await sendRequest({ action: 'check_stats', url: urls[i], pin: pin });
+                
+                if (res.status === 'success') {
+                    const accessColor = res.canEdit ? '#2ed573' : '#ff4757'; 
+                    const accessWeight = res.canEdit ? 'normal' : 'bold';
+
+                    resultsHTML += `
+                        <div class="result-box">
+                            <div class="result-title">${i+1}. ${res.name} (${res.type === 'folder' ? '📁 Folder' : '📄 File'})</div>
+                            <div class="result-info">
+                                📄 File: ${res.stats.files} | 
+                                💾 Size: <span style="color:#2ed573">${res.stats.size}</span><br>
+                                🔒 Akses: <span style="color:${accessColor}; font-weight:${accessWeight}">${res.access}</span><br>
+                                🤖 Running As: <span style="color:#fff">${res.scriptUser}</span><br>
+                                👑 Owner File: <span style="color:#ccc">${res.ownerEmail}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultsHTML += `<div class="result-box" style="border-color:#ff4757"><div class="result-title" style="color:#ff4757">${i+1}. Gagal</div><div class="result-info">${res.message}</div></div>`;
+                }
+            } catch (e) {
+                resultsHTML += `<div class="result-box" style="border-color:#ff4757"><div class="result-title" style="color:#ff4757">${i+1}. Error</div><div class="result-info">${e.message}</div></div>`;
+            }
+        }
+
+        Swal.fire({
+            title: '📊 Hasil Scan Lengkap',
+            html: `<div style="max-height:300px; overflow-y:auto; padding-right:5px;">${resultsHTML}</div>`,
+            background: '#111', color: '#fff', confirmButtonText: 'Tutup', width: '600px'
+        });
+    });
+
+    // --- MAIN PROCESS LOGIC (RESTORED FOREGROUND QUEUE) ---
     document.getElementById('clearInputBtn').addEventListener('click', () => { 
         folderUrlsInput.value = ''; 
         remoteDetectedPanel.style.display = 'none'; 
     });
 
     submitBtn.addEventListener('click', async () => {
-        const urls = folderUrlsInput.value.split(/[\n,]+/).map(u => u.trim()).filter(u => u.startsWith('http'));
-        const pin = accessPinInput.value;
-        if(!pin || urls.length === 0) { Swal.fire('Info', 'Cek PIN dan Link Sumber', 'warning'); return; }
+        const rawText = folderUrlsInput.value;
+        const urls = rawText.split(/[\n,]+/)
+                            .map(u => u.trim())
+                            .filter(u => u.startsWith('http') && !u.includes('script.google.com'));
 
-        setUIState('running'); startTimer();
-        addLog("🚀 Memulai proses...", "info");
+        const pin = accessPinInput.value;
+        const destUrl = destUrlInput.value.trim();
+        const newFolderName = newFolderNameInput.value.trim();
+        
+        let renamePrefix = document.getElementById('renamePrefix').value.trim();
+        if (renamePrefix === "") renamePrefix = "[MOVED] ";
+        if (!renamePrefix.endsWith(" ") && !renamePrefix.endsWith("_") && !renamePrefix.endsWith("-")) renamePrefix += " ";
+
+        if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong', text: 'Masukkan PIN.' }); return; }
+        if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong', text: 'Tidak ada link Google Drive yang valid untuk diproses.' }); return; }
+
+        const config = {
+            mode: document.getElementById('duplicateMode').value,
+            destUrl: destUrl,
+            newFolderName: newFolderName,
+            renamePrefix: renamePrefix, 
+            filters: {
+                maxSizeMB: parseInt(document.getElementById('maxSize').value) || 0,
+                ignoredExt: document.getElementById('ignoredExt').value
+            },
+            email: document.getElementById('emailNotif').value
+        };
+
+        if (config.mode.startsWith('rename_')) {
+            const c = await Swal.fire({title:'Konfirmasi Rename?', text:'File sumber akan diganti namanya. Lanjut?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33', confirmButtonText:'Ya'});
+            if (!c.isConfirmed) return;
+        }
+
+        isStopRequested = false; 
+        setUIState('running'); 
+        clearLog(); 
+        startTimer();
+        currentSessionLogs = []; // Reset Logs
+
+        addLog(`🔐 PIN: OK | Mode: ${config.mode.toUpperCase()}`, 'info');
 
         // Use Background Mode if checked
         if (document.getElementById('bgToggle').checked) {
             try {
+                addLog("Mengirim job ke server...", "info");
                 const res = await sendRequest({ 
-                    action: 'start_background_multi', 
-                    urls: urls, 
-                    pin: pin, 
-                    destUrl: destUrlInput.value, 
-                    mode: document.getElementById('duplicateMode').value,
-                    newFolderName: document.getElementById('newFolderName').value,
-                    renamePrefix: document.getElementById('renamePrefix').value || "[MOVED] ",
-                    email: document.getElementById('emailNotif').value
+                    action: 'start_background_multi', urls: urls, pin: pin, ...config 
                 });
-                if(res.status === 'success') Swal.fire('Sukses', 'Berjalan di Background!', 'success');
-                else { addLog(res.message, 'error'); setUIState('idle'); }
-            } catch(e) { addLog(e.message, 'error'); setUIState('idle'); }
+                if(res.status === 'success') {
+                    addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; 
+                    if (typeof launchConfetti === 'function') launchConfetti();
+                    Swal.fire({ icon: 'success', title: 'Started!', text: 'Proses berjalan di background.', confirmButtonText: 'Oke' });
+                } else { 
+                    addLog("❌ Gagal: " + res.message, "error"); setUIState('stopped'); stopTimer(); 
+                }
+            } catch(e) { addLog("❌ Error: " + e.message, "error"); setUIState('stopped'); stopTimer(); }
         } else {
             // Foreground Processing
-            for(let url of urls) {
-                if(url.includes('script.google.com')) continue; // Skip script url if left in textarea
-                if(isStopRequested) break;
-                try {
-                    addLog(`Processing: ${url}`, 'info');
-                    const init = await sendRequest({ action: 'initialize', url: url, pin: pin, destUrl: destUrlInput.value, mode: document.getElementById('duplicateMode').value });
-                    if(init.status !== 'success') throw new Error(init.message);
-                    
-                    let done = false;
-                    while(!done && !isStopRequested) {
-                        const batch = await sendRequest({ action: 'process_batch', jobId: init.jobId, pin: pin });
-                        if(batch.status !== 'success' || batch.action === 'complete') done = true;
-                        updateProgress(batch.progress ? batch.progress.percent : 0, "Processing...");
-                    }
-                    addLog(`✅ Selesai: ${url}`, 'success');
-                } catch(e) { addLog(`❌ Error: ${e.message}`, 'error'); }
-            }
-            setUIState('idle'); stopTimer();
-            Swal.fire('Selesai', 'Proses antrian selesai.', 'success');
+            await runForegroundQueue(urls, pin, config);
         }
     });
 
     stopBtn.addEventListener('click', () => { isStopRequested = true; stopBtn.innerText = "Stopping..."; });
 
-    // --- SCHEDULE LOAD ---
+    // --- FOREGROUND WORKER (RESTORED) ---
+    async function runForegroundQueue(urls, pin, config) {
+        let successCount = 0; let failCount = 0; let grandTotalFiles = 0; let grandTotalBytes = 0; let resultLinks = [];
+
+        for (let i = 0; i < urls.length; i++) {
+            if (isStopRequested) break;
+            const currentUrl = urls[i];
+            globalStatus.textContent = `Memproses Link ${i + 1} dari ${urls.length}`;
+            updateProgress(0, "Inisialisasi...");
+
+            try {
+                addLog(`▶ [${i+1}/${urls.length}] Connecting...`, 'info');
+                const result = await processSingleFolder(currentUrl, pin, config);
+                
+                const itemType = result.type === 'file' ? 'File' : 'Folder';
+                
+                if (result.files > 0 || result.type === 'file') {
+                     successCount++;
+                     addLog(`✅ Selesai: ${itemType} "${result.name}" (${result.files} processed).`, 'success');
+                     if (result.url) resultLinks.push({ name: `${itemType}: ${result.name}`, url: result.url });
+                } else {
+                     addLog(`⚠️ Selesai: ${result.name} (0 file disalin/kena filter).`, 'info');
+                }
+                
+                grandTotalFiles += result.files; 
+                grandTotalBytes += parseBytesToNum(result.sizeStr);
+
+            } catch (error) {
+                failCount++; addLog(`❌ Gagal: ${error.message}`, 'error');
+                if(error.message.includes("PIN")) { setUIState('stopped'); stopTimer(); return; }
+            }
+        }
+
+        setUIState('stopped'); stopTimer();
+        
+        if (isStopRequested) {
+            addLog("⛔ Proses dihentikan.", "error"); globalStatus.textContent = "DIHENTIKAN";
+        } else {
+            globalStatus.textContent = "SELESAI"; 
+            
+            // Send Report
+            try {
+                const reportRes = await sendRequest({
+                    action: 'send_report', pin: pin, email: config.email || "", 
+                    urls: urls, stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) },
+                    details: currentSessionLogs 
+                });
+                if(reportRes.emailStatus === 'sent') addLog("📧 Email terkirim!", "success");
+            } catch(e) {}
+
+            if (typeof launchConfetti === 'function') launchConfetti();
+            showFinalReport(successCount, failCount, grandTotalFiles, grandTotalBytes, resultLinks);
+        }
+    }
+
+    async function processSingleFolder(url, pin, config) {
+        if (isStopRequested) return { files: 0, sizeStr: "0 B", url: null, type: 'unknown' };
+        
+        const initRes = await sendRequest({ action: 'initialize', url: url, name: "", pin: pin, ...config });
+        if (initRes.status !== 'success') throw new Error(initRes.message);
+
+        const jobId = initRes.jobId; const total = initRes.totalFiles;
+        const sourceName = initRes.sourceName || "Item";
+        let targetUrl = initRes.targetUrl; 
+        const sourceType = initRes.type || 'folder';
+
+        const actionText = sourceType === 'file' ? 'Menyalin File' : 'Menyalin Folder';
+        document.getElementById('progressText').textContent = `${actionText}: ${sourceName}`;
+
+        if (total === 0) return { files: 0, sizeStr: "0 B", url: targetUrl, name: sourceName, type: sourceType };
+
+        let finalProcessed = 0; let finalSizeStr = "0 B"; let isFinished = false; let workers = [];
+        
+        const workerTask = async () => {
+            while (!isFinished && !isStopRequested) {
+                try {
+                    const res = await sendRequest({ action: 'process_batch', jobId: jobId, pin: pin });
+                    if (res.status !== 'success') throw new Error(res.message);
+                    
+                    const p = res.progress;
+                    updateProgress(p.percent, `${actionText}: ${p.processed}/${p.total}`);
+                    finalProcessed = p.processed; finalSizeStr = p.currentSize;
+
+                    if (res.processedList && res.processedList.length > 0) {
+                        res.processedList.forEach(item => {
+                            let type = 'success';
+                            if(item.status === 'skipped') type = 'skip';
+                            if(item.status === 'error') type = 'error';
+                            if(item.status === 'warning') type = 'warning'; 
+                            
+                            if (item.status === 'success' && sourceType === 'file') targetUrl = item.url;
+                            
+                            let displayInfo = item.info; 
+                            if(item.status === 'warning') displayInfo = "⚠️ " + item.info;
+
+                            currentSessionLogs.push({ name: item.name, url: item.url, status: type.toUpperCase(), info: displayInfo });
+                            addLogHTML(item.name, item.url, item.size, type, displayInfo);
+                        });
+                    }
+                    if (res.action === 'complete') isFinished = true;
+                } catch (e) { await new Promise(r => setTimeout(r, 2000)); }
+            }
+        };
+
+        for (let k = 0; k < CONCURRENCY_LIMIT; k++) workers.push(workerTask());
+        await Promise.all(workers);
+
+        return { files: finalProcessed, sizeStr: finalSizeStr, url: targetUrl, name: sourceName, type: sourceType };
+    }
+
+    // --- SCHEDULE LOAD (RESTORED WITH DETAILS) ---
     window.refreshScheduleList = async () => {
         const c = document.getElementById('scheduleListContainer'); c.innerText = "Loading...";
         try {
             const res = await sendRequest({ action: 'get_schedule_list', pin: accessPinInput.value || '0000' });
             if(res.status === 'success') {
-                c.innerHTML = res.list.map(i => `<div class="schedule-item"><span>${i.label}</span><button onclick="delSched('${i.id}')" style="width:auto;padding:5px;background:#ff4757;font-size:0.7rem;">Hapus</button></div>`).join('');
+                if(res.list && res.list.length > 0) {
+                    activeSchedules = res.list; // STORE FOR DETAILS
+                    let html = '';
+                    res.list.forEach(item => {
+                        const lastRun = item.lastRun ? new Date(item.lastRun).toLocaleString() : 'Belum pernah';
+                        html += `
+                        <div class="schedule-item">
+                            <div class="schedule-info">
+                                <span class="schedule-name">${item.label}</span>
+                                <div class="schedule-meta">Destinasi: ...${item.destUrl.substr(-15)}</div>
+                                <div class="schedule-meta">Mode: ${item.mode} | Run Terakhir: ${lastRun}</div>
+                            </div>
+                            <div class="sched-btn-group">
+                                <button class="btn-detail-sched" onclick="viewScheduleDetail('${item.id}')">ℹ️</button>
+                                <button class="btn-del-sched" onclick="delSched('${item.id}')">🗑️</button>
+                            </div>
+                        </div>`;
+                    });
+                    c.innerHTML = html;
+                } else c.innerHTML = '<div style="text-align:center;color:#666;padding:10px;">Belum ada jadwal.</div>';
             } else c.innerText = "Gagal load jadwal.";
         } catch(e) { c.innerText = "Error koneksi."; }
     };
+
+    window.viewScheduleDetail = function(id) {
+        const item = activeSchedules.find(s => s.id === id);
+        if (!item) return;
+
+        const config = item.config;
+        const sourceLinksHtml = config.urls.map((u, i) => `<div>${i+1}. <a href="${u}" target="_blank" style="color:#00d2ff; text-decoration:none;">${u.substring(0,30)}...</a></div>`).join('');
+        
+        let filterHtml = "Tidak ada filter aktif.";
+        if (config.filters && (config.filters.maxSizeMB > 0 || config.filters.ignoredExt)) {
+            filterHtml = `Max Size: ${config.filters.maxSizeMB || 'Unlimited'} MB<br>Ignore Ext: ${config.filters.ignoredExt || '-'}`;
+        }
+
+        Swal.fire({
+            title: `📋 Detail Jadwal`,
+            html: `
+                <div style="text-align:left; font-size:0.85rem; background:#222; padding:15px; border-radius:8px; border:1px solid #444; max-height:300px; overflow-y:auto;">
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">🏷️ Label:</strong> ${item.label}
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">🔗 Link Sumber (${config.urls.length}):</strong>
+                        <div style="padding-left:10px; font-size:0.8rem;">${sourceLinksHtml}</div>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">📂 Tujuan:</strong><br>
+                        <a href="${config.destUrl}" target="_blank" style="color:#00d2ff;">Buka Folder Tujuan</a><br>
+                        Sub-folder: ${config.newFolderName || "(Tidak ada)"}
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <strong style="color:#f4b400;">⚙️ Setting:</strong><br>
+                        Mode: ${config.mode}<br>
+                        Retention (Max): ${config.maxBackups || 30}<br>
+                        Email: ${config.email || "-"}
+                    </div>
+                    <div>
+                        <strong style="color:#f4b400;">🔍 Filter:</strong><br>
+                        ${filterHtml}
+                    </div>
+                </div>
+            `,
+            background: '#1a1a2e',
+            color: '#fff',
+            showConfirmButton: true,
+            confirmButtonText: 'Tutup'
+        });
+    };
+
     window.delSched = async (id) => {
+        if(!confirm('Hapus jadwal ini?')) return;
         await sendRequest({ action: 'delete_schedule_item', id: id, pin: accessPinInput.value });
         refreshScheduleList();
     };
-    // Load on start
     refreshScheduleList();
 
 
@@ -519,14 +780,45 @@
         return await res.json(); 
     }
     function setUIState(s) {
-        if(s==='running') { submitBtn.style.display='none'; stopBtn.style.display='block'; progressWrapper.style.display='block'; }
-        else { submitBtn.style.display='block'; stopBtn.style.display='none'; stopBtn.innerText="STOP 🛑"; }
+        if(s==='running') { submitBtn.style.display='none'; checkBtn.style.display='none'; stopBtn.style.display='block'; progressWrapper.style.display='block'; logArea.style.display='block'; }
+        else { submitBtn.style.display='block'; checkBtn.style.display='block'; stopBtn.style.display='none'; stopBtn.innerText="STOP 🛑"; }
     }
-    function addLog(m, t) { logArea.innerHTML += `<div class="log-item log-${t}"><span>${m}</span></div>`; logArea.scrollTop=logArea.scrollHeight; }
-    function updateProgress(p, t) { progressBar.style.width=p+"%"; document.getElementById('progressPercent').innerText=p+"%"; }
+    function addLog(m, t) { logArea.innerHTML += `<div class="log-item log-${t}"><span class="log-icon">${getIcon(t)}</span><span>${m}</span></div>`; logArea.scrollTop=logArea.scrollHeight; }
+    function addLogHTML(name, url, size, type, detailMsg) { 
+        const div = document.createElement('div'); div.className = 'log-item log-' + type; 
+        const content = url && url !== '#' ? `<a href="${url}" target="_blank">${name}</a>` : name; 
+        div.innerHTML = `<span class="log-icon">${getIcon(type)}</span> <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${content} <span style="font-size:0.8em; opacity:0.8">(${detailMsg})</span></span> <span class="log-size">${size}</span>`; 
+        logArea.appendChild(div); logArea.scrollTop = logArea.scrollHeight; 
+    }
+    function getIcon(type) { if(type === 'success') return '✅'; if(type === 'error') return '❌'; if(type === 'skip') return '⏩'; if(type === 'info') return 'ℹ️'; if(type === 'warning') return '⚠️'; return '•'; }
+    function clearLog() { logArea.innerHTML = ''; }
+    function updateProgress(p, t) { progressBar.style.width=p+"%"; document.getElementById('progressPercent').innerText=p+"%"; document.getElementById('progressText').innerText=t; }
     function startTimer() { const s = Date.now(); timerInterval = setInterval(() => { const d = Math.floor((Date.now()-s)/1000); timerDisplay.innerText = new Date(d*1000).toISOString().substr(11,8); }, 1000); }
     function stopTimer() { clearInterval(timerInterval); }
+    function launchConfetti() { if (typeof confetti !== 'undefined') { var d = 3000; var e = Date.now() + d; var i = setInterval(function() { if (Date.now() > e) return clearInterval(i); confetti({ particleCount: 50, spread: 360, startVelocity: 30, origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); } }
+    function formatBytes(b) { if (bytes === 0) return '0 Bytes'; const i = Math.floor(Math.log(b) / Math.log(1024)); return parseFloat((b / Math.pow(1024, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB', 'TB'][i]; }
+    function parseBytesToNum(sizeStr) { if (!sizeStr) return 0; const units = { 'Bytes': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3, 'TB': 1024**4 }; const parts = sizeStr.split(' '); return parseFloat(parts[0]) * (units[parts[1]] || 1); }
     
+    function showFinalReport(success, fail, totalFiles, totalBytes, links) {
+        let linksHtml = "";
+        if (links.length > 0) {
+            linksHtml += `<div style="margin-top:15px; border-top:1px solid #333; padding-top:10px; max-height:100px; overflow-y:auto;">`;
+            links.forEach(link => { linksHtml += `<div style="margin-bottom:5px;"><a href="${link.url}" target="_blank" style="color:#00d2ff; text-decoration:none;">🔗 ${link.name}</a></div>`; });
+            linksHtml += `</div>`;
+        }
+        Swal.fire({
+            title: '🎉 Selesai',
+            html: `
+                <table class="swal-table">
+                    <tr><td>Link Sumber</td><td>${success + fail}</td></tr>
+                    <tr><td>Total Item</td><td>${totalFiles}</td></tr>
+                    <tr><td>Total Ukuran</td><td>${totalBytes} Bytes (Est)</td></tr>
+                    <tr><td>Durasi</td><td>${timerDisplay.textContent}</td></tr>
+                </table>${linksHtml}`,
+            background: '#111116', color: '#fff', confirmButtonText: 'Tutup'
+        });
+    }
+
     // UI Toggles
     function setMode(m) { 
         document.getElementById('advancedSection').style.display = m==='simple'?'none':'block'; 
@@ -535,6 +827,8 @@
         document.getElementById('modeHighlighter').style.transform = m==='simple'?'translateX(0)':'translateX(100%)';
     }
     function toggleRenameInput() { document.getElementById('renameInputContainer').style.display = document.getElementById('duplicateMode').value.startsWith('rename')?'block':'none'; }
+    
+    // Add Schedule
     document.getElementById('addScheduleBtn').addEventListener('click', async () => {
        const res = await sendRequest({ action: 'add_schedule_item', pin: accessPinInput.value, label: document.getElementById('scheduleLabel').value, config: { urls: folderUrlsInput.value.split('\n'), destUrl: destUrlInput.value, maxBackups: 30 } });
        if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');
