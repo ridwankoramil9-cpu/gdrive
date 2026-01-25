@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-Drive Ultimate v2.2</title>
+    <title>G-Drive Ultimate v2.3</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.0/tsparticles.bundle.min.js"></script>
@@ -378,20 +378,31 @@
                     </div>
                     <div class="picker-container">`;
 
-                if (res.folders.length === 0) {
+                if (res.items.length === 0) {
                     html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
                 } else {
-                    res.folders.forEach(f => {
+                    res.items.forEach(f => {
+                        // Tentukan Icon & Navigasi berdasarkan Tipe
+                        let icon = f.type === 'folder' ? '📁' : '📄';
+                        let sizeInfo = f.type === 'file' ? `<span style="font-size:0.7em; color:#888; margin-left:5px;">(${f.size})</span>` : '';
+                        
+                        // Navigasi hanya jalan kalau tipe = folder
+                        let navAction = f.type === 'folder' ? `onclick="navRemote('${f.id}')"` : '';
+                        let cursorStyle = f.type === 'folder' ? 'cursor:pointer;' : 'cursor:default;';
+                        let textColor = f.type === 'folder' ? '#fff' : '#ccc';
+
                         html += `
                         <div class="picker-item">
-                            <input type="checkbox" class="picker-checkbox" value="${f.id}" data-name="${f.name}" onchange="toggleRemoteSelect(this)">
-                            <span style="flex:1; margin-left:10px;" onclick="navRemote('${f.id}')">📁 ${f.name}</span>
+                            <input type="checkbox" class="picker-checkbox" value="${f.id}" data-name="${f.name}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
+                            <span style="flex:1; margin-left:10px; ${cursorStyle} color:${textColor};" ${navAction}>
+                                ${icon} ${f.name} ${sizeInfo}
+                            </span>
                         </div>`;
                     });
                 }
                 html += `</div>
                 <div style="margin-top:15px; display:flex; gap:10px;">
-                    <button style="background:#2ed573; padding:10px; font-size:0.9rem;" onclick="confirmRemoteSelection()">✅ Tambahkan Folder Terpilih</button>
+                    <button style="background:#2ed573; padding:10px; font-size:0.9rem;" onclick="confirmRemoteSelection()">✅ Tambahkan (${selectedRemoteFolders.length}) Item Terpilih</button>
                 </div>`;
                 container.innerHTML = html;
             } else {
@@ -403,25 +414,44 @@
     }
 
     window.navRemote = (id) => { loadRemoteContent(id); };
+    
     window.toggleRemoteSelect = (cb) => {
         const id = cb.value;
         const name = cb.getAttribute('data-name');
+        const type = cb.getAttribute('data-type');
+        
         if (cb.checked) {
-            selectedRemoteFolders.push({ id, name });
+            selectedRemoteFolders.push({ id, name, type });
         } else {
             selectedRemoteFolders = selectedRemoteFolders.filter(item => item.id !== id);
         }
+        
+        // Update Button Text
+        const btn = document.querySelector('#remotePickerContent button');
+        if(btn) btn.innerText = `✅ Tambahkan (${selectedRemoteFolders.length}) Item Terpilih`;
     };
+
     window.confirmRemoteSelection = () => {
         if (selectedRemoteFolders.length === 0) {
-            Swal.showValidationMessage('Pilih minimal satu folder!');
+            Swal.showValidationMessage('Pilih minimal satu item!');
             return;
         }
-        let newLinks = selectedRemoteFolders.map(f => `https://drive.google.com/drive/folders/${f.id}`).join('\n');
+        
+        // Generate Links based on Type
+        let newLinks = selectedRemoteFolders.map(f => {
+            if (f.type === 'folder') {
+                return `https://drive.google.com/drive/folders/${f.id}`;
+            } else {
+                // Link File Standar
+                return `https://drive.google.com/file/d/${f.id}/view`;
+            }
+        }).join('\n');
+        
         const currentVal = folderUrlsInput.value;
-        folderUrlsInput.value = currentVal + '\n\n' + newLinks;
+        folderUrlsInput.value = currentVal + (currentVal ? '\n' : '') + newLinks;
+        
         Swal.close();
-        Swal.fire({ icon: 'success', title: 'Berhasil', text: `${selectedRemoteFolders.length} folder ditambahkan ke antrian!` });
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: `${selectedRemoteFolders.length} item ditambahkan ke antrian!` });
     };
 
     // --- STANDARD PICKER (DESTINATION) ---
