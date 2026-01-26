@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 8.7 (Fix: Race Condition Prevention - Concurrency=1)
+  VERSION: 8.8 (Fix: Consistent Deep Folder Browsing for Local & Remote)
   ============================================================================
 -->
 <html lang="id">
@@ -559,11 +559,28 @@
         try {
             const res = await sendRequest({ action: 'browse_folders', parentId: parentId, pin: pin });
             if(res.status === 'success') {
-                let html = `<div class="picker-header"><div>${res.currentName}</div>${res.parentId?`<div onclick="loadLocalPicker('${res.parentId}','${pin}')" style="cursor:pointer">⬅ Back</div>`:''}</div><div class="picker-container">`;
-                res.folders.forEach(f => {
-                    html += `<div class="picker-item" onclick="selectLocalDest('${f.id}', '${f.name}')" ondblclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
-                });
-                html += `</div>`;
+                let html = `
+                    <div class="picker-header">
+                        <div style="font-size:0.9rem; font-weight:bold; color:#2ed573;">${res.currentName}</div>
+                        ${res.parentId ? `<div onclick="loadLocalPicker('${res.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
+                    </div>
+                    <div class="picker-container" style="max-height:200px;">`;
+                
+                if (res.folders.length === 0) {
+                    html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
+                } else {
+                    res.folders.forEach(f => {
+                        // FIX: CLICK = NAVIGATE DEEPER
+                        html += `
+                        <div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">
+                            📁 ${f.name}
+                        </div>`;
+                    });
+                }
+                html += `</div>
+                <div style="margin-top:10px;">
+                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectLocalDest('${res.currentId}', '${res.currentName}')">🎯 Pilih Folder Ini ("${res.currentName}")</button>
+                </div>`;
                 container.innerHTML = html;
             } else container.innerText = res.message;
         } catch(e) { container.innerText = e.message; }
