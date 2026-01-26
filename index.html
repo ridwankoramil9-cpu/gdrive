@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 8.8 (Fix: Consistent Deep Folder Browsing for Local & Remote)
+  VERSION: 8.9 (Feature: Save & Load Any Link in Source)
   ============================================================================
 -->
 <html lang="id">
@@ -79,24 +79,15 @@
         }
         .btn-clear:hover { background: rgba(255, 71, 87, 0.4) !important; color: white !important; }
 
-        .btn-save-remote {
+        .btn-action-small {
             width: auto !important; padding: 4px 10px !important; font-size: 0.75rem !important;
-            background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.5) !important;
-            color: #3498db !important; margin: 0 !important; border-radius: 6px !important; cursor: pointer;
-            display: none; /* Hidden by default */
+            margin: 0 !important; border-radius: 6px !important; cursor: pointer;
         }
-        .btn-save-remote:hover { background: rgba(52, 152, 219, 0.4) !important; color: white !important; }
-
-        /* REMOTE DETECTED BADGE */
-        .remote-badge {
-            display: none; width: 100%; padding: 10px; box-sizing: border-box;
-            background: rgba(46, 213, 115, 0.2); border: 1px solid #2ed573; color: #2ed573;
-            border-radius: 8px; margin-bottom: 10px; cursor: pointer; text-align: center;
-            font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
-            animation: pulse 2s infinite;
-        }
-        .remote-badge:hover { background: rgba(46, 213, 115, 0.4); }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
+        .btn-saved { background: rgba(255, 159, 67, 0.2) !important; border: 1px solid rgba(255, 159, 67, 0.5) !important; color: #ff9f43 !important; }
+        .btn-saved:hover { background: rgba(255, 159, 67, 0.4) !important; color: white !important; }
+        
+        .btn-save-link { background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.5) !important; color: #3498db !important; }
+        .btn-save-link:hover { background: rgba(52, 152, 219, 0.4) !important; color: white !important; }
 
         textarea, input[type="text"], input[type="number"], input[type="email"], input[type="password"] {
             width: 100%; padding: 12px 15px; background: var(--input-bg);
@@ -234,13 +225,13 @@
         <div class="header-row">
             <label for="folderUrls">Daftar Link Sumber</label>
             <div class="header-actions">
-                <!-- NEW SAVE BUTTON -->
-                <button id="saveRemoteBtn" class="btn-save-remote">💾 Simpan Akun</button>
+                <button id="openSavedBtn" class="btn-action-small btn-saved">📂 Saved</button>
+                <button id="saveLinkBtn" class="btn-action-small btn-save-link">💾 Save</button>
                 <button id="clearInputBtn" class="btn-clear">Clear</button>
             </div>
         </div>
         
-        <!-- NEW: SMART BUTTON -->
+        <!-- DETECTED BADGE -->
         <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemotePicker()">
             📡 Server Remote Terdeteksi! Klik untuk Jelajah
         </div>
@@ -341,7 +332,8 @@
     const bgToggle = document.getElementById('bgToggle'); 
     const folderUrlsInput = document.getElementById('folderUrls');
     const remoteDetectedPanel = document.getElementById('remoteDetectedPanel');
-    const saveRemoteBtn = document.getElementById('saveRemoteBtn'); // New Button
+    const saveLinkBtn = document.getElementById('saveLinkBtn'); // New Button
+    const openSavedBtn = document.getElementById('openSavedBtn'); // New Button
     const destUrlInput = document.getElementById('destUrl');
     const accessPinInput = document.getElementById('accessPin');
     const progressWrapper = document.getElementById('progressWrapper');
@@ -356,8 +348,6 @@
     let isStopRequested = false;
     let timerInterval;
     let activeSchedules = []; 
-    
-    // VARIABEL BARU UNTUK REMOTE DESTINATION
     let selectedRemoteDestUrl = null;
 
     // --- SMART DETECTION LOGIC ---
@@ -370,24 +360,27 @@
             detectedRemoteUrl = match[0];
             remoteDetectedPanel.style.display = 'block';
             remoteDetectedPanel.innerHTML = `📡 Server Remote Terdeteksi! Klik untuk Jelajah Akun B`;
-            saveRemoteBtn.style.display = 'inline-block'; // Tampilkan Tombol Simpan
         } else {
             detectedRemoteUrl = null;
             remoteDetectedPanel.style.display = 'none';
-            saveRemoteBtn.style.display = 'none';
         }
     });
 
-    // --- SAVE REMOTE ACCOUNT LOGIC ---
-    saveRemoteBtn.addEventListener('click', async () => {
-        if (!detectedRemoteUrl) return;
+    // --- SAVE ANY LINK / ACCOUNT LOGIC ---
+    saveLinkBtn.addEventListener('click', async () => {
+        const raw = folderUrlsInput.value.trim();
         const pin = accessPinInput.value;
         if (!pin) { Swal.fire('Error', 'Masukkan PIN Akses dulu!', 'error'); return; }
+        if (!raw) { Swal.fire('Info', 'Paste link dulu di kotak input!', 'info'); return; }
 
+        // Ambil baris pertama jika ada banyak
+        const firstLine = raw.split('\n')[0].trim();
+        
         const { value: label } = await Swal.fire({
-            title: 'Simpan Akun Remote',
+            title: 'Simpan Link/Akun',
             input: 'text',
-            inputLabel: 'Beri nama untuk akun ini (Contoh: Kantor, Backup)',
+            inputLabel: 'Beri nama untuk link ini',
+            inputValue: 'Link ' + new Date().toLocaleTimeString(),
             showCancelButton: true,
             background: '#1a1a2e', color: '#fff',
             inputValidator: (value) => { if (!value) return 'Nama label wajib diisi!' }
@@ -400,17 +393,79 @@
                     action: 'save_remote_account', 
                     pin: pin, 
                     label: label, 
-                    targetUrl: detectedRemoteUrl 
+                    targetUrl: firstLine 
                 });
                 
                 if(res.status === 'success') {
-                    Swal.fire('Berhasil!', `Akun ${res.email} tersimpan sebagai "${label}"`, 'success');
+                    let msg = res.type === 'server' ? `Akun Remote (${res.email}) Tersimpan!` : `Link Folder Tersimpan!`;
+                    Swal.fire('Berhasil!', msg, 'success');
                 } else {
                     Swal.fire('Gagal', res.message, 'error');
                 }
             } catch(e) { Swal.fire('Error', e.message, 'error'); }
         }
     });
+
+    // --- OPEN SAVED ITEMS (SOURCE PICKER) ---
+    openSavedBtn.addEventListener('click', async () => {
+        const pin = accessPinInput.value;
+        if(!pin) { Swal.fire('Error', 'Masukkan PIN Akses!', 'error'); return; }
+
+        Swal.fire({
+            title: '📂 Item Tersimpan',
+            html: `<div id="savedItemsContainer" style="min-height:200px;">Loading...</div>`,
+            showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
+            didOpen: () => { loadSavedItemsForSource(pin); }
+        });
+    });
+
+    async function loadSavedItemsForSource(pin) {
+        const container = document.getElementById('savedItemsContainer');
+        try {
+            const res = await sendRequest({ action: 'get_remote_accounts', pin: pin });
+            if(res.status === 'success') {
+                if (res.list.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">Belum ada item tersimpan.</div>';
+                    return;
+                }
+                let html = `<div class="picker-container">`;
+                res.list.forEach(item => {
+                    let icon = item.type === 'server' ? '📡' : '🔗';
+                    let typeText = item.type === 'server' ? 'Server Akun' : 'Link Folder';
+                    let actionText = item.type === 'server' ? 'Browse' : 'Insert';
+                    let actionColor = item.type === 'server' ? '#e1b12c' : '#2ed573';
+                    
+                    html += `
+                    <div class="picker-item" onclick="pickSavedItem('${item.url}', '${item.type}', '${item.label}')">
+                        <span style="font-size:1.2em;">${icon}</span> 
+                        <div style="flex:1; margin-left:10px;">
+                            <div style="font-weight:bold; color:#fff;">${item.label}</div>
+                            <div style="font-size:0.75em; color:#888;">${typeText} | ${item.email}</div>
+                        </div>
+                        <div style="color:${actionColor}; font-weight:bold; font-size:0.8rem;">${actionText} ➡</div>
+                    </div>`;
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+            } else container.innerText = res.message;
+        } catch(e) { container.innerText = e.message; }
+    }
+
+    window.pickSavedItem = (url, type, label) => {
+        if (type === 'server') {
+            // Jika Server, Buka Browser Remote untuk memilih file
+            detectedRemoteUrl = url; // Set global detected URL
+            Swal.close();
+            openRemotePicker(); // Panggil fungsi existing
+        } else {
+            // Jika Link Biasa, Masukkan ke Textarea
+            const currentVal = folderUrlsInput.value;
+            folderUrlsInput.value = currentVal + (currentVal ? '\n' : '') + url;
+            Swal.close();
+            const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, background:'#2ed573', color:'#fff'});
+            Toast.fire({ icon: 'success', title: 'Link ditambahkan!' });
+        }
+    };
 
     // --- REMOTE PICKER LOGIC (SOURCE) ---
     window.openRemotePicker = function() {
@@ -526,7 +581,6 @@
         
         Swal.fire({
             title: 'Pilih Folder Tujuan',
-            // TABS UI
             html: `
                 <div class="picker-tabs">
                     <div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">📁 Local Drive</div>
@@ -553,7 +607,7 @@
         }
     };
 
-    // LOAD LOCAL (Sama seperti sebelumnya)
+    // LOAD LOCAL
     async function loadLocalPicker(parentId, pin) {
         const container = document.getElementById('destPickerContent');
         try {
@@ -570,11 +624,7 @@
                     html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
                 } else {
                     res.folders.forEach(f => {
-                        // FIX: CLICK = NAVIGATE DEEPER
-                        html += `
-                        <div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">
-                            📁 ${f.name}
-                        </div>`;
+                        html += `<div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
                     });
                 }
                 html += `</div>
@@ -586,7 +636,7 @@
         } catch(e) { container.innerText = e.message; }
     }
 
-    // LOAD REMOTE SAVED ACCOUNTS
+    // LOAD REMOTE SAVED ACCOUNTS (DESTINATION)
     async function loadSavedRemotes(pin) {
         const container = document.getElementById('destPickerContent');
         try {
@@ -598,15 +648,18 @@
                 }
                 let html = `<div class="picker-header"><div>Daftar Akun Tersimpan</div></div><div class="picker-container">`;
                 res.list.forEach(item => {
-                    html += `
-                    <div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">
-                        <span style="font-size:1.2em;">☁️</span> 
-                        <div style="flex:1;">
-                            <div style="font-weight:bold; color:#fff;">${item.label}</div>
-                            <div style="font-size:0.8em; color:#888;">${item.email}</div>
-                        </div>
-                        <div style="color:#00d2ff;">Browse ➡</div>
-                    </div>`;
+                    // Hanya tampilkan yang tipe SERVER untuk Destinasi
+                    if (item.type === 'server') {
+                        html += `
+                        <div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">
+                            <span style="font-size:1.2em;">☁️</span> 
+                            <div style="flex:1;">
+                                <div style="font-weight:bold; color:#fff;">${item.label}</div>
+                                <div style="font-size:0.8em; color:#888;">${item.email}</div>
+                            </div>
+                            <div style="color:#00d2ff;">Browse ➡</div>
+                        </div>`;
+                    }
                 });
                 html += `</div>`;
                 container.innerHTML = html;
@@ -622,7 +675,6 @@
     };
 
     // --- NEW: REMOTE DESTINATION BROWSER (UPDATED UX) ---
-    // Klik Folder = Masuk (Browse). Pilih = Tombol Terpisah.
     
     window.browseRemoteDest = (url, label) => {
         const container = document.getElementById('destPickerContent');
@@ -655,9 +707,7 @@
                     html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
                 } else {
                     res.items.forEach(f => {
-                        // Hanya tampilkan Folder di sini untuk destinasi
                         if (f.type === 'folder') {
-                            // UX FIX: ONCLICK = NAVIGATE DEEPER
                             html += `
                             <div class="picker-item" onclick="loadRemoteDestContent('${url}', '${f.id}', '${label}')">
                                 📁 ${f.name}
