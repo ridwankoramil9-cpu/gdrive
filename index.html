@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.0 (Fix: Smart Detection & Remote Browse Button)
+  VERSION: 9.1 (Fix: Paste Event & Robust Regex Detection)
   ============================================================================
 -->
 <html lang="id">
@@ -365,7 +365,8 @@
     const detectRemote = () => {
         const val = folderUrlsInput.value;
         // Regex yang lebih toleran: menangkap 'script.google.com.../exec' di mana saja
-        const scriptRegex = /(https:\/\/script\.google\.com\/macros\/s\/[^/\s]+\/exec)/;
+        // Gunakan \s* untuk mengabaikan spasi di sekitar link
+        const scriptRegex = /https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i;
         const match = val.match(scriptRegex);
 
         if (match) {
@@ -384,8 +385,11 @@
 
     // Trigger detection on multiple events
     folderUrlsInput.addEventListener('input', detectRemote);
-    folderUrlsInput.addEventListener('paste', () => setTimeout(detectRemote, 100)); // Delay agar nilai masuk dulu
     folderUrlsInput.addEventListener('change', detectRemote);
+    // Tambahkan event 'paste' dengan delay kecil agar value masuk dulu
+    folderUrlsInput.addEventListener('paste', () => {
+        setTimeout(detectRemote, 100);
+    });
 
     // --- SAVE ANY LINK / ACCOUNT LOGIC ---
     saveLinkBtn.addEventListener('click', async () => {
@@ -474,10 +478,11 @@
 
     window.pickSavedItem = (url, type, label) => {
         if (type === 'server') {
-            // Jika Server, Buka Browser Remote untuk memilih file
-            detectedRemoteUrl = url; // Set global detected URL
+            // Jika Server, Masukkan ke input DAN trigger deteksi
+            folderUrlsInput.value = url;
+            detectRemote(); // FORCE DETECT
             Swal.close();
-            openRemotePicker(); // Panggil fungsi existing
+            openRemotePicker(); // Langsung buka picker
         } else {
             // Jika Link Biasa, Masukkan ke Textarea
             const currentVal = folderUrlsInput.value;
