@@ -2,8 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 8.0 (Remote Destination Browser & Creator)
-  NOTE: FULL FEATURES PRESERVED. NO CODE SIMPLIFICATION.
+  VERSION: 8.1 (Deep Folder Navigation Update)
   ============================================================================
 -->
 <html lang="id">
@@ -641,15 +640,17 @@
                         // Hanya tampilkan Folder di sini untuk destinasi
                         if (f.type === 'folder') {
                             html += `
-                            <div class="picker-item" onclick="selectThisRemoteFolder('${url}', '${f.id}', '${f.name}', '${label}')" ondblclick="loadRemoteDestContent('${url}', '${f.id}', '${label}')">
-                                📁 ${f.name}
+                            <div class="picker-item" onclick="loadRemoteDestContent('${url}', '${f.id}', '${label}')">
+                                📁 ${f.name} (Klik Masuk)
                             </div>`;
                         }
                     });
                 }
+                
+                // TOMBOL DIBAWAH DAFTAR FOLDER: MEMILIH FOLDER SAAT INI (PARENT ID)
                 html += `</div>
                 <div style="margin-top:10px;">
-                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectThisRemoteFolder('${url}', '${parentId}', '${res.currentName}', '${label}')">🎯 Pilih Folder Ini ("${res.currentName}")</button>
+                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectThisRemoteFolder('${url}', '${parentId}', '${res.currentName}', '${label}')">🎯 Pilih Folder Yang Terbuka Ini</button>
                 </div>`;
                 container.innerHTML = html;
             } else {
@@ -1082,8 +1083,7 @@
     // Add Schedule
     document.getElementById('addScheduleBtn').addEventListener('click', async () => {
        const res = await sendRequest({ action: 'add_schedule_item', pin: accessPinInput.value, label: document.getElementById('scheduleLabel').value, config: { urls: folderUrlsInput.value.split('\n'), destUrl: destUrlInput.value, maxBackups: 30 } });
-       if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');
-    });
+       if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');\n    });
 
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.2 }, size: { value: 3 }, move: { enable: true, speed: 1 } } });
 </script>
