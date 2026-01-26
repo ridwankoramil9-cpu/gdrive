@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.3 (Fix: Legacy Saved Account Visibility)
+  VERSION: 9.4 (Feature: Login Gatekeeper Overlay)
   ============================================================================
 -->
 <html lang="id">
@@ -29,14 +29,40 @@
         }
         #tsparticles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
         
+        /* --- LOGIN GATEKEEPER STYLES --- */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 12, 41, 0.95); /* Hampir solid gelap */
+            z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            transition: opacity 0.6s ease-in-out, visibility 0.6s;
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.2); width: 100%; max-width: 350px;
+            animation: floatIn 0.8s ease-out;
+        }
+        @keyframes floatIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        .login-title {
+            font-size: 1.5rem; margin-bottom: 5px; font-weight: 700;
+            background: linear-gradient(to right, #00d2ff, #ff00de); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        /* --- MAIN CONTAINER STYLES --- */
         .container {
             position: relative; z-index: 1; background: var(--glass-bg);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             padding: 2rem; border-radius: 20px; border: 1px solid var(--glass-border);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 600px;
             animation: fadeIn 0.8s ease-out;
+            opacity: 0; /* Hidden initially until login */
+            transition: opacity 1s;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .container.visible { opacity: 1; }
 
         h1 {
             font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center;
@@ -214,7 +240,20 @@
 
 <div id="tsparticles"></div>
 
-<div class="container">
+<!-- LOGIN GATEKEEPER OVERLAY -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <div class="login-title">🔐 G-Drive Pro</div>
+        <p style="color:#aaa; font-size:0.9rem; margin-bottom:20px;">Masukkan PIN Akses Anda</p>
+        
+        <input type="password" id="gatePinInput" placeholder="●●●●●" 
+               style="text-align:center; font-size:1.5rem; letter-spacing:5px; margin-bottom:20px; background:rgba(0,0,0,0.3); border-color:#00d2ff;">
+        
+        <button onclick="unlockSite()" style="background: linear-gradient(45deg, #00d2ff, #3a7bd5); width:100%;">BUKA DASHBOARD</button>
+    </div>
+</div>
+
+<div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
     <p class="subtitle">Smart Filter & Secure Cloning</p>
     
@@ -228,7 +267,7 @@
     
     <div class="form-group">
         <label for="accessPin">PIN Akses (Wajib)</label>
-        <input type="password" id="accessPin" placeholder="Masukkan PIN Rahasia Anda" value="12345">
+        <input type="password" id="accessPin" placeholder="Masukkan PIN Rahasia Anda" value="">
     </div>
     
     <!-- SOURCE AREA WITH SMART DETECTION -->
@@ -360,6 +399,41 @@
     let timerInterval;
     let activeSchedules = []; 
     let selectedRemoteDestUrl = null;
+
+    // --- GATEKEEPER LOGIC ---
+    // Support tombol Enter di input PIN
+    document.getElementById('gatePinInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') unlockSite();
+    });
+
+    function unlockSite() {
+        const pin = document.getElementById('gatePinInput').value;
+        if (!pin) {
+            Swal.fire({
+                icon: 'error', title: 'PIN Kosong', 
+                text: 'Silakan masukkan PIN akses.', 
+                background: '#1a1a2e', color: '#fff',
+                toast: true, position: 'top', timer: 2000, showConfirmButton: false
+            });
+            return;
+        }
+        
+        // Transfer PIN ke form utama
+        accessPinInput.value = pin;
+        
+        // Animasi Buka
+        const overlay = document.getElementById('loginOverlay');
+        const main = document.getElementById('mainContainer');
+        
+        overlay.style.opacity = '0';
+        overlay.style.visibility = 'hidden';
+        
+        // Tampilkan Dashboard
+        setTimeout(() => {
+            overlay.style.display = 'none'; // Hapus dari layout
+            main.classList.add('visible');
+        }, 600);
+    }
 
     // --- SMART DETECTION LOGIC (UPDATED: MORE ROBUST) ---
     const detectRemote = () => {
