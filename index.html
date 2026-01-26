@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 7.0 (Remote Account Manager & Smart Destination Picker)
+  VERSION: 8.0 (Remote Destination Browser & Creator)
   NOTE: FULL FEATURES PRESERVED. NO CODE SIMPLIFICATION.
   ============================================================================
 -->
@@ -583,12 +583,13 @@
                 let html = `<div class="picker-header"><div>Daftar Akun Tersimpan</div></div><div class="picker-container">`;
                 res.list.forEach(item => {
                     html += `
-                    <div class="picker-item" onclick="selectRemoteDest('${item.url}', '${item.label}')">
+                    <div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">
                         <span style="font-size:1.2em;">☁️</span> 
                         <div style="flex:1;">
                             <div style="font-weight:bold; color:#fff;">${item.label}</div>
                             <div style="font-size:0.8em; color:#888;">${item.email}</div>
                         </div>
+                        <div style="color:#00d2ff;">Browse ➡</div>
                     </div>`;
                 });
                 html += `</div>`;
@@ -604,33 +605,121 @@
         destUrlInput.style.borderColor = '#2ed573';
     };
 
-    // HANDSHAKE SAAT PILIH REMOTE
-    window.selectRemoteDest = async (targetUrl, label) => {
+    // --- NEW: REMOTE DESTINATION BROWSER ---
+    window.browseRemoteDest = (url, label) => {
+        // Tampilkan loading lalu panggil content remote
         const container = document.getElementById('destPickerContent');
-        container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div style="margin-top:10px;">Menghubungi Server ${label}...</div></div>`;
+        container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div>Menghubungi ${label}...</div></div>`;
+        loadRemoteDestContent(url, 'root', label);
+    };
+
+    async function loadRemoteDestContent(url, parentId, label) {
+        const container = document.getElementById('destPickerContent');
+        if(!container) return;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: 'browse_remote', parentId: parentId })
+            });
+            const res = await response.json();
+
+            if (res.status === 'success') {
+                let html = `
+                    <div class="picker-header" style="flex-wrap:wrap;">
+                        <div style="width:100%; margin-bottom:5px;">${label} > <span style="color:#00d2ff">${res.currentName}</span></div>
+                        ${res.parentId ? `<div style="cursor:pointer; color:#f4b400; font-size:0.85rem;" onclick="loadRemoteDestContent('${url}', '${res.parentId}', '${label}')">⬅ Kembali</div>` : '<div style="cursor:pointer; color:#f4b400; font-size:0.85rem;" onclick="switchDestTab(\'remote\')">⬅ Daftar Akun</div>'}
+                        <div style="margin-left:auto; cursor:pointer; color:#2ed573; font-size:0.85rem;" onclick="createRemoteFolder('${url}', '${parentId}', '${label}')">➕ New Folder</div>
+                    </div>
+                    <div class="picker-container" style="max-height:200px;">`;
+
+                if (res.items.length === 0) {
+                    html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
+                } else {
+                    res.items.forEach(f => {
+                        // Hanya tampilkan Folder di sini untuk destinasi
+                        if (f.type === 'folder') {
+                            html += `
+                            <div class="picker-item" onclick="selectThisRemoteFolder('${url}', '${f.id}', '${f.name}', '${label}')" ondblclick="loadRemoteDestContent('${url}', '${f.id}', '${label}')">
+                                📁 ${f.name}
+                            </div>`;
+                        }
+                    });
+                }
+                html += `</div>
+                <div style="margin-top:10px;">
+                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectThisRemoteFolder('${url}', '${parentId}', '${res.currentName}', '${label}')">🎯 Pilih Folder Ini ("${res.currentName}")</button>
+                </div>`;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<div style="color:red;">Error: ${res.message}</div>`;
+            }
+        } catch (e) {
+            container.innerHTML = `<div style="color:red;">Koneksi Error: ${e.message}</div>`;
+        }
+    }
+    
+    window.createRemoteFolder = async (url, parentId, label) => {
+        const { value: folderName } = await Swal.fire({
+            title: 'Buat Folder Baru di Remote',
+            input: 'text',
+            inputLabel: 'Nama Folder',
+            showCancelButton: true,
+            background: '#1a1a2e', color: '#fff'
+        });
+
+        if (folderName) {
+            const container = document.getElementById('destPickerContent');
+            container.innerHTML = '<div style="text-align:center; padding:20px;">Membuat Folder...</div>';
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'create_folder', parentId: parentId, name: folderName })
+                });
+                const res = await response.json();
+                if(res.status === 'success') {
+                    // Reload folder list
+                    loadRemoteDestContent(url, parentId, label);
+                } else {
+                    Swal.fire('Gagal', res.message, 'error');
+                    loadRemoteDestContent(url, parentId, label);
+                }
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+    };
+
+    window.selectThisRemoteFolder = async (targetUrl, folderId, folderName, label) => {
+        const container = document.getElementById('destPickerContent');
+        container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div>Menyiapkan Izin Folder...</div></div>`;
         
         try {
             const pin = accessPinInput.value;
+            // Kirim targetId ke Server A, Server A akan minta Server B prepare folder ID tsb
             const res = await sendRequest({ 
                 action: 'connect_remote_dest', 
                 pin: pin, 
-                targetUrl: targetUrl 
+                targetUrl: targetUrl,
+                targetId: folderId // NEW PARAM
             });
             
             if (res.status === 'success') {
-                destUrlInput.value = res.folderUrl; // Tampilkan URL Folder di Input
-                selectedRemoteDestUrl = targetUrl;  // Simpan URL Remote untuk Absorb Trigger
+                destUrlInput.value = res.folderUrl; 
+                selectedRemoteDestUrl = targetUrl; 
                 
                 Swal.close();
                 Swal.fire({
                     icon: 'success', 
-                    title: 'Terhubung!', 
-                    text: `Siap mengirim ke ${label} (${res.serverEmail}). Folder Inbox disiapkan.`,
+                    title: 'Folder Siap!', 
+                    text: `Tujuan diset ke: ${res.folderName} (di Akun ${label})`,
                     timer: 2000
                 });
-                destUrlInput.style.borderColor = '#00d2ff'; // Warna biru untuk Remote
+                destUrlInput.style.borderColor = '#00d2ff'; 
             } else {
                 Swal.fire('Gagal Handshake', res.message, 'error');
+                // Kembali ke browser jika gagal
+                loadRemoteDestContent(targetUrl, folderId, label);
             }
         } catch (e) { Swal.fire('Error', e.message, 'error'); }
     };
