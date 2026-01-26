@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.2 (Fix: Auto-Detect Trigger on Insert Saved Link)
+  VERSION: 9.3 (Fix: Legacy Saved Account Visibility)
   ============================================================================
 -->
 <html lang="id">
@@ -455,13 +455,16 @@
                 }
                 let html = `<div class="picker-container">`;
                 res.list.forEach(item => {
-                    let icon = item.type === 'server' ? '📡' : '🔗';
-                    let typeText = item.type === 'server' ? 'Server Akun' : 'Link Folder';
-                    let actionText = item.type === 'server' ? 'Browse' : 'Insert';
-                    let actionColor = item.type === 'server' ? '#e1b12c' : '#2ed573';
+                    // FIX: Deteksi legacy data (tanpa type) sebagai server
+                    let isServer = (item.type === 'server' || !item.type);
+                    
+                    let icon = isServer ? '📡' : '🔗';
+                    let typeText = isServer ? 'Server Akun' : 'Link Folder';
+                    let actionText = isServer ? 'Browse' : 'Insert';
+                    let actionColor = isServer ? '#e1b12c' : '#2ed573';
                     
                     html += `
-                    <div class="picker-item" onclick="pickSavedItem('${item.url}', '${item.type}', '${item.label}')">
+                    <div class="picker-item" onclick="pickSavedItem('${item.url}', '${isServer ? 'server' : 'link'}', '${item.label}')">
                         <span style="font-size:1.2em;">${icon}</span> 
                         <div style="flex:1; margin-left:10px;">
                             <div style="font-weight:bold; color:#fff;">${item.label}</div>
@@ -679,7 +682,8 @@
                 let html = `<div class="picker-header"><div>Daftar Akun Tersimpan</div></div><div class="picker-container">`;
                 res.list.forEach(item => {
                     // Hanya tampilkan yang tipe SERVER untuk Destinasi
-                    if (item.type === 'server') {
+                    // FIX: Tambahkan !item.type untuk support data lama sebelum fitur 'type' ada
+                    if (item.type === 'server' || !item.type) {
                         html += `
                         <div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">
                             <span style="font-size:1.2em;">☁️</span> 
