@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.5 (Fixed: Secure Server-Side Login Verification)
+  VERSION: 9.6 (Fixed: Show Detailed Login Error from Server)
   ============================================================================
 -->
 <html lang="id">
@@ -454,9 +454,10 @@
                     refreshScheduleList();
                 }, 600);
             } else {
+                // TAMPILKAN PESAN ERROR DARI SERVER (Rate Limit / Wrong PIN)
                 Swal.fire({
                     icon: 'error', title: 'Akses Ditolak', 
-                    text: 'PIN yang Anda masukkan salah.', 
+                    text: res.message || 'PIN yang Anda masukkan salah.', 
                     background: '#1a1a2e', color: '#fff'
                 });
                 pinInput.value = "";
