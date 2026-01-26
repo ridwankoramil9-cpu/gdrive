@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.4 (Feature: Login Gatekeeper Overlay)
+  VERSION: 9.5 (Fixed: Secure Server-Side Login Verification)
   ============================================================================
 -->
 <html lang="id">
@@ -249,7 +249,7 @@
         <input type="password" id="gatePinInput" placeholder="●●●●●" 
                style="text-align:center; font-size:1.5rem; letter-spacing:5px; margin-bottom:20px; background:rgba(0,0,0,0.3); border-color:#00d2ff;">
         
-        <button onclick="unlockSite()" style="background: linear-gradient(45deg, #00d2ff, #3a7bd5); width:100%;">BUKA DASHBOARD</button>
+        <button id="gateLoginBtn" onclick="unlockSite()" style="background: linear-gradient(45deg, #00d2ff, #3a7bd5); width:100%;">BUKA DASHBOARD</button>
     </div>
 </div>
 
@@ -400,14 +400,17 @@
     let activeSchedules = []; 
     let selectedRemoteDestUrl = null;
 
-    // --- GATEKEEPER LOGIC ---
+    // --- GATEKEEPER LOGIC (UPDATED WITH SERVER VERIFICATION) ---
     // Support tombol Enter di input PIN
     document.getElementById('gatePinInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') unlockSite();
     });
 
-    function unlockSite() {
-        const pin = document.getElementById('gatePinInput').value;
+    async function unlockSite() {
+        const pinInput = document.getElementById('gatePinInput');
+        const loginBtn = document.getElementById('gateLoginBtn');
+        const pin = pinInput.value;
+
         if (!pin) {
             Swal.fire({
                 icon: 'error', title: 'PIN Kosong', 
@@ -417,22 +420,59 @@
             });
             return;
         }
+
+        // Set Loading UI
+        const originalBtnText = loginBtn.innerText;
+        loginBtn.innerText = "Memverifikasi...";
+        loginBtn.disabled = true;
+        pinInput.disabled = true;
         
-        // Transfer PIN ke form utama
-        accessPinInput.value = pin;
-        
-        // Animasi Buka
-        const overlay = document.getElementById('loginOverlay');
-        const main = document.getElementById('mainContainer');
-        
-        overlay.style.opacity = '0';
-        overlay.style.visibility = 'hidden';
-        
-        // Tampilkan Dashboard
-        setTimeout(() => {
-            overlay.style.display = 'none'; // Hapus dari layout
-            main.classList.add('visible');
-        }, 600);
+        try {
+            // Verifikasi PIN ke Server
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'verify_pin', pin: pin })
+            });
+            const res = await response.json();
+
+            if (res.status === 'success') {
+                // Transfer PIN ke form utama
+                accessPinInput.value = pin;
+                
+                // Animasi Buka
+                const overlay = document.getElementById('loginOverlay');
+                const main = document.getElementById('mainContainer');
+                
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+                
+                // Tampilkan Dashboard
+                setTimeout(() => {
+                    overlay.style.display = 'none'; // Hapus dari layout
+                    main.classList.add('visible');
+                    // Refresh jadwal setelah login berhasil
+                    refreshScheduleList();
+                }, 600);
+            } else {
+                Swal.fire({
+                    icon: 'error', title: 'Akses Ditolak', 
+                    text: 'PIN yang Anda masukkan salah.', 
+                    background: '#1a1a2e', color: '#fff'
+                });
+                pinInput.value = "";
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error', title: 'Error Koneksi', 
+                text: 'Gagal menghubungi server: ' + e.message, 
+                background: '#1a1a2e', color: '#fff'
+            });
+        } finally {
+            loginBtn.innerText = originalBtnText;
+            loginBtn.disabled = false;
+            pinInput.disabled = false;
+            pinInput.focus();
+        }
     }
 
     // --- SMART DETECTION LOGIC (UPDATED: MORE ROBUST) ---
