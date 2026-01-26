@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.6 (Fixed: Show Detailed Login Error from Server)
+  VERSION: 9.7 (Added: Create New Folder Button in Local Picker)
   ============================================================================
 -->
 <html lang="id">
@@ -762,9 +762,10 @@
             const res = await sendRequest({ action: 'browse_folders', parentId: parentId, pin: pin });
             if(res.status === 'success') {
                 let html = `
-                    <div class="picker-header">
-                        <div style="font-size:0.9rem; font-weight:bold; color:#2ed573;">${res.currentName}</div>
+                    <div class="picker-header" style="flex-wrap:wrap;">
+                        <div style="width:100%; margin-bottom:5px; font-size:0.9rem; font-weight:bold; color:#2ed573;">${res.currentName}</div>
                         ${res.parentId ? `<div onclick="loadLocalPicker('${res.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
+                        <div style="margin-left:auto; cursor:pointer; color:#2ed573; font-size:0.85rem;" onclick="createLocalFolder('${res.currentId}', '${pin}')">➕ New Folder</div>
                     </div>
                     <div class="picker-container" style="max-height:200px;">`;
                 
@@ -783,6 +784,31 @@
             } else container.innerText = res.message;
         } catch(e) { container.innerText = e.message; }
     }
+    
+    window.createLocalFolder = async (parentId, pin) => {
+        const { value: folderName } = await Swal.fire({
+            title: 'Buat Folder Baru (Lokal)',
+            input: 'text',
+            inputLabel: 'Nama Folder',
+            showCancelButton: true,
+            background: '#1a1a2e', color: '#fff'
+        });
+
+        if (folderName) {
+            const container = document.getElementById('destPickerContent');
+            container.innerHTML = '<div style="text-align:center; padding:20px;">Membuat Folder...</div>';
+            try {
+                const res = await sendRequest({ action: 'create_folder_tool', parentId: parentId, name: folderName, pin: pin });
+                if(res.status === 'success') {
+                    // Reload current folder list
+                    loadLocalPicker(parentId, pin);
+                } else {
+                    Swal.fire('Gagal', res.message, 'error');
+                    loadLocalPicker(parentId, pin);
+                }
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+    };
 
     // LOAD REMOTE SAVED ACCOUNTS (DESTINATION)
     async function loadSavedRemotes(pin) {
