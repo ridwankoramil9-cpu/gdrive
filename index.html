@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 8.9 (Feature: Save & Load Any Link in Source)
+  VERSION: 9.0 (Fix: Smart Detection & Remote Browse Button)
   ============================================================================
 -->
 <html lang="id">
@@ -88,6 +88,17 @@
         
         .btn-save-link { background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.5) !important; color: #3498db !important; }
         .btn-save-link:hover { background: rgba(52, 152, 219, 0.4) !important; color: white !important; }
+
+        /* REMOTE DETECTED BADGE */
+        .remote-badge {
+            display: none; width: 100%; padding: 10px; box-sizing: border-box;
+            background: rgba(46, 213, 115, 0.2); border: 1px solid #2ed573; color: #2ed573;
+            border-radius: 8px; margin-bottom: 10px; cursor: pointer; text-align: center;
+            font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
+            animation: pulse 2s infinite;
+        }
+        .remote-badge:hover { background: rgba(46, 213, 115, 0.4); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
 
         textarea, input[type="text"], input[type="number"], input[type="email"], input[type="password"] {
             width: 100%; padding: 12px 15px; background: var(--input-bg);
@@ -350,21 +361,31 @@
     let activeSchedules = []; 
     let selectedRemoteDestUrl = null;
 
-    // --- SMART DETECTION LOGIC ---
-    folderUrlsInput.addEventListener('input', function() {
-        const val = this.value;
-        const scriptRegex = /https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/;
+    // --- SMART DETECTION LOGIC (UPDATED: MORE ROBUST) ---
+    const detectRemote = () => {
+        const val = folderUrlsInput.value;
+        // Regex yang lebih toleran: menangkap 'script.google.com.../exec' di mana saja
+        const scriptRegex = /(https:\/\/script\.google\.com\/macros\/s\/[^/\s]+\/exec)/;
         const match = val.match(scriptRegex);
 
         if (match) {
             detectedRemoteUrl = match[0];
             remoteDetectedPanel.style.display = 'block';
             remoteDetectedPanel.innerHTML = `📡 Server Remote Terdeteksi! Klik untuk Jelajah Akun B`;
+            // Add subtle animation reset
+            remoteDetectedPanel.style.animation = 'none';
+            setTimeout(() => remoteDetectedPanel.style.animation = 'pulse 2s infinite', 10);
         } else {
+            // Sembunyikan jika tidak ada link server
             detectedRemoteUrl = null;
             remoteDetectedPanel.style.display = 'none';
         }
-    });
+    };
+
+    // Trigger detection on multiple events
+    folderUrlsInput.addEventListener('input', detectRemote);
+    folderUrlsInput.addEventListener('paste', () => setTimeout(detectRemote, 100)); // Delay agar nilai masuk dulu
+    folderUrlsInput.addEventListener('change', detectRemote);
 
     // --- SAVE ANY LINK / ACCOUNT LOGIC ---
     saveLinkBtn.addEventListener('click', async () => {
