@@ -2,7 +2,8 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 8.1 (Deep Folder Navigation Update)
+  VERSION: 8.5 (Deep Browse Navigation Fix)
+  NOTE: FULL FEATURES PRESERVED.
   ============================================================================
 -->
 <html lang="id">
@@ -604,9 +605,10 @@
         destUrlInput.style.borderColor = '#2ed573';
     };
 
-    // --- NEW: REMOTE DESTINATION BROWSER ---
+    // --- NEW: REMOTE DESTINATION BROWSER (UPDATED UX) ---
+    // Klik Folder = Masuk (Browse). Pilih = Tombol Terpisah.
+    
     window.browseRemoteDest = (url, label) => {
-        // Tampilkan loading lalu panggil content remote
         const container = document.getElementById('destPickerContent');
         container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div>Menghubungi ${label}...</div></div>`;
         loadRemoteDestContent(url, 'root', label);
@@ -639,18 +641,17 @@
                     res.items.forEach(f => {
                         // Hanya tampilkan Folder di sini untuk destinasi
                         if (f.type === 'folder') {
+                            // UX FIX: ONCLICK = NAVIGATE DEEPER
                             html += `
                             <div class="picker-item" onclick="loadRemoteDestContent('${url}', '${f.id}', '${label}')">
-                                📁 ${f.name} (Klik Masuk)
+                                📁 ${f.name}
                             </div>`;
                         }
                     });
                 }
-                
-                // TOMBOL DIBAWAH DAFTAR FOLDER: MEMILIH FOLDER SAAT INI (PARENT ID)
                 html += `</div>
                 <div style="margin-top:10px;">
-                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectThisRemoteFolder('${url}', '${parentId}', '${res.currentName}', '${label}')">🎯 Pilih Folder Yang Terbuka Ini</button>
+                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectThisRemoteFolder('${url}', '${parentId}', '${res.currentName}', '${label}')">🎯 Pilih Folder Ini ("${res.currentName}")</button>
                 </div>`;
                 container.innerHTML = html;
             } else {
