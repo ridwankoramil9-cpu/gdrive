@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 8.5 (Deep Browse Navigation Fix)
+  VERSION: 8.6 (Syntax Error Fix)
   NOTE: FULL FEATURES PRESERVED.
   ============================================================================
 -->
@@ -1084,7 +1084,8 @@
     // Add Schedule
     document.getElementById('addScheduleBtn').addEventListener('click', async () => {
        const res = await sendRequest({ action: 'add_schedule_item', pin: accessPinInput.value, label: document.getElementById('scheduleLabel').value, config: { urls: folderUrlsInput.value.split('\n'), destUrl: destUrlInput.value, maxBackups: 30 } });
-       if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');\n    });
+       if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');
+    });
 
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.2 }, size: { value: 3 }, move: { enable: true, speed: 1 } } });
 </script>
