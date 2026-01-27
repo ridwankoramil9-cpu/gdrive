@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 9.9 (Feature Added: Upload & Tab Navigation)
+  VERSION: 14.0 (Clone, Upload Picker, Remote, & Targeted Search)
   ============================================================================
 -->
 <html lang="id">
@@ -29,913 +29,228 @@
         }
         #tsparticles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
         
-        /* --- LOGIN GATEKEEPER STYLES --- */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 12, 41, 0.95); /* Hampir solid gelap */
-            z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            transition: opacity 0.6s ease-in-out, visibility 0.6s;
-        }
-        .login-box {
-            background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;
-            box-shadow: 0 0 50px rgba(0, 210, 255, 0.2); width: 100%; max-width: 350px;
-            animation: floatIn 0.8s ease-out;
-        }
-        @keyframes floatIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        
-        .login-title {
-            font-size: 1.5rem; margin-bottom: 5px; font-weight: 700;
-            background: linear-gradient(to right, #00d2ff, #ff00de); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        
-        /* --- MAIN CONTAINER STYLES --- */
         .container {
             position: relative; z-index: 1; background: var(--glass-bg);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             padding: 2rem; border-radius: 20px; border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 600px;
-            animation: fadeIn 0.8s ease-out;
-            opacity: 0; /* Hidden initially until login */
-            transition: opacity 1s;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 650px;
+            animation: fadeIn 0.8s ease-out; opacity: 0; transition: opacity 1s;
         }
         .container.visible { opacity: 1; }
 
-        h1 {
-            font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center;
-            background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-weight: 700; text-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
-        }
-        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center; background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; margin-bottom: 1.5rem; }
 
-        /* TAB NAVIGATION STYLES (NEW) */
-        .tab-container {
-            display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
-        }
-        .tab-btn {
-            background: transparent; border: none; color: #888; font-weight: 600; padding: 10px 20px;
-            cursor: pointer; transition: 0.3s; font-size: 0.95rem; border-bottom: 2px solid transparent;
-        }
-        .tab-btn:hover { color: #fff; }
-        .tab-btn.active { color: #00d2ff; border-bottom: 2px solid #00d2ff; }
-
-        /* UPLOAD BOX STYLES (NEW) */
-        .upload-box {
-            border: 2px dashed #00d2ff; border-radius: 15px; padding: 30px; text-align: center;
-            background: rgba(0, 210, 255, 0.05); cursor: pointer; transition: 0.3s; margin-bottom: 20px;
-        }
-        .upload-box:hover { background: rgba(0, 210, 255, 0.15); border-color: #ff00de; }
-        .upload-icon { font-size: 3rem; margin-bottom: 10px; display: block; filter: drop-shadow(0 0 10px #00d2ff); }
-        .file-list { margin-top: 10px; text-align: left; }
-        .file-item { display: flex; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.05); }
-
-        /* MODE SWITCH */
-        .mode-switch-container { display: flex; justify-content: center; margin-bottom: 20px; }
-        .mode-switch-wrapper {
-            background: rgba(0,0,0,0.3); border-radius: 30px; padding: 4px; display: flex;
-            border: 1px solid rgba(255,255,255,0.1); position: relative;
-        }
-        .mode-btn {
-            padding: 8px 25px; border-radius: 25px; border: none; background: transparent;
-            color: #aaa; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem;
-            z-index: 2; position: relative;
-        }
-        .mode-btn.active { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        .mode-highlighter {
-            position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); width: 50%;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5); border-radius: 25px;
-            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); z-index: 1;
-        }
+        .tab-nav { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .tab-btn { background: transparent; border: none; color: #888; font-weight: 600; padding: 10px 15px; cursor: pointer; transition: 0.3s; font-size: 0.85rem; border-bottom: 2px solid transparent; flex: 1; }
+        .tab-btn.active { color: #00d2ff; border-bottom-color: #00d2ff; background: rgba(0,210,255,0.05); }
 
         .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.6rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
+        label { display: block; margin-bottom: 0.6rem; color: #d1d8e0; font-size: 0.8rem; font-weight: 500; }
+        input, textarea, select { width: 100%; padding: 12px 15px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 10px; font-size: 0.9rem; color: white; box-sizing: border-box; }
         
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
-        
-        /* TOMBOL HEADER GROUP */
-        .header-actions { display: flex; gap: 5px; }
-        
-        .btn-clear {
-            width: auto !important; padding: 4px 10px !important; font-size: 0.75rem !important;
-            background: rgba(255, 71, 87, 0.2) !important; border: 1px solid rgba(255, 71, 87, 0.5) !important;
-            color: #ff4757 !important; margin: 0 !important; border-radius: 6px !important; 
-        }
-        .btn-clear:hover { background: rgba(255, 71, 87, 0.4) !important; color: white !important; }
-
-        .btn-action-small {
-            width: auto !important; padding: 4px 10px !important; font-size: 0.75rem !important;
-            margin: 0 !important; border-radius: 6px !important; cursor: pointer;
-        }
-        .btn-saved { background: rgba(255, 159, 67, 0.2) !important; border: 1px solid rgba(255, 159, 67, 0.5) !important; color: #ff9f43 !important; }
-        .btn-saved:hover { background: rgba(255, 159, 67, 0.4) !important; color: white !important; }
-        
-        .btn-save-link { background: rgba(52, 152, 219, 0.2) !important; border: 1px solid rgba(52, 152, 219, 0.5) !important; color: #3498db !important; }
-        .btn-save-link:hover { background: rgba(52, 152, 219, 0.4) !important; color: white !important; }
-
-        /* REMOTE DETECTED BADGE */
-        .remote-badge {
-            display: none; width: 100%; padding: 10px; box-sizing: border-box;
-            background: rgba(46, 213, 115, 0.2); border: 1px solid #2ed573; color: #2ed573;
-            border-radius: 8px; margin-bottom: 10px; cursor: pointer; text-align: center;
-            font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
-            animation: pulse 2s infinite;
-        }
-        .remote-badge:hover { background: rgba(46, 213, 115, 0.4); }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
-
-        textarea, input[type="text"], input[type="number"], input[type="email"], input[type="password"] {
-            width: 100%; padding: 12px 15px; background: var(--input-bg);
-            border: 1px solid var(--glass-border); border-radius: 10px;
-            font-size: 0.9rem; color: white; box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-        textarea:focus, input:focus { outline: none; border-color: var(--primary); }
-
         .input-group { display: flex; gap: 10px; }
-        .btn-picker {
-            width: auto !important; white-space: nowrap; background: #6c5ce7;
-            padding: 0 20px !important; display: flex; align-items: center; justify-content: center;
-        }
+        .btn-picker { width: auto !important; white-space: nowrap; background: #6c5ce7; padding: 0 20px !important; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; border: none; color: white; }
         .btn-picker:hover { background: #5649c0; }
 
-        select {
-            width: 100%; padding: 12px 15px; background: var(--input-bg);
-            border: 1px solid var(--glass-border); border-radius: 10px;
-            font-size: 0.9rem; color: white; box-sizing: border-box; cursor: pointer;
-            appearance: none; -webkit-appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300d2ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat; background-position: right 15px top 50%; background-size: 12px auto;
-        }
-        option { background: #1a1a2e; color: white; }
-        optgroup { background: #000; color: #f4b400; font-weight: bold; }
-        
-        /* ADVANCED & SCHEDULE */
-        .advanced-section {
-            background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.05); display: none; 
-            animation: slideDown 0.3s ease-out;
-        }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        button.main-btn { width: 100%; padding: 15px; border-radius: 10px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
 
-        .two-col { display: flex; gap: 15px; } .col { flex: 1; }
+        .upload-box { border: 2px dashed #00d2ff; border-radius: 15px; padding: 30px; text-align: center; background: rgba(0, 210, 255, 0.05); cursor: pointer; margin-bottom: 15px; transition: 0.3s; }
+        .upload-box:hover { border-color: #ff00de; background: rgba(0, 210, 255, 0.1); }
+
+        /* PICKER STYLES */
+        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .picker-item { padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; text-align: left; }
+        .picker-item:hover { background: rgba(255,255,255,0.1); }
+        .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .picker-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; color: #888; transition: all 0.2s; }
+        .picker-tab.active { background: #00d2ff; color: #fff; font-weight: bold; }
+
+        /* SEARCH STYLES */
+        .search-results { max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .search-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; }
+        .btn-add-search { background: #2ed573; border: none; color: #fff; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+
+        .log-area { margin-top: 15px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; font-size: 0.75rem; font-family: monospace; }
+        
+        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,12,41,0.98); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(10px); }
+        .login-box { background:rgba(255,255,255,0.05); padding:40px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; width:300px; }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        
+        /* Advanced Settings Toggle */
         .toggle-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .toggle-label { font-size: 0.9rem; font-weight: 600; color: #00d2ff; }
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #2ed573; } input:checked + .slider:before { transform: translateX(26px); }
-
-        .schedule-box { border: 1px dashed rgba(255, 255, 255, 0.3); padding: 15px; border-radius: 10px; margin-top: 15px; }
-        /* SCHEDULE LIST STYLING RESTORED */
-        .schedule-list { margin-top: 15px; max-height: 200px; overflow-y: auto; }
-        .schedule-item { 
-            background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); 
-            padding: 10px; display: flex; justify-content: space-between; align-items: center; 
-            font-size: 0.8rem;
-        }
-        .schedule-info { flex: 1; padding-right: 10px; }
-        .schedule-name { font-weight: bold; color: #00d2ff; display: block; margin-bottom: 2px;}
-        .schedule-meta { color: #888; font-size: 0.75rem; }
-        
-        .sched-btn-group { display: flex; gap: 5px; }
-        .btn-del-sched { 
-            background: #ff4757 !important; width: auto !important; padding: 5px 10px !important; 
-            font-size: 0.7rem !important; border-radius: 5px; color:white; border:none; cursor:pointer;
-        }
-        .btn-detail-sched { 
-            background: #3498db !important; width: auto !important; padding: 5px 10px !important; 
-            font-size: 0.7rem !important; border-radius: 5px; color:white; border:none; cursor:pointer;
-        }
-        
-        .btn-group { display: flex; gap: 10px; }
-        button { width: 100%; border: none; padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; text-transform: uppercase; letter-spacing: 1px; color: white; }
-        #submitBtn, #uploadStartBtn { background: linear-gradient(45deg, #00d2ff, #3a7bd5, #ff00de); background-size: 200% 200%; animation: gradientAnim 3s ease infinite; }
-        #checkBtn { background: #6c5ce7; }
-        #stopBtn { background: #ff4757; display: none; }
-        @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        button:hover { transform: translateY(-2px); }
-        .sheet-btn { background: #109869 !important; color: white !important; margin-top: 10px; display: block; width: 100%; text-decoration: none; text-align: center; padding: 10px; border-radius: 5px; font-weight: bold; }
-
-        .progress-wrapper { margin-top: 20px; display: none; }
-        .progress-container { width: 100%; height: 8px; background-color: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; margin-top: 5px;}
-        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #f4b400, #ff00de, #00d2ff); border-radius: 10px; transition: width 0.4s ease; }
-        .log-area { margin-top: 15px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; font-size: 0.8rem; font-family: 'Consolas', monospace; display: none; border: 1px solid rgba(255,255,255,0.05); }
-        .log-item { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; align-items:center; }
-        .log-icon { flex-shrink: 0; width: 20px; text-align: center; }
-        .log-size { font-size: 0.7em; color: #888; margin-left: auto; padding-left: 10px; }
-        .log-success { color: #00d2ff; } .log-error { color: #ff4757; } .log-info { color: #ddd; } .log-warning { color: #ffa502; font-weight: bold; } 
-        
-        /* PICKER STYLES */
-        .picker-container { text-align: left; max-height: 300px; overflow-y: auto; }
-        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .picker-item { padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; }
-        .picker-item:hover { background: rgba(255,255,255,0.1); }
-        .picker-item.selected { background: rgba(0, 210, 255, 0.2); border-color: #00d2ff; }
-        .picker-checkbox { width: 18px; height: 18px; accent-color: #00d2ff; cursor: pointer; }
-
-        /* TABS DI PICKER */
-        .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .picker-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; color: #888; transition: all 0.2s; }
-        .picker-tab.active { background: #00d2ff; color: #fff; font-weight: bold; }
-        .picker-tab:hover:not(.active) { background: rgba(255,255,255,0.1); }
-
-        .result-box { text-align: left; background: #222; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
-        .result-title { color: #00d2ff; font-weight: bold; margin-bottom: 5px; font-size: 0.95rem; }
-        .result-info { font-size: 0.85rem; color: #ccc; }
-        .hidden-input { display: none; margin-top: 10px; }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-        .swal-table { width: 100%; font-size: 0.9em; margin-top: 10px; border-collapse: collapse; }
-        .swal-table td { padding: 5px; border-bottom: 1px solid #333; color: #ddd; text-align: left; }
-        .swal-table td:last-child { text-align: right; font-weight: bold; color: #fff; }
+        .advanced-section { display: none; margin-bottom: 20px; animation: slideDown 0.3s ease-out; border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:10px; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div id="tsparticles"></div>
 
-<!-- LOGIN GATEKEEPER OVERLAY -->
 <div id="loginOverlay">
     <div class="login-box">
-        <div class="login-title">🔐 G-Drive Pro</div>
-        <p style="color:#aaa; font-size:0.9rem; margin-bottom:20px;">Masukkan PIN Akses Anda</p>
-        
-        <input type="password" id="gatePinInput" placeholder="●●●●●" 
-               style="text-align:center; font-size:1.5rem; letter-spacing:5px; margin-bottom:20px; background:rgba(0,0,0,0.3); border-color:#00d2ff;">
-        
-        <button id="gateLoginBtn" onclick="unlockSite()" style="background: linear-gradient(45deg, #00d2ff, #3a7bd5); width:100%;">BUKA DASHBOARD</button>
+        <h2 style="color:#00d2ff; margin-bottom:10px;">🔐 Akses Terkunci</h2>
+        <input type="password" id="gatePinInput" placeholder="PIN" style="text-align:center; font-size:1.5rem; letter-spacing:5px; background:rgba(0,0,0,0.5); color:white; border:1px solid #444; padding:10px; border-radius:5px; width:100%;">
+        <button onclick="unlockSite()" class="main-btn" style="margin-top:15px;">Masuk</button>
     </div>
 </div>
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Smart Filter & Direct Upload</p>
+    <p class="subtitle">Full Integrated System (v14.0)</p>
+    
+    <div class="tab-nav">
+        <button class="tab-btn active" id="btnTabClone" onclick="switchTab('clone')">☁️ Clone</button>
+        <button class="tab-btn" id="btnTabUpload" onclick="switchTab('upload')">📤 Upload</button>
+        <button class="tab-btn" id="btnTabSearch" onclick="switchTab('search')">🔍 Cari File</button>
+    </div>
 
-    <!-- TAB NAVIGATION -->
-    <div class="tab-container">
-        <button class="tab-btn active" onclick="switchMainTab('clone')" id="tabBtnClone">☁️ Clone / Copy</button>
-        <button class="tab-btn" onclick="switchMainTab('upload')" id="tabBtnUpload">📤 Direct Upload</button>
-    </div>
-    
     <div class="form-group">
-        <label for="accessPin">PIN Akses (Wajib)</label>
-        <input type="password" id="accessPin" placeholder="Masukkan PIN Rahasia Anda" value="">
+        <label>PIN Akses</label>
+        <input type="password" id="accessPin" placeholder="PIN Keamanan">
     </div>
-    
-    <!-- ============================================= -->
-    <!-- CLONING PANEL (EXISTING FEATURES)             -->
-    <!-- ============================================= -->
-    <div id="clonePanel">
-        <div class="mode-switch-container">
-            <div class="mode-switch-wrapper">
-                <div class="mode-highlighter" id="modeHighlighter"></div>
-                <button class="mode-btn active" id="btnSimple" onclick="setMode('simple')">Simple</button>
-                <button class="mode-btn" id="btnAdvance" onclick="setMode('advance')">Advance</button>
+
+    <!-- PANEL 1: CLONING -->
+    <div id="panelClone">
+        <div class="form-group">
+            <label>Link Sumber (Daftar Link)</label>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+               <button onclick="openSavedItems()" style="font-size:0.7rem; background:#e1b12c; border:none; padding:2px 8px; border-radius:4px; cursor:pointer;">📂 Item Tersimpan</button>
+               <button onclick="saveCurrentLink()" style="font-size:0.7rem; background:#0984e3; border:none; padding:2px 8px; border-radius:4px; cursor:pointer; color:white;">💾 Simpan Link</button>
+            </div>
+            <textarea id="folderUrls" placeholder="Paste link folder/file G-Drive di sini..." style="height:100px;"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Folder Tujuan</label>
+            <div class="input-group">
+                <input type="text" id="destUrl" placeholder="Link/ID Folder tujuan (kosong = default)">
+                <button type="button" class="btn-picker" onclick="openDestPicker('clone')">📂 Pilih</button>
+            </div>
+        </div>
+
+        <!-- Advanced Toggle -->
+        <div style="text-align:center; margin-bottom:10px; cursor:pointer; color:#00d2ff; font-size:0.8rem;" onclick="document.getElementById('advSec').style.display=document.getElementById('advSec').style.display==='block'?'none':'block'">🛠️ Pengaturan Lanjutan ▼</div>
+        
+        <div class="advanced-section" id="advSec">
+            <div class="form-group">
+                <label>Mode Copy</label>
+                <select id="duplicateMode">
+                    <option value="copy_duplicate">Duplikat (Default)</option>
+                    <option value="copy_skip">Skip jika ada</option>
+                    <option value="copy_replace">Replace jika ada</option>
+                    <option value="rename_duplicate">Rename Sumber</option>
+                </select>
+            </div>
+            <div class="toggle-container">
+                <span style="font-size:0.9rem;">Run in Background</span>
+                <label class="switch"><input type="checkbox" id="bgToggle"><span class="slider"></span></label>
+            </div>
+            <div class="form-group">
+                <label>Email Notifikasi</label>
+                <input type="text" id="emailNotif" placeholder="email@gmail.com">
+            </div>
+            <div class="form-group">
+                <label>Buat Jadwal (Schedule)</label>
+                <div class="input-group">
+                   <input type="text" id="schedLabel" placeholder="Nama Jadwal">
+                   <button class="btn-picker" style="background:#20bf6b;" onclick="createSchedule()">➕ Add</button>
+                </div>
+                <div style="margin-top:5px; font-size:0.75rem; color:#aaa; cursor:pointer;" onclick="showScheduleList()">📅 Lihat Daftar Jadwal</div>
+            </div>
+        </div>
+
+        <button class="main-btn" onclick="startCloning()">Mulai Cloning 🚀</button>
+    </div>
+
+    <!-- PANEL 2: UPLOAD (UPDATED WITH PICKER) -->
+    <div id="panelUpload" style="display:none;">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <span style="font-size:2rem;">☁️</span>
+            <p>Pilih atau Tarik File ke Sini</p>
+            <input type="file" id="fileInput" style="display:none" multiple onchange="handleFileSelect(this)">
+        </div>
+        <div id="uploadList" style="margin-bottom:15px; font-size:0.8rem; color:#aaa; text-align:center;">Belum ada file dipilih</div>
+        
+        <div class="form-group">
+            <label>Upload ke Folder</label>
+            <div class="input-group">
+                <input type="text" id="uploadDestId" placeholder="ID/Link Folder Tujuan (Default: Root)">
+                <button type="button" class="btn-picker" onclick="openDestPicker('upload')">📂 Pilih</button>
             </div>
         </div>
         
-        <!-- SOURCE AREA WITH SMART DETECTION -->
-        <div class="form-group">
-            <div class="header-row">
-                <label for="folderUrls">Daftar Link Sumber</label>
-                <div class="header-actions">
-                    <button id="openSavedBtn" class="btn-action-small btn-saved">📂 Saved</button>
-                    <button id="saveLinkBtn" class="btn-action-small btn-save-link">💾 Save</button>
-                    <button id="clearInputBtn" class="btn-clear">Clear</button>
-                </div>
-            </div>
-            
-            <!-- DETECTED BADGE -->
-            <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemotePicker()">
-                📡 Server Remote Terdeteksi! Klik untuk Jelajah
-            </div>
-
-            <textarea id="folderUrls" placeholder="Paste Link GDrive atau Link WebApp Script Akun B di sini..."></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="destUrl">Folder Tujuan (Opsional)</label>
-            <div class="input-group">
-                <input type="text" id="destUrl" placeholder="Link folder tujuan (jika kosong = default)">
-                <button type="button" class="btn-picker" id="browseBtn">📂 Pilih</button>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="newFolderName">Buat Folder Baru (Sub-folder)</label>
-            <input type="text" id="newFolderName" placeholder="Contoh: Backup Akun B">
-        </div>
-
-        <!-- ADVANCED & SCHEDULE -->
-        <div class="advanced-section" id="advancedSection">
-            <div style="font-size:0.8rem; color:#f4b400; margin-bottom:10px;">🛠️ Pengaturan Advance</div>
-            
-            <div class="form-group">
-                <label for="duplicateMode">Metode Duplikasi:</label>
-                <select id="duplicateMode" onchange="toggleRenameInput()">
-                    <optgroup label="🔵 Mode Copy (File Sumber Tetap Aman)">
-                        <option value="copy_duplicate">Copy & Duplikat (Default)</option>
-                        <option value="copy_skip">Copy & Skip (Jika file ada, lewati)</option>
-                        <option value="copy_replace">Copy & Replace (Timpa file lama)</option>
-                    </optgroup>
-                    <optgroup label="✏️ Mode Rename (Ganti Nama Sumber)">
-                        <option value="rename_duplicate">Copy & Rename Sumber</option>
-                        <option value="rename_skip">Copy & Rename (Skip jika target ada)</option>
-                        <option value="rename_replace">Copy & Rename (Replace jika target ada)</option>
-                    </optgroup>
-                </select>
-                <div id="renameInputContainer" class="hidden-input">
-                    <input type="text" id="renamePrefix" placeholder="Prefix: [MOVED] ">
-                </div>
-            </div>
-            
-            <div class="two-col">
-                <div class="col"><label>Max Size (MB)</label><input type="number" id="maxSize" placeholder="0 = Unlimited"></div>
-                <div class="col"><label>Ignore Ext</label><input type="text" id="ignoredExt" placeholder="mp4, exe"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Email Notifikasi</label>
-                <input type="email" id="emailNotif" placeholder="email@anda.com">
-            </div>
-            
-            <div class="toggle-container">
-                <span class="toggle-label">Run in Background</span>
-                <label class="switch"><input type="checkbox" id="bgToggle"><span class="slider"></span></label>
-            </div>
-
-            <!-- SCHEDULE -->
-            <div class="schedule-box">
-                <div class="toggle-label" style="margin-bottom:10px;">📅 Manajemen Jadwal</div>
-                <input type="text" id="scheduleLabel" placeholder="Nama Jadwal" style="margin-bottom:5px;">
-                <input type="number" id="maxBackups" value="30" placeholder="Max Retensi" style="margin-bottom:5px;">
-                <button id="addScheduleBtn" type="button" style="padding:10px; font-size:0.8rem; background:#10ac84;">➕ Tambah Jadwal</button>
-                <div class="schedule-list" id="scheduleListContainer">Memuat...</div>
-                <button type="button" onclick="refreshScheduleList()" style="background:none; color:#00d2ff; font-size:0.8rem; margin-top:5px; padding:0;">🔄 Refresh</button>
-            </div>
-        </div>
-
-        <div class="btn-group">
-            <button id="checkBtn">🔍 Cek Link</button>
-            <button id="submitBtn">Mulai Proses</button>
-            <button id="stopBtn">STOP 🛑</button>
-        </div>
-    </div> <!-- END CLONE PANEL -->
-
-    <!-- ============================================= -->
-    <!-- UPLOAD PANEL (NEW FEATURE)                    -->
-    <!-- ============================================= -->
-    <div id="uploadPanel" style="display:none;">
-        <div class="upload-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
-            <span class="upload-icon">☁️</span>
-            <p id="dropText">Klik atau Seret File ke Sini<br><span style="font-size:0.8rem; color:#888;">Max 10MB per file disarankan</span></p>
-            <input type="file" id="fileInput" style="display:none" multiple onchange="handleFileSelect(this)">
-        </div>
-
-        <div id="uploadFileList" class="file-list"></div>
-
-        <div class="form-group" style="margin-top:20px;">
-            <label for="uploadDestUrl">Folder Tujuan Upload</label>
-            <div class="input-group">
-                <input type="text" id="uploadDestUrl" placeholder="Link/ID Folder Tujuan (Kosong = Default)">
-                <!-- Reuse Browse Button Logic for Upload Tab if needed, but keeping simple for now -->
-            </div>
-        </div>
-
-        <div class="btn-group">
-            <button id="uploadStartBtn" onclick="startUpload()" disabled>Mulai Upload 🚀</button>
-        </div>
+        <button class="main-btn" id="btnUploadNow" onclick="startUpload()" disabled>Upload File 📤</button>
     </div>
 
-    <!-- PROGRESS & LOGS (SHARED) -->
-    <div class="progress-wrapper" id="progressWrapper">
-        <div style="text-align:center; color:#f4b400; font-weight:bold; margin-bottom:10px;" id="globalStatus">Menunggu...</div>
-        <div style="text-align:center; font-family:monospace; color:white; font-size:1.2rem; margin-bottom:10px;" id="timerDisplay">00:00:00</div>
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-            <span id="progressText">Progress...</span><span id="progressPercent">0%</span>
+    <!-- PANEL 3: SEARCH (UPDATED WITH LOCATION PICKER) -->
+    <div id="panelSearch" style="display:none;">
+        <div class="form-group">
+            <label>Lokasi Pencarian</label>
+            <div class="input-group">
+                <input type="text" id="searchLocName" placeholder="Seluruh Drive (Default)" readonly style="background:#2f3542; cursor:not-allowed;">
+                <input type="hidden" id="searchLocId" value="root">
+                <button class="btn-picker" onclick="openDestPicker('search_source')">📂 Filter Lokasi</button>
+                <button class="btn-picker" style="background:#ff4757; width:50px;" onclick="resetSearchLoc()">X</button>
+            </div>
         </div>
-        <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
-        <div class="log-area" id="logArea"></div>
+
+        <div class="input-group">
+            <input type="text" id="searchInput" placeholder="Nama file/folder yang dicari..." onkeypress="if(event.key==='Enter') searchDrive()">
+            <button class="btn-picker" onclick="searchDrive()" style="background:#00d2ff;">Cari</button>
+        </div>
+        <div id="searchResults" class="search-results"></div>
     </div>
+
+    <!-- LOGGING -->
+    <div class="log-area" id="logArea"></div>
 </div>
 
 <script>
-    // URL SCRIPT AKUN A (SERVER UTAMA)
+    // GANTI URL INI DENGAN DEPLOYMENT WEB APP ANDA
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVMco1a7VA7GkY6OyxFm239RXZlqMsTUy9kheMJthucelNETE9Zu9B9jqMB9mgyWbr/exec"; 
     
-    // UBAH JADI 1 UNTUK MENCEGAH RACE CONDITION DI DATABASE FILE DRIVE
-    const CONCURRENCY_LIMIT = 1;
+    // Variabel untuk melacak dari mana Picker dibuka: 'clone', 'upload', atau 'search_source'
+    let activePickerMode = 'clone'; 
 
-    // UI Variables
-    const submitBtn = document.getElementById('submitBtn');
-    const checkBtn = document.getElementById('checkBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const bgToggle = document.getElementById('bgToggle'); 
-    const folderUrlsInput = document.getElementById('folderUrls');
-    const remoteDetectedPanel = document.getElementById('remoteDetectedPanel');
-    const saveLinkBtn = document.getElementById('saveLinkBtn'); 
-    const openSavedBtn = document.getElementById('openSavedBtn'); 
-    const destUrlInput = document.getElementById('destUrl');
-    const accessPinInput = document.getElementById('accessPin');
-    const progressWrapper = document.getElementById('progressWrapper');
-    const progressBar = document.getElementById('progressBar');
-    const logArea = document.getElementById('logArea');
-    const globalStatus = document.getElementById('globalStatus');
-    const timerDisplay = document.getElementById('timerDisplay');
-    
-    // NEW UPLOAD VARIABLES
-    let selectedFiles = [];
-    const uploadStartBtn = document.getElementById('uploadStartBtn');
-    const uploadDestUrlInput = document.getElementById('uploadDestUrl');
-    const dropZone = document.getElementById('dropZone');
-
-    let detectedRemoteUrl = null;
-    let selectedRemoteFolders = []; 
-    let currentSessionLogs = [];
-    let isStopRequested = false;
-    let timerInterval;
-    let activeSchedules = []; 
-    let selectedRemoteDestUrl = null;
-
-    // --- TAB SWITCHING LOGIC ---
-    window.switchMainTab = (mode) => {
-        const clonePanel = document.getElementById('clonePanel');
-        const uploadPanel = document.getElementById('uploadPanel');
-        const btnClone = document.getElementById('tabBtnClone');
-        const btnUpload = document.getElementById('tabBtnUpload');
-
-        if(mode === 'clone') {
-            clonePanel.style.display = 'block';
-            uploadPanel.style.display = 'none';
-            btnClone.classList.add('active');
-            btnUpload.classList.remove('active');
-            // Hide progress if not running
-            if(globalStatus.innerText === 'Menunggu...') progressWrapper.style.display = 'none';
-        } else {
-            clonePanel.style.display = 'none';
-            uploadPanel.style.display = 'block';
-            btnClone.classList.remove('active');
-            btnUpload.classList.add('active');
-        }
-    };
-
-    // --- UPLOAD HANDLING LOGIC (NEW) ---
-    
-    // 1. File Selection
-    window.handleFileSelect = (input) => {
-        const newFiles = Array.from(input.files);
-        // Add to existing list or replace? Let's append
-        selectedFiles = selectedFiles.concat(newFiles);
-        renderUploadList();
-    };
-
-    // 2. Render List
-    function renderUploadList() {
-        const listContainer = document.getElementById('uploadFileList');
-        listContainer.innerHTML = selectedFiles.map((f, i) => `
-            <div class="file-item">
-                <div style="display:flex; flex-direction:column; width:100%;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="font-weight:bold; color:#00d2ff;">${f.name}</span>
-                        <span style="cursor:pointer; color:#ff4757;" onclick="removeFile(${i})">✖</span>
-                    </div>
-                    <div style="font-size:0.8rem; color:#aaa;">Size: ${(f.size/1024/1024).toFixed(2)} MB</div>
-                </div>
-            </div>
-        `).join('');
-        
-        uploadStartBtn.disabled = selectedFiles.length === 0;
-        uploadStartBtn.innerHTML = selectedFiles.length > 0 ? `Mulai Upload (${selectedFiles.length} File) 🚀` : `Pilih File Dulu`;
+    function switchTab(mode) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btnTab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+        ['clone', 'upload', 'search'].forEach(m => document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display = (m===mode?'block':'none'));
     }
-
-    window.removeFile = (index) => {
-        selectedFiles.splice(index, 1);
-        renderUploadList();
-    };
-
-    // 3. Drag & Drop Events
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.background = 'rgba(0, 210, 255, 0.2)'; dropZone.style.borderColor = '#ff00de'; };
-    dropZone.ondragleave = () => { dropZone.style.background = 'rgba(0, 210, 255, 0.05)'; dropZone.style.borderColor = '#00d2ff'; };
-    dropZone.ondrop = (e) => {
-        e.preventDefault();
-        dropZone.style.background = 'rgba(0, 210, 255, 0.05)'; dropZone.style.borderColor = '#00d2ff';
-        const newFiles = Array.from(e.dataTransfer.files);
-        selectedFiles = selectedFiles.concat(newFiles);
-        renderUploadList();
-    };
-
-    // 4. Helper: File to Base64
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-
-    function extractId(url) {
-        const m = url.match(/[-\w]{25,}/);
-        return m ? m[0] : "";
-    }
-
-    // 5. Start Upload Process
-    window.startUpload = async () => {
-        const pin = accessPinInput.value;
-        let destId = extractId(uploadDestUrlInput.value);
-        if(!destId && uploadDestUrlInput.value.trim().length > 0) {
-            // Jika user input ID pendek atau text biasa yg bukan URL
-            destId = uploadDestUrlInput.value.trim();
-        }
-
-        if(!pin) return Swal.fire('Error', 'PIN Wajib diisi', 'error');
-
-        // UI Setup
-        progressWrapper.style.display = 'block';
-        logArea.style.display = 'block';
-        logArea.innerHTML = '';
-        progressBar.style.width = '0%';
-        uploadStartBtn.disabled = true;
-        
-        addLog("🚀 Memulai proses upload...", "info");
-
-        let successCount = 0;
-        let failCount = 0;
-
-        for (let i = 0; i < selectedFiles.length; i++) {
-            const file = selectedFiles[i];
-            const percent = Math.round(((i) / selectedFiles.length) * 100);
-            
-            globalStatus.innerText = `Mengunggah ${i+1}/${selectedFiles.length}: ${file.name}`;
-            updateProgress(percent, `Uploading ${file.name}...`);
-            
-            try {
-                // Warning size
-                if(file.size > 40 * 1024 * 1024) {
-                    addLog(`⚠️ File ${file.name} terlalu besar (>40MB). Mungkin gagal.`, 'warning');
-                }
-
-                const base64 = await toBase64(file);
-                
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'direct_upload',
-                        pin: pin,
-                        fileName: file.name,
-                        mimeType: file.type,
-                        fileData: base64,
-                        destId: destId
-                    })
-                });
-                
-                const result = await res.json();
-                
-                if(result.status === 'success') {
-                    addLog(`✅ Sukses: ${result.fileName} (${result.size})`, 'success');
-                    successCount++;
-                } else {
-                    addLog(`❌ Gagal ${file.name}: ${result.message}`, 'error');
-                    failCount++;
-                }
-
-            } catch (e) {
-                addLog(`❌ Error ${file.name}: ${e.message}`, 'error');
-                failCount++;
-            }
-        }
-
-        updateProgress(100, "Selesai");
-        globalStatus.innerText = "UPLOAD SELESAI";
-        uploadStartBtn.disabled = false;
-        
-        Swal.fire({
-            title: 'Selesai!',
-            html: `Sukses: ${successCount}<br>Gagal: ${failCount}`,
-            icon: successCount > 0 ? 'success' : 'error'
-        });
-        
-        if(successCount > 0) {
-             launchConfetti();
-             selectedFiles = []; // Clear list on success
-             renderUploadList();
-        }
-    };
-
-
-    // --- EXISTING GATEKEEPER LOGIC ---
-    document.getElementById('gatePinInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') unlockSite();
-    });
 
     async function unlockSite() {
-        const pinInput = document.getElementById('gatePinInput');
-        const loginBtn = document.getElementById('gateLoginBtn');
-        const pin = pinInput.value;
-
-        if (!pin) {
-            Swal.fire({
-                icon: 'error', title: 'PIN Kosong', 
-                text: 'Silakan masukkan PIN akses.', 
-                background: '#1a1a2e', color: '#fff',
-                toast: true, position: 'top', timer: 2000, showConfirmButton: false
-            });
-            return;
-        }
-
-        const originalBtnText = loginBtn.innerText;
-        loginBtn.innerText = "Memverifikasi...";
-        loginBtn.disabled = true;
-        pinInput.disabled = true;
-        
-        try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'verify_pin', pin: pin })
-            });
-            const res = await response.json();
-
-            if (res.status === 'success') {
-                accessPinInput.value = pin;
-                
-                const overlay = document.getElementById('loginOverlay');
-                const main = document.getElementById('mainContainer');
-                
-                overlay.style.opacity = '0';
-                overlay.style.visibility = 'hidden';
-                
-                setTimeout(() => {
-                    overlay.style.display = 'none'; 
-                    main.classList.add('visible');
-                    refreshScheduleList();
-                }, 600);
-            } else {
-                Swal.fire({
-                    icon: 'error', title: 'Akses Ditolak', 
-                    text: res.message || 'PIN yang Anda masukkan salah.', 
-                    background: '#1a1a2e', color: '#fff'
-                });
-                pinInput.value = "";
-            }
-        } catch (e) {
-            Swal.fire({
-                icon: 'error', title: 'Error Koneksi', 
-                text: 'Gagal menghubungi server: ' + e.message, 
-                background: '#1a1a2e', color: '#fff'
-            });
-        } finally {
-            loginBtn.innerText = originalBtnText;
-            loginBtn.disabled = false;
-            pinInput.disabled = false;
-            pinInput.focus();
+        const pin = document.getElementById('gatePinInput').value;
+        if(!pin) return;
+        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
+        const d = await res.json();
+        if(d.status === 'success') {
+            document.getElementById('accessPin').value = pin;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContainer').classList.add('visible');
+        } else {
+            Swal.fire('Gagal', 'PIN Salah!', 'error');
         }
     }
 
-    // --- SMART DETECTION LOGIC ---
-    const detectRemote = () => {
-        const val = folderUrlsInput.value;
-        const scriptRegex = /https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i;
-        const match = val.match(scriptRegex);
-
-        if (match) {
-            detectedRemoteUrl = match[0];
-            remoteDetectedPanel.style.display = 'block';
-            remoteDetectedPanel.innerHTML = `📡 Server Remote Terdeteksi! Klik untuk Jelajah Akun B`;
-            remoteDetectedPanel.style.animation = 'none';
-            setTimeout(() => remoteDetectedPanel.style.animation = 'pulse 2s infinite', 10);
-        } else {
-            detectedRemoteUrl = null;
-            remoteDetectedPanel.style.display = 'none';
-        }
-    };
-
-    folderUrlsInput.addEventListener('input', detectRemote);
-    folderUrlsInput.addEventListener('change', detectRemote);
-    folderUrlsInput.addEventListener('paste', () => {
-        setTimeout(detectRemote, 100);
-    });
-
-    // --- SAVE ANY LINK / ACCOUNT LOGIC ---
-    saveLinkBtn.addEventListener('click', async () => {
-        const raw = folderUrlsInput.value.trim();
-        const pin = accessPinInput.value;
-        if (!pin) { Swal.fire('Error', 'Masukkan PIN Akses dulu!', 'error'); return; }
-        if (!raw) { Swal.fire('Info', 'Paste link dulu di kotak input!', 'info'); return; }
-
-        const firstLine = raw.split('\n')[0].trim();
+    // --- PICKER SYSTEM (GENERIC) ---
+    function openDestPicker(mode) {
+        activePickerMode = mode; 
+        const pin = document.getElementById('accessPin').value;
+        if(!pin) return Swal.fire('Error', 'PIN belum diisi', 'error');
         
-        const { value: label } = await Swal.fire({
-            title: 'Simpan Link/Akun',
-            input: 'text',
-            inputLabel: 'Beri nama untuk link ini',
-            inputValue: 'Link ' + new Date().toLocaleTimeString(),
-            showCancelButton: true,
-            background: '#1a1a2e', color: '#fff',
-            inputValidator: (value) => { if (!value) return 'Nama label wajib diisi!' }
-        });
-
-        if (label) {
-            Swal.fire({title: 'Menyimpan...', didOpen:()=>{Swal.showLoading()}});
-            try {
-                const res = await sendRequest({ 
-                    action: 'save_remote_account', 
-                    pin: pin, 
-                    label: label, 
-                    targetUrl: firstLine 
-                });
-                
-                if(res.status === 'success') {
-                    let msg = res.type === 'server' ? `Akun Remote (${res.email}) Tersimpan!` : `Link Folder Tersimpan!`;
-                    Swal.fire('Berhasil!', msg, 'success');
-                } else {
-                    Swal.fire('Gagal', res.message, 'error');
-                }
-            } catch(e) { Swal.fire('Error', e.message, 'error'); }
-        }
-    });
-
-    // --- OPEN SAVED ITEMS (SOURCE PICKER) ---
-    openSavedBtn.addEventListener('click', async () => {
-        const pin = accessPinInput.value;
-        if(!pin) { Swal.fire('Error', 'Masukkan PIN Akses!', 'error'); return; }
+        // Tentukan judul modal
+        let title = "Pilih Folder Tujuan";
+        if(mode === 'search_source') title = "Pilih Lokasi Pencarian";
 
         Swal.fire({
-            title: '📂 Item Tersimpan',
-            html: `<div id="savedItemsContainer" style="min-height:200px;">Loading...</div>`,
-            showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
-            didOpen: () => { loadSavedItemsForSource(pin); }
-        });
-    });
-
-    async function loadSavedItemsForSource(pin) {
-        const container = document.getElementById('savedItemsContainer');
-        try {
-            const res = await sendRequest({ action: 'get_remote_accounts', pin: pin });
-            if(res.status === 'success') {
-                if (res.list.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">Belum ada item tersimpan.</div>';
-                    return;
-                }
-                let html = `<div class="picker-container">`;
-                res.list.forEach(item => {
-                    let isServer = (item.type === 'server' || !item.type);
-                    
-                    let icon = isServer ? '📡' : '🔗';
-                    let typeText = isServer ? 'Server Akun' : 'Link Folder';
-                    let actionText = isServer ? 'Browse' : 'Insert';
-                    let actionColor = isServer ? '#e1b12c' : '#2ed573';
-                    
-                    html += `
-                    <div class="picker-item" onclick="pickSavedItem('${item.url}', '${isServer ? 'server' : 'link'}', '${item.label}')">
-                        <span style="font-size:1.2em;">${icon}</span> 
-                        <div style="flex:1; margin-left:10px;">
-                            <div style="font-weight:bold; color:#fff;">${item.label}</div>
-                            <div style="font-size:0.75em; color:#888;">${typeText} | ${item.email}</div>
-                        </div>
-                        <div style="color:${actionColor}; font-weight:bold; font-size:0.8rem;">${actionText} ➡</div>
-                    </div>`;
-                });
-                html += `</div>`;
-                container.innerHTML = html;
-            } else container.innerText = res.message;
-        } catch(e) { container.innerText = e.message; }
-    }
-
-    window.pickSavedItem = (url, type, label) => {
-        if (type === 'server') {
-            folderUrlsInput.value = url;
-            detectRemote(); 
-            Swal.close();
-            openRemotePicker(); 
-        } else {
-            const currentVal = folderUrlsInput.value;
-            folderUrlsInput.value = currentVal + (currentVal ? '\n' : '') + url;
-            detectRemote(); 
-            Swal.close();
-            const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, background:'#2ed573', color:'#fff'});
-            Toast.fire({ icon: 'success', title: 'Link ditambahkan!' });
-        }
-    };
-
-    // --- REMOTE PICKER LOGIC (SOURCE) ---
-    window.openRemotePicker = function() {
-        if (!detectedRemoteUrl) return;
-        selectedRemoteFolders = []; 
-
-        Swal.fire({
-            title: 'Jelajah Akun B (Remote)',
-            html: `<div id="remotePickerContent"><div style="color:#aaa;">Menghubungi Server B...</div></div>`,
-            showConfirmButton: false, showCloseButton: true, width: '600px',
-            background: '#1a1a2e', color: '#fff',
-            didOpen: () => { loadRemoteContent('root'); }
-        });
-    };
-
-    async function loadRemoteContent(parentId) {
-        const container = document.getElementById('remotePickerContent');
-        if(!container) return;
-        container.innerHTML = '<div class="swal2-loading" style="display:block;"></div>';
-
-        try {
-            const response = await fetch(detectedRemoteUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action: 'browse_remote', parentId: parentId })
-            });
-            const res = await response.json();
-
-            if (res.status === 'success') {
-                let html = `
-                    <div class="picker-header">
-                        <div style="font-size:0.9rem; font-weight:bold; color:#2ed573;">📂 ${res.currentName}</div>
-                        ${res.parentId ? `<div style="cursor:pointer; color:#f4b400;" onclick="navRemote('${res.parentId}')">⬅ Kembali</div>` : ''}
-                    </div>
-                    <div class="picker-container">`;
-
-                if (res.items.length === 0) {
-                    html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
-                } else {
-                    res.items.forEach(f => {
-                        let icon = f.type === 'folder' ? '📁' : '📄';
-                        let sizeInfo = f.type === 'file' ? `<span style="font-size:0.7em; color:#888; margin-left:5px;">(${f.size})</span>` : '';
-                        let navAction = f.type === 'folder' ? `onclick="navRemote('${f.id}')"` : '';
-                        let cursorStyle = f.type === 'folder' ? 'cursor:pointer;' : 'cursor:default;';
-                        let textColor = f.type === 'folder' ? '#fff' : '#ccc';
-
-                        html += `
-                        <div class="picker-item">
-                            <input type="checkbox" class="picker-checkbox" value="${f.id}" data-name="${f.name}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
-                            <span style="flex:1; margin-left:10px; ${cursorStyle} color:${textColor};" ${navAction}>
-                                ${icon} ${f.name} ${sizeInfo}
-                            </span>
-                        </div>`;
-                    });
-                }
-                html += `</div>
-                <div style="margin-top:15px; display:flex; gap:10px;">
-                    <button style="background:#2ed573; padding:10px; font-size:0.9rem;" onclick="confirmRemoteSelection()">✅ Tambahkan & Unlock</button>
-                </div>`;
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = `<div style="color:red;">Server B Error: ${res.message}</div>`;
-            }
-        } catch (e) {
-            container.innerHTML = `<div style="color:red;">Koneksi Gagal: ${e.message}<br>Pastikan Script B sudah di-deploy sebagai 'Anyone'.</div>`;
-        }
-    }
-
-    window.navRemote = (id) => { loadRemoteContent(id); };
-    
-    window.toggleRemoteSelect = (cb) => {
-        const id = cb.value;
-        const name = cb.getAttribute('data-name');
-        const type = cb.getAttribute('data-type');
-        
-        if (cb.checked) {
-            selectedRemoteFolders.push({ id, name, type });
-        } else {
-            selectedRemoteFolders = selectedRemoteFolders.filter(item => item.id !== id);
-        }
-        const btn = document.querySelector('#remotePickerContent button');
-        if(btn) btn.innerText = `✅ Tambahkan (${selectedRemoteFolders.length}) Item Terpilih`;
-    };
-
-    window.confirmRemoteSelection = async () => {
-        if (selectedRemoteFolders.length === 0) { Swal.showValidationMessage('Pilih minimal satu item!'); return; }
-        
-        const container = document.getElementById('remotePickerContent');
-        container.innerHTML = `<div style="text-align:center; padding:40px;"><div class="swal2-loading" style="display:block;"></div><h3 style="color:#f4b400;">Membuka Izin File...</h3><p>Mohon tunggu sebentar.</p></div>`;
-
-        try {
-            const ids = selectedRemoteFolders.map(f => f.id);
-            const response = await fetch(detectedRemoteUrl, {
-                method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'unlock_files', ids: ids })
-            });
-            const res = await response.json();
-
-            if (res.status === 'success') {
-                let newLinks = selectedRemoteFolders.map(f => f.type === 'folder' ? `https://drive.google.com/drive/folders/${f.id}` : `https://drive.google.com/file/d/${f.id}/view`).join('\n');
-                const currentVal = folderUrlsInput.value;
-                folderUrlsInput.value = currentVal + (currentVal ? '\n' : '') + newLinks;
-                Swal.close();
-                Swal.fire({ icon: 'success', title: 'Sukses!', text: `${res.unlocked} item berhasil dibuka & ditambahkan.`, timer: 2000 });
-            } else { Swal.fire({ icon: 'error', title: 'Gagal Unlock', text: res.message }); }
-        } catch (e) { Swal.fire({ icon: 'error', title: 'Error', text: e.message }); }
-    };
-
-    // --- DESTINATION PICKER (LOCAL & REMOTE) ---
-    document.getElementById('browseBtn').addEventListener('click', () => {
-        const pin = accessPinInput.value;
-        if(!pin) { Swal.fire('Error', 'Masukkan PIN Akses!', 'error'); return; }
-        
-        Swal.fire({
-            title: 'Pilih Folder Tujuan',
+            title: title,
             html: `
                 <div class="picker-tabs">
                     <div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">📁 Local Drive</div>
@@ -946,589 +261,327 @@
             showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
             didOpen: () => { switchDestTab('local'); }
         });
-    });
+    }
 
-    window.switchDestTab = function(mode) {
-        document.getElementById('tabLocal').className = (mode === 'local') ? 'picker-tab active' : 'picker-tab';
-        document.getElementById('tabRemote').className = (mode === 'remote') ? 'picker-tab active' : 'picker-tab';
-        
+    window.switchDestTab = function(type) {
+        document.getElementById('tabLocal').className = (type === 'local') ? 'picker-tab active' : 'picker-tab';
+        document.getElementById('tabRemote').className = (type === 'remote') ? 'picker-tab active' : 'picker-tab';
         const container = document.getElementById('destPickerContent');
         container.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
+        const pin = document.getElementById('accessPin').value;
         
-        if (mode === 'local') {
-            loadLocalPicker('root', accessPinInput.value);
-        } else {
-            loadSavedRemotes(accessPinInput.value);
-        }
+        if (type === 'local') loadLocalPicker('root', pin);
+        else loadSavedRemotes(pin);
     };
 
     async function loadLocalPicker(parentId, pin) {
         const container = document.getElementById('destPickerContent');
         try {
-            const res = await sendRequest({ action: 'browse_folders', parentId: parentId, pin: pin });
-            if(res.status === 'success') {
+            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'browse_folders', parentId: parentId, pin: pin }) });
+            const data = await res.json();
+            
+            if(data.status === 'success') {
                 let html = `
-                    <div class="picker-header" style="flex-wrap:wrap;">
-                        <div style="width:100%; margin-bottom:5px; font-size:0.9rem; font-weight:bold; color:#2ed573;">${res.currentName}</div>
-                        ${res.parentId ? `<div onclick="loadLocalPicker('${res.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
-                        <div style="margin-left:auto; cursor:pointer; color:#2ed573; font-size:0.85rem;" onclick="createLocalFolder('${res.currentId}', '${pin}')">➕ New Folder</div>
+                    <div class="picker-header">
+                        <div style="font-weight:bold; color:#2ed573;">${data.currentName}</div>
+                        ${data.parentId ? `<div onclick="loadLocalPicker('${data.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
+                        <div style="cursor:pointer; color:#2ed573;" onclick="createLocalFolder('${data.currentId}', '${pin}')">➕ New</div>
                     </div>
-                    <div class="picker-container" style="max-height:200px;">`;
+                    <div style="max-height:200px; overflow-y:auto; text-align:left;">`;
                 
-                if (res.folders.length === 0) {
-                    html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
-                } else {
-                    res.folders.forEach(f => {
-                        html += `<div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
-                    });
-                }
+                if(data.folders.length === 0) html += `<div style="padding:10px; color:#666;">Folder kosong</div>`;
+                data.folders.forEach(f => {
+                    html += `<div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
+                });
+                
+                // Text tombol menyesuaikan konteks
+                let btnText = "🎯 Pilih Folder Ini";
+                if(activePickerMode === 'search_source') btnText = "🔍 Cari di Folder Ini";
+
                 html += `</div>
                 <div style="margin-top:10px;">
-                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectLocalDest('${res.currentId}', '${res.currentName}')">🎯 Pilih Folder Ini ("${res.currentName}")</button>
+                    <button style="background:#0984e3; padding:8px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer;" 
+                    onclick="selectLocalDest('${data.currentId}', '${data.currentName}')">${btnText}</button>
                 </div>`;
                 container.innerHTML = html;
-            } else container.innerText = res.message;
+            } else container.innerText = data.message;
         } catch(e) { container.innerText = e.message; }
     }
-    
-    window.createLocalFolder = async (parentId, pin) => {
-        const { value: folderName } = await Swal.fire({
-            title: 'Buat Folder Baru (Lokal)',
-            input: 'text',
-            inputLabel: 'Nama Folder',
-            showCancelButton: true,
-            background: '#1a1a2e', color: '#fff'
-        });
 
-        if (folderName) {
-            const container = document.getElementById('destPickerContent');
-            container.innerHTML = '<div style="text-align:center; padding:20px;">Membuat Folder...</div>';
-            try {
-                const res = await sendRequest({ action: 'create_folder_tool', parentId: parentId, name: folderName, pin: pin });
-                if(res.status === 'success') {
-                    loadLocalPicker(parentId, pin);
-                } else {
-                    Swal.fire('Gagal', res.message, 'error');
-                    loadLocalPicker(parentId, pin);
-                }
-            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+    async function createLocalFolder(parentId, pin) {
+        const { value: name } = await Swal.fire({ title: 'Nama Folder Baru', input: 'text', background:'#1a1a2e', color:'#fff' });
+        if(name) {
+            await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'create_folder_tool', parentId:parentId, name:name, pin:pin }) });
+            loadLocalPicker(parentId, pin);
         }
+    }
+
+    // LOGIKA SELECT: Memasukkan ID ke input yang sesuai
+    window.selectLocalDest = function(id, name) {
+        if (activePickerMode === 'clone') {
+            document.getElementById('destUrl').value = `https://drive.google.com/drive/folders/${id}`;
+        } else if (activePickerMode === 'upload') {
+            document.getElementById('uploadDestId').value = id; 
+        } else if (activePickerMode === 'search_source') {
+            document.getElementById('searchLocId').value = id;
+            document.getElementById('searchLocName').value = name;
+        }
+        Swal.close();
+        
+        let msg = 'Folder Terpilih!';
+        if (activePickerMode === 'search_source') msg = 'Lokasi Pencarian Diset!';
+        
+        Swal.fire({ icon:'success', title: msg, text: `Folder: ${name}`, timer: 1500, showConfirmButton:false });
     };
 
+    // --- REMOTE PICKER LOGIC ---
     async function loadSavedRemotes(pin) {
         const container = document.getElementById('destPickerContent');
-        try {
-            const res = await sendRequest({ action: 'get_remote_accounts', pin: pin });
-            if(res.status === 'success') {
-                if (res.list.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">Belum ada akun tersimpan.<br>Simpan akun via tombol "Simpan Akun" di atas.</div>';
-                    return;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
+        const data = await res.json();
+        let html = '<div style="max-height:200px; overflow-y:auto;">';
+        if(data.list && data.list.length > 0) {
+            data.list.forEach(item => { 
+                if(item.type === 'server' || !item.type) {
+                    html += `<div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">☁️ ${item.label} (${item.email})</div>`;
                 }
-                let html = `<div class="picker-header"><div>Daftar Akun Tersimpan</div></div><div class="picker-container">`;
-                res.list.forEach(item => {
-                    if (item.type === 'server' || !item.type) {
-                        html += `
-                        <div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">
-                            <span style="font-size:1.2em;">☁️</span> 
-                            <div style="flex:1;">
-                                <div style="font-weight:bold; color:#fff;">${item.label}</div>
-                                <div style="font-size:0.8em; color:#888;">${item.email}</div>
-                            </div>
-                            <div style="color:#00d2ff;">Browse ➡</div>
-                        </div>`;
-                    }
-                });
-                html += `</div>`;
-                container.innerHTML = html;
-            } else container.innerText = res.message;
-        } catch(e) { container.innerText = e.message; }
+            });
+        } else { html += '<div style="padding:10px;">Belum ada akun remote.</div>'; }
+        html += '</div>';
+        container.innerHTML = html;
     }
 
-    window.selectLocalDest = (id, name) => {
-        destUrlInput.value = `https://drive.google.com/drive/folders/${id}`;
-        selectedRemoteDestUrl = null; 
-        Swal.close();
-        destUrlInput.style.borderColor = '#2ed573';
-    };
-
-    window.browseRemoteDest = (url, label) => {
-        const container = document.getElementById('destPickerContent');
-        container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div>Menghubungi ${label}...</div></div>`;
+    window.browseRemoteDest = function(url, label) {
+        document.getElementById('destPickerContent').innerHTML = 'Loading Remote...';
         loadRemoteDestContent(url, 'root', label);
     };
 
     async function loadRemoteDestContent(url, parentId, label) {
         const container = document.getElementById('destPickerContent');
-        if(!container) return;
-
         try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action: 'browse_remote', parentId: parentId })
-            });
-            const res = await response.json();
-
-            if (res.status === 'success') {
+            const res = await fetch(url, { method: 'POST', body: JSON.stringify({ action: 'browse_remote', parentId: parentId }) });
+            const data = await res.json();
+            if (data.status === 'success') {
                 let html = `
-                    <div class="picker-header" style="flex-wrap:wrap;">
-                        <div style="width:100%; margin-bottom:5px;">${label} > <span style="color:#00d2ff">${res.currentName}</span></div>
-                        ${res.parentId ? `<div style="cursor:pointer; color:#f4b400; font-size:0.85rem;" onclick="loadRemoteDestContent('${url}', '${res.parentId}', '${label}')">⬅ Kembali</div>` : '<div style="cursor:pointer; color:#f4b400; font-size:0.85rem;" onclick="switchDestTab(\'remote\')">⬅ Daftar Akun</div>'}
-                        <div style="margin-left:auto; cursor:pointer; color:#2ed573; font-size:0.85rem;" onclick="createRemoteFolder('${url}', '${parentId}', '${label}')">➕ New Folder</div>
+                    <div class="picker-header">
+                        <div style="font-weight:bold; color:#00d2ff;">${label} > ${data.currentName}</div>
+                        ${data.parentId ? `<div onclick="loadRemoteDestContent('${url}','${data.parentId}','${label}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : `<div onclick="switchDestTab('remote')" style="cursor:pointer; color:#f4b400;">⬅ Accounts</div>`}
                     </div>
-                    <div class="picker-container" style="max-height:200px;">`;
-
-                if (res.items.length === 0) {
-                    html += `<div style="padding:20px; text-align:center; color:#666;">Folder kosong</div>`;
+                    <div style="max-height:200px; overflow-y:auto; text-align:left;">`;
+                data.items.forEach(f => { if (f.type === 'folder') html += `<div class="picker-item" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>`; });
+                
+                // Remote hanya untuk Clone Destination
+                let btnHtml = '';
+                if(activePickerMode === 'clone') {
+                    btnHtml = `<button style="background:#0984e3; padding:8px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer;" 
+                    onclick="selectRemoteDest('${url}', '${parentId}', '${data.currentName}', '${label}')">🎯 Pilih Folder Ini</button>`;
                 } else {
-                    res.items.forEach(f => {
-                        if (f.type === 'folder') {
-                            html += `
-                            <div class="picker-item" onclick="loadRemoteDestContent('${url}', '${f.id}', '${label}')">
-                                📁 ${f.name}
-                            </div>`;
-                        }
-                    });
+                    btnHtml = `<div style="text-align:center; color:#aaa; font-size:0.8rem;">Remote tidak support untuk mode ini.</div>`;
                 }
+
                 html += `</div>
-                <div style="margin-top:10px;">
-                    <button style="background:#0984e3; padding:8px; font-size:0.85rem;" onclick="selectThisRemoteFolder('${url}', '${parentId}', '${res.currentName}', '${label}')">🎯 Pilih Folder Ini ("${res.currentName}")</button>
-                </div>`;
+                <div style="margin-top:10px;">${btnHtml}</div>`;
                 container.innerHTML = html;
-            } else {
-                container.innerHTML = `<div style="color:red;">Error: ${res.message}</div>`;
             }
-        } catch (e) {
-            container.innerHTML = `<div style="color:red;">Koneksi Error: ${e.message}</div>`;
+        } catch(e) { container.innerHTML = "Error: " + e.message; }
+    }
+
+    window.selectRemoteDest = async function(url, id, name, label) {
+        const pin = document.getElementById('accessPin').value;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'connect_remote_dest', pin:pin, targetUrl:url, targetId:id }) });
+        const d = await res.json();
+        if(d.status === 'success') {
+            document.getElementById('destUrl').value = d.folderUrl;
+            Swal.close();
+            Swal.fire('Sukses', `Tujuan Remote: ${name} (${label})`, 'success');
+        } else {
+            Swal.fire('Error', d.message, 'error');
+        }
+    };
+
+    // --- SEARCH ---
+    function resetSearchLoc() {
+        document.getElementById('searchLocId').value = 'root';
+        document.getElementById('searchLocName').value = 'Seluruh Drive (Default)';
+    }
+
+    async function searchDrive() {
+        const q = document.getElementById('searchInput').value;
+        const pin = document.getElementById('accessPin').value;
+        const parentId = document.getElementById('searchLocId').value; // Ambil ID filter lokasi
+        
+        const div = document.getElementById('searchResults');
+        div.innerHTML = '<div style="padding:10px; text-align:center;">Mencari...</div>';
+        
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'search_drive', query:q, pin:pin, parentId: parentId }) });
+        const d = await res.json();
+        
+        let h = '';
+        if(d.status==='success') {
+            // Tampilkan info lokasi pencarian di hasil
+            if (d.results.length > 0) {
+                 d.results.forEach(f => {
+                    h += `<div class="search-item">
+                            <span style="font-size:1.2rem;">${f.mimeType==='folder'?'📁':'📄'}</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:bold; font-size:0.85rem;">${f.name}</div>
+                                <div style="font-size:0.7rem; color:#aaa;">${f.size} | ${f.date}</div>
+                            </div>
+                            <button class="btn-add-search" onclick="addToQueue('${f.url}', '${f.name}')">➕ Clone</button>
+                          </div>`;
+                });
+            } else {
+                 h = '<div style="padding:10px; text-align:center;">Tidak ditemukan di lokasi ini.</div>';
+            }
+        } else { h = `<div style="padding:10px; color:red;">Error: ${d.message}</div>`; }
+        div.innerHTML = h;
+    }
+
+    function addToQueue(url, name) {
+        const ta = document.getElementById('folderUrls');
+        ta.value = ta.value + (ta.value ? '\n' : '') + url;
+        switchTab('clone');
+        Swal.fire({ icon:'success', title:'Ditambahkan', text:name, timer:1000, showConfirmButton:false });
+    }
+
+    // --- UPLOAD LOGIC ---
+    let selectedFiles = [];
+    function handleFileSelect(input) {
+        selectedFiles = Array.from(input.files);
+        document.getElementById('uploadList').innerHTML = selectedFiles.map(f => `<div>📄 ${f.name} (${(f.size/1024).toFixed(1)} KB)</div>`).join('');
+        document.getElementById('btnUploadNow').disabled = selectedFiles.length === 0;
+    }
+
+    async function startUpload() {
+        const pin = document.getElementById('accessPin').value;
+        let destId = document.getElementById('uploadDestId').value;
+        if(destId.includes('folder/')) destId = destId.split('folder/')[1].split('?')[0];
+        if(!pin) return Swal.fire('Error', 'PIN kosong', 'error');
+
+        addLog("🚀 Memulai Upload...", "info");
+        for(let f of selectedFiles) {
+            try {
+                addLog("⏳ Mengunggah: " + f.name, "info");
+                const b64 = await toBase64(f);
+                const res = await fetch(SCRIPT_URL, { 
+                    method:'POST', 
+                    body: JSON.stringify({ 
+                        action:'direct_upload', 
+                        pin:pin, 
+                        fileName:f.name, 
+                        mimeType:f.type, 
+                        fileData:b64, 
+                        destId: destId 
+                    }) 
+                });
+                const d = await res.json();
+                if(d.status === 'success') addLog(`✅ Berhasil: <a href="${d.fileUrl}" target="_blank">${d.fileName}</a>`, 'success');
+                else addLog("❌ Gagal: " + d.message, 'error');
+            } catch(e) { addLog("❌ Error Network: " + f.name, 'error'); }
         }
     }
-    
-    window.createRemoteFolder = async (url, parentId, label) => {
-        const { value: folderName } = await Swal.fire({
-            title: 'Buat Folder Baru di Remote',
-            input: 'text',
-            inputLabel: 'Nama Folder',
-            showCancelButton: true,
-            background: '#1a1a2e', color: '#fff'
-        });
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
+    });
 
-        if (folderName) {
-            const container = document.getElementById('destPickerContent');
-            container.innerHTML = '<div style="text-align:center; padding:20px;">Membuat Folder...</div>';
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'create_folder', parentId: parentId, name: folderName })
-                });
-                const res = await response.json();
-                if(res.status === 'success') {
-                    loadRemoteDestContent(url, parentId, label);
-                } else {
-                    Swal.fire('Gagal', res.message, 'error');
-                    loadRemoteDestContent(url, parentId, label);
-                }
-            } catch(e) { Swal.fire('Error', e.message, 'error'); }
-        }
-    };
+    // --- SAVED ITEMS & SCHEDULE LOGIC ---
+    async function openSavedItems() {
+        const pin = document.getElementById('accessPin').value;
+        if(!pin) return;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
+        const d = await res.json();
+        let h = '<div style="max-height:200px; overflow-y:auto; text-align:left;">';
+        if(d.list.length > 0) d.list.forEach(i => h += `<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`);
+        else h += "Kosong";
+        h += '</div>';
+        Swal.fire({ title:'Item Tersimpan', html:h, background:'#1a1a2e', color:'#fff' });
+    }
+    function insertSaved(u) {
+        const t = document.getElementById('folderUrls');
+        t.value = t.value + (t.value ? '\n' : '') + u;
+        Swal.close();
+    }
+    async function saveCurrentLink() {
+        const u = document.getElementById('folderUrls').value.split('\n')[0];
+        const pin = document.getElementById('accessPin').value;
+        if(!u || !pin) return;
+        const {value:l} = await Swal.fire({ title:'Label Link', input:'text', background:'#1a1a2e', color:'#fff' });
+        if(l) fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'save_remote_account', pin:pin, targetUrl:u, label:l }) });
+    }
+    async function createSchedule() {
+        const pin = document.getElementById('accessPin').value;
+        const lbl = document.getElementById('schedLabel').value;
+        if(!lbl || !pin) return;
+        await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'add_schedule_item', pin:pin, label:lbl, config:{ urls: document.getElementById('folderUrls').value.split('\n'), destUrl: document.getElementById('destUrl').value, maxBackups: 30 } }) });
+        Swal.fire('Jadwal Dibuat', '', 'success');
+    }
+    async function showScheduleList() {
+        const pin = document.getElementById('accessPin').value;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'get_schedule_list', pin:pin }) });
+        const d = await res.json();
+        let h = '<div style="max-height:200px; overflow-y:auto; text-align:left;">';
+        if(d.list.length) d.list.forEach(i => h += `<div style="border-bottom:1px solid #444; padding:5px;">${i.label} <button onclick="delSched('${i.id}')" style="float:right;background:red;color:white;border:none;">Del</button></div>`);
+        else h+="Kosong";
+        h+='</div>';
+        Swal.fire({ title:'Jadwal', html:h, background:'#1a1a2e', color:'#fff' });
+    }
+    async function delSched(id) {
+        await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_schedule_item', id:id, pin:document.getElementById('accessPin').value }) });
+        Swal.close(); Swal.fire('Dihapus','','success');
+    }
 
-    window.selectThisRemoteFolder = async (targetUrl, folderId, folderName, label) => {
-        const container = document.getElementById('destPickerContent');
-        container.innerHTML = `<div style="text-align:center; padding:20px;"><div class="swal2-loading" style="display:block;"></div><div>Menyiapkan Izin Folder...</div></div>`;
+    // --- CORE COPY START ---
+    async function startCloning() {
+        const urls = document.getElementById('folderUrls').value.split('\n').filter(u=>u);
+        const pin = document.getElementById('accessPin').value;
+        if(urls.length===0 || !pin) return Swal.fire('Warning', 'Isi link & PIN', 'warning');
         
-        try {
-            const pin = accessPinInput.value;
-            const res = await sendRequest({ 
-                action: 'connect_remote_dest', 
-                pin: pin, 
-                targetUrl: targetUrl,
-                targetId: folderId 
-            });
-            
-            if (res.status === 'success') {
-                destUrlInput.value = res.folderUrl; 
-                selectedRemoteDestUrl = targetUrl; 
-                
-                Swal.close();
-                Swal.fire({
-                    icon: 'success', 
-                    title: 'Folder Siap!', 
-                    text: `Tujuan diset ke: ${res.folderName} (di Akun ${label})`,
-                    timer: 2000
-                });
-                destUrlInput.style.borderColor = '#00d2ff'; 
-            } else {
-                Swal.fire('Gagal Handshake', res.message, 'error');
-                loadRemoteDestContent(targetUrl, folderId, label);
-            }
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    };
-
-    checkBtn.addEventListener('click', async () => {
-        const rawText = folderUrlsInput.value;
-        const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.length > 0 && !u.includes('script.google.com'));
-        const pin = accessPinInput.value;
-
-        if (!pin) { Swal.fire({ icon: 'error', title: 'PIN Kosong' }); return; }
-        if (urls.length === 0) { Swal.fire({ icon: 'warning', title: 'Kosong' }); return; }
-
-        Swal.fire({ title: `Memindai...`, didOpen: () => { Swal.showLoading(); } });
-
-        let resultsHTML = "";
-        for (let i = 0; i < urls.length; i++) {
-            try {
-                const res = await sendRequest({ action: 'check_stats', url: urls[i], pin: pin });
-                
-                if (res.status === 'success') {
-                    const accessColor = res.canEdit ? '#2ed573' : '#ff4757'; 
-                    const accessWeight = res.canEdit ? 'normal' : 'bold';
-
-                    resultsHTML += `
-                        <div class="result-box">
-                            <div class="result-title">${i+1}. ${res.name} (${res.type === 'folder' ? '📁 Folder' : '📄 File'})</div>
-                            <div class="result-info">
-                                📄 File: ${res.stats.files} | 
-                                💾 Size: <span style="color:#2ed573">${res.stats.size}</span><br>
-                                🔒 Akses: <span style="color:${accessColor}; font-weight:${accessWeight}">${res.access}</span><br>
-                                🤖 Running As: <span style="color:#fff">${res.scriptUser}</span><br>
-                                👑 Owner File: <span style="color:#ccc">${res.ownerEmail}</span>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    resultsHTML += `<div class="result-box" style="border-color:#ff4757"><div class="result-title" style="color:#ff4757">${i+1}. Gagal</div><div class="result-info">${res.message}</div></div>`;
-                }
-            } catch (e) {
-                resultsHTML += `<div class="result-box" style="border-color:#ff4757"><div class="result-title" style="color:#ff4757">${i+1}. Error</div><div class="result-info">${e.message}</div></div>`;
-            }
-        }
-
-        Swal.fire({
-            title: '📊 Hasil Scan Lengkap',
-            html: `<div style="max-height:300px; overflow-y:auto; padding-right:5px;">${resultsHTML}</div>`,
-            background: '#111', color: '#fff', confirmButtonText: 'Tutup', width: '600px'
-        });
-    });
-
-    document.getElementById('clearInputBtn').addEventListener('click', () => { 
-        folderUrlsInput.value = ''; 
-        remoteDetectedPanel.style.display = 'none'; 
-        saveRemoteBtn.style.display = 'none';
-    });
-
-    submitBtn.addEventListener('click', async () => {
-        const rawText = folderUrlsInput.value;
-        const urls = rawText.split(/[\n,]+/).map(u => u.trim()).filter(u => u.startsWith('http') && !u.includes('script.google.com'));
-        const pin = accessPinInput.value;
-        const destUrl = destUrlInput.value.trim();
-        const newFolderName = document.getElementById('newFolderName').value.trim();
-        let renamePrefix = document.getElementById('renamePrefix').value.trim() || "[MOVED] ";
-
-        if (!pin) { Swal.fire('Error', 'PIN Kosong', 'error'); return; }
-        if (urls.length === 0) { Swal.fire('Warning', 'Tidak ada link valid', 'warning'); return; }
-
+        // Config Object
         const config = {
             mode: document.getElementById('duplicateMode').value,
-            destUrl: destUrl,
-            remoteTargetUrl: selectedRemoteDestUrl, 
-            newFolderName: newFolderName,
-            renamePrefix: renamePrefix, 
-            filters: {
-                maxSizeMB: parseInt(document.getElementById('maxSize').value) || 0,
-                ignoredExt: document.getElementById('ignoredExt').value
-            },
+            destUrl: document.getElementById('destUrl').value,
             email: document.getElementById('emailNotif').value
         };
 
-        if (config.mode.startsWith('rename_')) {
-            const c = await Swal.fire({title:'Konfirmasi Rename?', text:'File sumber akan diganti namanya. Lanjut?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33'});
-            if (!c.isConfirmed) return;
-        }
-
-        isStopRequested = false; 
-        setUIState('running'); 
-        clearLog(); 
-        startTimer();
-        currentSessionLogs = []; 
-
-        addLog(`🔐 PIN: OK | Mode: ${config.mode.toUpperCase()}`, 'info');
-        if (config.remoteTargetUrl) addLog("☁️ Target: Remote Server (Absorb Mode)", 'warning');
-
-        if (bgToggle.checked) {
-            try {
-                addLog("Mengirim job ke server (Background)...", "info");
-                const res = await sendRequest({ action: 'start_background_multi', urls: urls, pin: pin, ...config });
-                if(res.status === 'success') {
-                    addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; 
-                    launchConfetti();
-                    Swal.fire({ icon: 'success', title: 'Started!', text: 'Proses berjalan di background.', confirmButtonText: 'Oke' });
-                } else { 
-                    addLog("❌ Gagal: " + res.message, "error"); setUIState('stopped'); stopTimer(); 
-                }
-            } catch(e) { addLog("❌ Error: " + e.message, "error"); setUIState('stopped'); stopTimer(); }
+        addLog("🔄 Memulai Proses Cloning...", "info");
+        
+        if (document.getElementById('bgToggle').checked) {
+             const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'start_background_multi', pin:pin, urls:urls, ...config }) });
+             addLog("✅ Background Started", "success");
         } else {
-            await runForegroundQueue(urls, pin, config);
-        }
-    });
-
-    stopBtn.addEventListener('click', () => { isStopRequested = true; stopBtn.innerText = "Stopping..."; });
-
-    async function runForegroundQueue(urls, pin, config) {
-        let successCount = 0; let failCount = 0; let grandTotalFiles = 0; let grandTotalBytes = 0; let resultLinks = [];
-
-        for (let i = 0; i < urls.length; i++) {
-            if (isStopRequested) break;
-            const currentUrl = urls[i];
-            globalStatus.textContent = `Memproses Link ${i + 1} dari ${urls.length}`;
-            updateProgress(0, "Inisialisasi...");
-
-            try {
-                addLog(`▶ [${i+1}/${urls.length}] Connecting...`, 'info');
-                const result = await processSingleFolder(currentUrl, pin, config);
-                
-                const itemType = result.type === 'file' ? 'File' : 'Folder';
-                
-                if (result.files > 0 || result.type === 'file') {
-                     successCount++;
-                     addLog(`✅ Selesai: ${itemType} "${result.name}" (${result.files} processed).`, 'success');
-                     if (result.url) resultLinks.push({ name: `${itemType}: ${result.name}`, url: result.url });
-                } else {
-                     addLog(`⚠️ Selesai: ${result.name} (0 file disalin/kena filter).`, 'info');
-                }
-                grandTotalFiles += result.files; 
-                grandTotalBytes += parseBytesToNum(result.sizeStr);
-            } catch (error) {
-                failCount++; addLog(`❌ Gagal: ${error.message}`, 'error');
-            }
-        }
-
-        setUIState('stopped'); stopTimer();
-        
-        if (isStopRequested) {
-            addLog("⛔ Proses dihentikan.", "error"); globalStatus.textContent = "DIHENTIKAN";
-        } else {
-            globalStatus.textContent = "SELESAI"; 
-            try {
-                const reportRes = await sendRequest({
-                    action: 'send_report', pin: pin, email: config.email || "", 
-                    urls: urls, stats: { success: successCount, fail: failCount, totalFiles: grandTotalFiles, totalSize: formatBytes(grandTotalBytes) },
-                    details: currentSessionLogs 
-                });
-                if(reportRes.emailStatus === 'sent') addLog("📧 Email terkirim!", "success");
-            } catch(e) {}
-            launchConfetti();
-            showFinalReport(successCount, failCount, grandTotalFiles, grandTotalBytes, resultLinks);
-        }
-    }
-
-    async function processSingleFolder(url, pin, config) {
-        if (isStopRequested) return { files: 0, sizeStr: "0 B", url: null, type: 'unknown' };
-        
-        const initRes = await sendRequest({ action: 'initialize', url: url, name: "", pin: pin, ...config });
-        if (initRes.status !== 'success') throw new Error(initRes.message);
-
-        const jobId = initRes.jobId; const total = initRes.totalFiles;
-        const sourceName = initRes.sourceName || "Item";
-        let targetUrl = initRes.targetUrl; 
-        const sourceType = initRes.type || 'folder';
-
-        const actionText = sourceType === 'file' ? 'Menyalin File' : 'Menyalin Folder';
-        document.getElementById('progressText').textContent = `${actionText}: ${sourceName}`;
-
-        if (total === 0) return { files: 0, sizeStr: "0 B", url: targetUrl, name: sourceName, type: sourceType };
-
-        let finalProcessed = 0; let finalSizeStr = "0 B"; let isFinished = false; let workers = [];
-        
-        const workerTask = async () => {
-            while (!isFinished && !isStopRequested) {
+            for(let url of urls) {
                 try {
-                    const res = await sendRequest({ action: 'process_batch', jobId: jobId, pin: pin });
-                    if (res.status !== 'success') throw new Error(res.message);
-                    
-                    const p = res.progress;
-                    updateProgress(p.percent, `${actionText}: ${p.processed}/${p.total}`);
-                    finalProcessed = p.processed; finalSizeStr = p.currentSize;
-
-                    if (res.processedList && res.processedList.length > 0) {
-                        res.processedList.forEach(item => {
-                            let type = 'success';
-                            if(item.status === 'skipped') type = 'skip';
-                            if(item.status === 'error') type = 'error';
-                            if(item.status === 'warning') type = 'warning'; 
-                            
-                            if (item.status === 'success' && sourceType === 'file') targetUrl = item.url;
-                            
-                            let displayInfo = item.info; 
-                            if(item.status === 'warning') displayInfo = "⚠️ " + item.info;
-
-                            currentSessionLogs.push({ name: item.name, url: item.url, status: type.toUpperCase(), info: displayInfo });
-                            addLogHTML(item.name, item.url, item.size, type, displayInfo);
-                        });
-                    }
-                    if (res.action === 'complete') isFinished = true;
-                } catch (e) { await new Promise(r => setTimeout(r, 2000)); }
+                    const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'initialize', pin:pin, url:url, ...config }) });
+                    const d = await res.json();
+                    if(d.status === 'success') {
+                         addLog(`✅ Init: ${d.sourceName}`, 'success');
+                         await processJob(d.jobId, pin);
+                    } else addLog(`❌ Init Gagal: ${d.message}`, 'error');
+                } catch(e) { addLog(`Error: ${e}`, 'error'); }
             }
-        };
-
-        for (let k = 0; k < CONCURRENCY_LIMIT; k++) workers.push(workerTask());
-        await Promise.all(workers);
-
-        return { files: finalProcessed, sizeStr: finalSizeStr, url: targetUrl, name: sourceName, type: sourceType };
-    }
-
-    window.refreshScheduleList = async () => {
-        const c = document.getElementById('scheduleListContainer'); c.innerText = "Loading...";
-        try {
-            const res = await sendRequest({ action: 'get_schedule_list', pin: accessPinInput.value || '0000' });
-            if(res.status === 'success') {
-                if(res.list && res.list.length > 0) {
-                    activeSchedules = res.list; 
-                    let html = '';
-                    res.list.forEach(item => {
-                        const lastRun = item.lastRun ? new Date(item.lastRun).toLocaleString() : 'Belum pernah';
-                        html += `
-                        <div class="schedule-item">
-                            <div class="schedule-info">
-                                <span class="schedule-name">${item.label}</span>
-                                <div class="schedule-meta">Dest: ...${item.destUrl.substr(-15)}</div>
-                                <div class="schedule-meta">Mode: ${item.mode} | Run Terakhir: ${lastRun}</div>
-                            </div>
-                            <div class="sched-btn-group">
-                                <button class="btn-detail-sched" onclick="viewScheduleDetail('${item.id}')">ℹ️</button>
-                                <button class="btn-del-sched" onclick="delSched('${item.id}')">🗑️</button>
-                            </div>
-                        </div>`;
-                    });
-                    c.innerHTML = html;
-                } else c.innerHTML = '<div style="text-align:center;color:#666;padding:10px;">Belum ada jadwal.</div>';
-            } else c.innerText = "Gagal load jadwal.";
-        } catch(e) { c.innerText = "Error koneksi."; }
-    };
-
-    window.viewScheduleDetail = async function(id) {
-        const item = activeSchedules.find(s => s.id === id);
-        if (!item) return;
-
-        const config = item.config;
-        const sourceLinksHtml = config.urls.map((u, i) => `<div>${i+1}. <a href="${u}" target="_blank" style="color:#00d2ff; text-decoration:none;">${u.substring(0,30)}...</a></div>`).join('');
-        
-        const lastRunTime = item.lastRun || 0;
-        const nextRunTime = lastRunTime === 0 ? "Segera (Dalam 1 jam)" : new Date(lastRunTime + (23 * 60 * 60 * 1000)).toLocaleString();
-
-        const { isDenied } = await Swal.fire({
-            title: `📋 Detail Jadwal`,
-            html: `
-                <div style="text-align:left; font-size:0.85rem; background:#222; padding:15px; border-radius:8px; border:1px solid #444; max-height:400px; overflow-y:auto;">
-                    <div style="margin-bottom:10px;">
-                        <strong style="color:#f4b400;">🏷️ Label:</strong> ${item.label}
-                    </div>
-                    
-                    <div style="margin-bottom:10px; border:1px dashed #444; padding:5px; border-radius:5px;" id="ownerInfoArea">
-                        <strong style="color:#f4b400;">👤 Pemilik:</strong> <span style="color:#aaa;">Memuat info...</span>
-                    </div>
-
-                    <div style="margin-bottom:10px;">
-                        <strong style="color:#f4b400;">⏰ Estimasi Run Berikutnya:</strong><br>
-                        <span style="color:#2ed573;">${nextRunTime}</span>
-                    </div>
-
-                    <div style="margin-bottom:10px;">
-                        <strong style="color:#f4b400;">🔗 Link Sumber (${config.urls.length}):</strong>
-                        <div style="padding-left:10px; font-size:0.8rem;">${sourceLinksHtml}</div>
-                    </div>
-                    <div style="margin-bottom:10px;">
-                        <strong style="color:#f4b400;">📂 Tujuan:</strong><br>
-                        <a href="${config.destUrl}" target="_blank" style="color:#00d2ff;">Buka Folder Tujuan</a>
-                    </div>
-                </div>
-            `,
-            background: '#1a1a2e', color: '#fff',
-            showConfirmButton: true, confirmButtonText: 'Tutup',
-            showDenyButton: true, denyButtonText: '🚀 Lakukan Sekarang', denyButtonColor: '#2ed573',
-            didOpen: async () => {
-                if (config.urls.length > 0) {
-                    try {
-                        const pin = accessPinInput.value || '0000';
-                        const res = await sendRequest({ action: 'check_stats', url: config.urls[0], pin: pin });
-                        const ownerArea = document.getElementById('ownerInfoArea');
-                        if (ownerArea && res.status === 'success') {
-                            ownerArea.innerHTML = `<strong style="color:#f4b400;">👤 Pemilik:</strong><br><span style="color:#fff;">${res.ownerEmail}</span>`;
-                        }
-                    } catch(e) {}
-                }
-            }
-        });
-
-        if (isDenied) {
-            runScheduleNow(item);
-        }
-    };
-
-    async function runScheduleNow(item) {
-        const pin = accessPinInput.value;
-        if (!pin) { Swal.fire('Error', 'Masukkan PIN dulu!', 'error'); return; }
-        
-        isStopRequested = false; setUIState('running'); clearLog(); startTimer(); currentSessionLogs = [];
-        addLog(`🚀 Menjalankan Jadwal Manual: "${item.label}"`, 'info');
-        
-        const config = item.config;
-        if (bgToggle.checked) {
-             try {
-                addLog("Mengirim job (Background)...", "info");
-                const res = await sendRequest({ action: 'start_background_multi', urls: config.urls, pin: pin, ...config, scheduleId: item.id });
-                if (res.status === 'success') {
-                    addLog("✅ " + res.message, "success"); globalStatus.textContent = "BERJALAN DI SERVER"; launchConfetti();
-                    Swal.fire({ icon: 'success', title: 'Started!' });
-                } else { addLog("❌ Gagal: " + res.message, "error"); setUIState('stopped'); stopTimer(); }
-            } catch (e) { addLog("❌ Error: " + e.message, "error"); setUIState('stopped'); stopTimer(); }
-        } else {
-            await runForegroundQueue(config.urls, pin, config);
         }
     }
 
-    window.delSched = async (id) => {
-        if(!confirm('Hapus jadwal ini?')) return;
-        await sendRequest({ action: 'delete_schedule_item', id: id, pin: accessPinInput.value });
-        refreshScheduleList();
-    };
-    refreshScheduleList();
-
-    // --- UTILS ---
-    async function sendRequest(payload) { const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); return await res.json(); }
-    function setUIState(s) { 
-        if(s==='running'){
-            submitBtn.style.display='none'; checkBtn.style.display='none'; stopBtn.style.display='block'; progressWrapper.style.display='block'; logArea.style.display='block';
-            // Hide upload items during run if in clone mode
-        } else {
-            submitBtn.style.display='block'; checkBtn.style.display='block'; stopBtn.style.display='none';
-        } 
+    async function processJob(jobId, pin) {
+        let done = false;
+        while(!done) {
+            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'process_batch', jobId:jobId, pin:pin }) });
+            const d = await res.json();
+            if(d.status !== 'success' || d.action === 'complete') done = true;
+            if(d.progress) addLog(`⏳ Progress: ${d.progress.processed}/${d.progress.total}`, 'info');
+            if(d.processedList) d.processedList.forEach(i => addLog(`📄 ${i.name} (${i.status})`, i.status==='success'?'success':'error'));
+        }
+        addLog("🏁 Job Selesai.", "info");
     }
-    function addLog(m, t) { logArea.innerHTML += `<div class="log-item log-${t}"><span class="log-icon">${getIcon(t)}</span><span>${m}</span></div>`; logArea.scrollTop=logArea.scrollHeight; }
-    function addLogHTML(name, url, size, type, info) { const div = document.createElement('div'); div.className = 'log-item log-'+type; const c = url && url!=='#' ? `<a href="${url}" target="_blank">${name}</a>` : name; div.innerHTML = `<span class="log-icon">${getIcon(type)}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${c} <span style="font-size:0.8em;opacity:0.8">(${info})</span></span><span class="log-size">${size}</span>`; logArea.appendChild(div); logArea.scrollTop=logArea.scrollHeight; }
-    function getIcon(t) { return t==='success'?'✅':t==='error'?'❌':t==='skip'?'⏩':'ℹ️'; }
-    function clearLog() { logArea.innerHTML = ''; }
-    function updateProgress(p, t) { progressBar.style.width=p+"%"; document.getElementById('progressPercent').innerText=p+"%"; document.getElementById('progressText').innerText=t; }
-    function startTimer() { const s = Date.now(); timerInterval = setInterval(() => { const d = Math.floor((Date.now()-s)/1000); timerDisplay.innerText = new Date(d*1000).toISOString().substr(11,8); }, 1000); }
-    function stopTimer() { clearInterval(timerInterval); }
-    function formatBytes(b) { if(b===0)return '0 B'; var k=1024,i=Math.floor(Math.log(b)/Math.log(k)); return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+['B','KB','MB','GB','TB'][i]; }
-    function parseBytesToNum(s) { if (!s) return 0; var parts = s.split(' '), u = {'KB':1024,'MB':1024**2,'GB':1024**3}; return parseFloat(parts[0]) * (u[parts[1]]||1); }
-    function launchConfetti() { if(typeof confetti !== 'undefined') { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } }
-    function showFinalReport(s, f, tf, tb, links) {
-        let lh = links.length ? `<div style="margin-top:15px; border-top:1px solid #333; padding-top:10px; max-height:100px; overflow-y:auto;">` + links.map(l => `<div style="margin-bottom:5px;"><a href="${l.url}" target="_blank" style="color:#00d2ff; text-decoration:none;">🔗 ${l.name}</a></div>`).join('') + `</div>` : '';
-        Swal.fire({ title: '🎉 Selesai', html: `<table class="swal-table"><tr><td>Sukses</td><td>${s}</td></tr><tr><td>Gagal</td><td>${f}</td></tr><tr><td>Total File</td><td>${tf}</td></tr><tr><td>Ukuran</td><td>${formatBytes(tb)}</td></tr></table>${lh}`, background: '#111', color: '#fff' });
-    }
-    
-    // UI Toggles
-    function setMode(m) { document.getElementById('advancedSection').style.display = m==='simple'?'none':'block'; document.getElementById('btnSimple').className=m==='simple'?'mode-btn active':'mode-btn'; document.getElementById('btnAdvance').className=m==='advance'?'mode-btn active':'mode-btn'; document.getElementById('modeHighlighter').style.transform=m==='simple'?'translateX(0)':'translateX(100%)'; }
-    function toggleRenameInput() { document.getElementById('renameInputContainer').style.display = document.getElementById('duplicateMode').value.startsWith('rename')?'block':'none'; }
-    
-    // Add Schedule
-    document.getElementById('addScheduleBtn').addEventListener('click', async () => {
-       const res = await sendRequest({ action: 'add_schedule_item', pin: accessPinInput.value, label: document.getElementById('scheduleLabel').value, config: { urls: folderUrlsInput.value.split('\n'), destUrl: destUrlInput.value, maxBackups: 30 } });
-       if(res.status==='success') refreshScheduleList(); else Swal.fire('Error', res.message, 'error');
-    });
 
-    tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.2 }, size: { value: 3 }, move: { enable: true, speed: 1 } } });
+    function addLog(m, t) {
+        const l = document.getElementById('logArea');
+        l.innerHTML += `<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}; margin-bottom:5px;">${m}</div>`;
+        l.scrollTop = l.scrollHeight;
+    }
+
+    tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.1 }, size: { value: 3 }, move: { enable: true, speed: 0.5 } } });
 </script>
 </body>
 </html>
