@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 14.0 (Clone, Upload Picker, Remote, & Targeted Search)
+  VERSION: 14.1 (Fix: Remote Detection & Source Browsing Restored)
   ============================================================================
 -->
 <html lang="id">
@@ -56,6 +56,17 @@
         button.main-btn { width: 100%; padding: 15px; border-radius: 10px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
         button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
 
+        /* REMOTE DETECTED BADGE (NEW) */
+        .remote-badge {
+            display: none; width: 100%; padding: 10px; box-sizing: border-box;
+            background: rgba(46, 213, 115, 0.2); border: 1px solid #2ed573; color: #2ed573;
+            border-radius: 8px; margin-bottom: 10px; cursor: pointer; text-align: center;
+            font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
+            animation: pulse 2s infinite;
+        }
+        .remote-badge:hover { background: rgba(46, 213, 115, 0.4); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
+
         .upload-box { border: 2px dashed #00d2ff; border-radius: 15px; padding: 30px; text-align: center; background: rgba(0, 210, 255, 0.05); cursor: pointer; margin-bottom: 15px; transition: 0.3s; }
         .upload-box:hover { border-color: #ff00de; background: rgba(0, 210, 255, 0.1); }
 
@@ -63,6 +74,7 @@
         .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
         .picker-item { padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; text-align: left; }
         .picker-item:hover { background: rgba(255,255,255,0.1); }
+        .picker-checkbox { width: 18px; height: 18px; accent-color: #00d2ff; cursor: pointer; margin-right: 10px; }
         .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
         .picker-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; color: #888; transition: all 0.2s; }
         .picker-tab.active { background: #00d2ff; color: #fff; font-weight: bold; }
@@ -103,7 +115,7 @@
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v14.0)</p>
+    <p class="subtitle">Full Integrated System (v14.1)</p>
     
     <div class="tab-nav">
         <button class="tab-btn active" id="btnTabClone" onclick="switchTab('clone')">☁️ Clone</button>
@@ -124,7 +136,13 @@
                <button onclick="openSavedItems()" style="font-size:0.7rem; background:#e1b12c; border:none; padding:2px 8px; border-radius:4px; cursor:pointer;">📂 Item Tersimpan</button>
                <button onclick="saveCurrentLink()" style="font-size:0.7rem; background:#0984e3; border:none; padding:2px 8px; border-radius:4px; cursor:pointer; color:white;">💾 Simpan Link</button>
             </div>
-            <textarea id="folderUrls" placeholder="Paste link folder/file G-Drive di sini..." style="height:100px;"></textarea>
+            
+            <!-- DETECTED BADGE -->
+            <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">
+                📡 Server Remote Terdeteksi! Klik untuk Jelajah
+            </div>
+
+            <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B) di sini..." style="height:100px;"></textarea>
         </div>
         
         <div class="form-group">
@@ -216,8 +234,10 @@
     // GANTI URL INI DENGAN DEPLOYMENT WEB APP ANDA
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVMco1a7VA7GkY6OyxFm239RXZlqMsTUy9kheMJthucelNETE9Zu9B9jqMB9mgyWbr/exec"; 
     
-    // Variabel untuk melacak dari mana Picker dibuka: 'clone', 'upload', atau 'search_source'
+    // Global Vars
     let activePickerMode = 'clone'; 
+    let detectedRemoteUrl = null;
+    let selectedRemoteSourceItems = [];
 
     function switchTab(mode) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -239,13 +259,102 @@
         }
     }
 
-    // --- PICKER SYSTEM (GENERIC) ---
+    // --- SMART DETECTION LOGIC ---
+    const detectRemote = () => {
+        const val = document.getElementById('folderUrls').value;
+        const scriptRegex = /https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i;
+        const match = val.match(scriptRegex);
+        const panel = document.getElementById('remoteDetectedPanel');
+
+        if (match) {
+            detectedRemoteUrl = match[0];
+            panel.style.display = 'block';
+        } else {
+            detectedRemoteUrl = null;
+            panel.style.display = 'none';
+        }
+    };
+    
+    document.getElementById('folderUrls').addEventListener('input', detectRemote);
+    document.getElementById('folderUrls').addEventListener('change', detectRemote);
+    document.getElementById('folderUrls').addEventListener('paste', () => setTimeout(detectRemote, 100));
+
+    // --- REMOTE SOURCE PICKER (Pilih File untuk Clone) ---
+    window.openRemoteSourcePicker = function() {
+        if (!detectedRemoteUrl) return;
+        selectedRemoteSourceItems = [];
+        Swal.fire({
+            title: 'Jelajah Server Remote',
+            html: `<div id="remoteSourcePickerContent" style="text-align:left; min-height:200px;">Loading...</div>`,
+            showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
+            didOpen: () => { loadRemoteSourceContent('root'); }
+        });
+    };
+
+    async function loadRemoteSourceContent(parentId) {
+        const container = document.getElementById('remoteSourcePickerContent');
+        if(!container) return;
+        try {
+            const res = await fetch(detectedRemoteUrl, { method:'POST', body:JSON.stringify({ action:'browse_remote', parentId:parentId }) });
+            const data = await res.json();
+            if(data.status==='success') {
+                let html = `
+                    <div class="picker-header">
+                        <div style="font-weight:bold; color:#2ed573;">📂 ${data.currentName}</div>
+                        ${data.parentId ? `<div style="cursor:pointer; color:#f4b400;" onclick="loadRemoteSourceContent('${data.parentId}')">⬅ Back</div>` : ''}
+                    </div>
+                    <div class="picker-container" style="max-height:250px; overflow-y:auto;">`;
+                
+                data.items.forEach(f => {
+                    const icon = f.type==='folder'?'📁':'📄';
+                    const nav = f.type==='folder' ? `onclick="loadRemoteSourceContent('${f.id}')"` : '';
+                    const cursor = f.type==='folder' ? 'cursor:pointer;' : '';
+                    html += `
+                    <div class="picker-item">
+                        <input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
+                        <span style="flex:1; margin-left:5px; ${cursor}" ${nav}>${icon} ${f.name}</span>
+                    </div>`;
+                });
+                html += `</div>
+                <div style="margin-top:15px; text-align:center;">
+                    <button style="background:#2ed573; padding:10px; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold;" onclick="confirmRemoteSelection()">✅ Tambahkan Item Terpilih</button>
+                </div>`;
+                container.innerHTML = html;
+            } else { container.innerText = data.message; }
+        } catch(e) { container.innerText = e.message; }
+    }
+
+    window.toggleRemoteSelect = function(cb) {
+        if(cb.checked) selectedRemoteSourceItems.push(cb.value);
+        else selectedRemoteSourceItems = selectedRemoteSourceItems.filter(id => id !== cb.value);
+    };
+
+    window.confirmRemoteSelection = async function() {
+        if(selectedRemoteSourceItems.length === 0) return Swal.showValidationMessage("Pilih minimal satu item!");
+        
+        // Auto Unlock
+        const container = document.getElementById('remoteSourcePickerContent');
+        container.innerHTML = `<div style="text-align:center; padding:20px;">🔓 Membuka izin akses (${selectedRemoteSourceItems.length} item)...</div>`;
+        
+        try {
+            await fetch(detectedRemoteUrl, { method:'POST', body:JSON.stringify({ action:'unlock_files', ids:selectedRemoteSourceItems }) });
+            
+            // Generate Links
+            let newLinks = selectedRemoteSourceItems.map(id => `https://drive.google.com/file/d/${id}/view`).join('\n');
+            const ta = document.getElementById('folderUrls');
+            ta.value = ta.value + (ta.value ? '\n' : '') + newLinks;
+            
+            Swal.close();
+            Swal.fire({ icon:'success', title:'Berhasil', text:'Link berhasil ditambahkan & di-unlock.', timer:1500, showConfirmButton:false });
+        } catch(e) { Swal.fire('Error', e.message, 'error'); }
+    };
+
+    // --- PICKER SYSTEM (GENERIC DESTINATION) ---
     function openDestPicker(mode) {
         activePickerMode = mode; 
         const pin = document.getElementById('accessPin').value;
         if(!pin) return Swal.fire('Error', 'PIN belum diisi', 'error');
         
-        // Tentukan judul modal
         let title = "Pilih Folder Tujuan";
         if(mode === 'search_source') title = "Pilih Lokasi Pencarian";
 
@@ -294,7 +403,6 @@
                     html += `<div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
                 });
                 
-                // Text tombol menyesuaikan konteks
                 let btnText = "🎯 Pilih Folder Ini";
                 if(activePickerMode === 'search_source') btnText = "🔍 Cari di Folder Ini";
 
@@ -316,7 +424,6 @@
         }
     }
 
-    // LOGIKA SELECT: Memasukkan ID ke input yang sesuai
     window.selectLocalDest = function(id, name) {
         if (activePickerMode === 'clone') {
             document.getElementById('destUrl').value = `https://drive.google.com/drive/folders/${id}`;
@@ -334,7 +441,7 @@
         Swal.fire({ icon:'success', title: msg, text: `Folder: ${name}`, timer: 1500, showConfirmButton:false });
     };
 
-    // --- REMOTE PICKER LOGIC ---
+    // --- REMOTE PICKER LOGIC (DESTINATION) ---
     async function loadSavedRemotes(pin) {
         const container = document.getElementById('destPickerContent');
         const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
@@ -370,7 +477,6 @@
                     <div style="max-height:200px; overflow-y:auto; text-align:left;">`;
                 data.items.forEach(f => { if (f.type === 'folder') html += `<div class="picker-item" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>`; });
                 
-                // Remote hanya untuk Clone Destination
                 let btnHtml = '';
                 if(activePickerMode === 'clone') {
                     btnHtml = `<button style="background:#0984e3; padding:8px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer;" 
@@ -418,7 +524,6 @@
         
         let h = '';
         if(d.status==='success') {
-            // Tampilkan info lokasi pencarian di hasil
             if (d.results.length > 0) {
                  d.results.forEach(f => {
                     h += `<div class="search-item">
