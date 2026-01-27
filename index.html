@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 18.1 (Full Features Verified & Expanded for Readability)
+  VERSION: 18.2 (Added: Delete Button in Pickers & UI Refinements)
   ============================================================================
 -->
 <html lang="id">
@@ -109,10 +109,19 @@
         /* --- PICKER MODAL STYLES --- */
         .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .picker-item {
-            padding: 10px; border-radius: 5px; cursor: pointer; display: flex; align-items: center;
+            padding: 10px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between;
             gap: 10px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; text-align: left;
         }
         .picker-item:hover { background: rgba(255,255,255,0.1); }
+        
+        /* New Picker Delete Button */
+        .btn-del-picker {
+            background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757;
+            padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .btn-del-picker:hover { background: #ff4757; color: white; }
+
         .picker-checkbox { width: 18px; height: 18px; accent-color: #00d2ff; cursor: pointer; margin-right: 10px; }
         
         .picker-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 5px; }
@@ -176,7 +185,7 @@
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v18.1)</p>
+    <p class="subtitle">Full Integrated System (v18.2)</p>
     
     <!-- 2. TAB NAVIGATION -->
     <div class="tab-nav">
@@ -386,10 +395,57 @@
             const pin = document.getElementById('accessPin').value;
             const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type, pin:pin }) });
             const d = await res.json();
-            if(d.status === 'success') { Swal.fire('Terhapus!', d.message, 'success'); searchDrive(); }
+            if(d.status === 'success') { 
+                Swal.fire('Terhapus!', d.message, 'success'); 
+                // Jika sedang di Search, refresh search
+                if(document.getElementById('searchResults').innerHTML.includes(id)) {
+                     searchDrive();
+                }
+            }
             else Swal.fire('Gagal', d.message, 'error');
         }
     }
+
+    // --- NEW: DELETE INSIDE PICKER FUNCTION ---
+    // Fungsi ini menangani penghapusan langsung dari dalam jendela Picker (Local & Remote)
+    async function deleteInsidePicker(id, type, name, mode, parentId, remoteUrl = null, remoteLabel = null) {
+        // Stop bubbling (mencegah klik folder terpilih saat klik tombol hapus)
+        const result = await Swal.fire({ 
+            title: `Hapus ${type === 'folder' ? 'Folder' : 'File'}?`, 
+            text: `Hapus "${name}" permanen dari tampilan ini?`, 
+            icon: 'warning', 
+            showCancelButton: true, 
+            confirmButtonColor: '#d33', 
+            confirmButtonText: 'Ya, Hapus' 
+        });
+
+        if (result.isConfirmed) {
+            const pin = document.getElementById('accessPin').value;
+            let res;
+            
+            if (mode === 'local') {
+                res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type, pin:pin }) });
+            } else {
+                // Remote Mode
+                res = await fetch(remoteUrl, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type }) });
+            }
+
+            const d = await res.json();
+            
+            if (d.status === 'success') {
+                Swal.fire({ title: 'Terhapus', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                // Refresh Picker Content based on Mode
+                if (mode === 'local') {
+                    loadLocalPicker(parentId, pin);
+                } else {
+                    loadRemoteDestContent(remoteUrl, parentId, remoteLabel);
+                }
+            } else {
+                Swal.fire('Gagal', d.message, 'error');
+            }
+        }
+    }
+
 
     // --- REMOTE SOURCE PICKER & REMOTE DELETE ---
     const detectRemote = () => {
@@ -446,8 +502,10 @@
                     
                     html += `
                     <div class="picker-item">
-                        <input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
-                        <span style="flex:1; margin-left:5px; ${cursor}" ${nav}>${icon} ${f.name} <small style="color:#888;">(${f.size})</small></span>
+                        <div style="display:flex; align-items:center; flex:1;">
+                            <input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
+                            <span style="flex:1; margin-left:5px; ${cursor}" ${nav}>${icon} ${f.name} <small style="color:#888;">(${f.size})</small></span>
+                        </div>
                         <button class="btn-del-search" style="padding:2px 8px; font-size:0.7rem;" onclick="deleteRemoteItem('${f.id}', '${f.type}', '${nameSafe}', '${parentId}')">🗑️</button>
                     </div>`;
                 });
@@ -532,6 +590,7 @@
         else loadSavedRemotes(pin);
     };
 
+    // --- MODIFIED LOCAL PICKER WITH DELETE BUTTON ---
     async function loadLocalPicker(parentId, pin) {
         const container = document.getElementById('destPickerContent');
         container.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
@@ -554,7 +613,13 @@
                 if(data.folders.length === 0) html += `<div style="padding:10px; color:#666; text-align:center;">Folder kosong</div>`;
                 
                 data.folders.forEach(f => {
-                    html += `<div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
+                    // Update: Ditambahkan tombol delete mini
+                    const safeName = f.name.replace(/'/g, "");
+                    html += `
+                    <div class="picker-item">
+                        <div style="flex:1; cursor:pointer;" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>
+                        <button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}', 'folder', '${safeName}', 'local', '${parentId}')">🗑️</button>
+                    </div>`;
                 });
                 
                 let btnText = "🎯 Pilih Folder Ini";
@@ -618,6 +683,7 @@
         loadRemoteDestContent(url, 'root', label);
     };
 
+    // --- MODIFIED REMOTE PICKER WITH DELETE BUTTON ---
     async function loadRemoteDestContent(url, parentId, label) {
         const container = document.getElementById('destPickerContent');
         try {
@@ -633,7 +699,15 @@
                     <div style="max-height:250px; overflow-y:auto; text-align:left;">`;
                 
                 data.items.forEach(f => { 
-                    if (f.type === 'folder') html += `<div class="picker-item" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>`; 
+                    const safeName = f.name.replace(/'/g, "");
+                    // Update: Tombol delete mini untuk Remote juga
+                    if (f.type === 'folder') {
+                        html += `
+                        <div class="picker-item">
+                           <div style="flex:1; cursor:pointer;" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>
+                           <button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}', 'folder', '${safeName}', 'remote', '${parentId}', '${url}', '${label}')">🗑️</button>
+                        </div>`; 
+                    }
                 });
                 
                 let btnHtml = '';
