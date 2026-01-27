@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 16.0 (Added: Direct Upload to Remote Client Support)
+  VERSION: 18.1 (Full Features Verified & Expanded for Readability)
   ============================================================================
 -->
 <html lang="id">
@@ -11,112 +11,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-Drive Ultimate Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.0/tsparticles.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
+        /* --- CORE THEME --- */
         :root {
-            --primary: #00d2ff; --secondary: #ff00de;
-            --glass-bg: rgba(20, 20, 30, 0.75); --glass-border: rgba(255, 255, 255, 0.1);
-            --text-color: #ffffff; --input-bg: rgba(0, 0, 0, 0.5);
+            --primary: #00d2ff; 
+            --secondary: #ff00de;
+            --glass-bg: rgba(20, 20, 30, 0.85); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff; 
+            --input-bg: rgba(0, 0, 0, 0.5);
         }
         body {
             font-family: 'Poppins', sans-serif;
-            background: #0f0c29; background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            margin: 0; padding: 20px; color: var(--text-color); overflow-x: hidden; position: relative;
+            background: #0f0c29; 
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; padding: 20px; 
+            color: var(--text-color); overflow-x: hidden; position: relative;
         }
         #tsparticles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
         
+        /* --- CONTAINER --- */
         .container {
             position: relative; z-index: 1; background: var(--glass-bg);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            padding: 2rem; border-radius: 20px; border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 650px;
+            padding: 2.5rem; border-radius: 20px; border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 680px;
             animation: fadeIn 0.8s ease-out; opacity: 0; transition: opacity 1s;
         }
         .container.visible { opacity: 1; }
 
-        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; text-align: center; background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; margin-bottom: 1.5rem; }
+        h1 {
+            font-size: 2rem; margin-bottom: 0.5rem; text-align: center;
+            background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 2rem; }
 
-        .tab-nav { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        .tab-btn { background: transparent; border: none; color: #888; font-weight: 600; padding: 10px 15px; cursor: pointer; transition: 0.3s; font-size: 0.85rem; border-bottom: 2px solid transparent; flex: 1; }
+        /* --- TABS --- */
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .tab-btn {
+            background: transparent; border: none; color: #888; font-weight: 600; 
+            padding: 10px 15px; cursor: pointer; transition: 0.3s; 
+            font-size: 0.9rem; border-bottom: 2px solid transparent; flex: 1;
+        }
         .tab-btn.active { color: #00d2ff; border-bottom-color: #00d2ff; background: rgba(0,210,255,0.05); }
 
-        .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.6rem; color: #d1d8e0; font-size: 0.8rem; font-weight: 500; }
-        input, textarea, select { width: 100%; padding: 12px 15px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: 10px; font-size: 0.9rem; color: white; box-sizing: border-box; }
-        
+        /* --- FORMS --- */
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.8rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
+        input, textarea, select {
+            width: 100%; padding: 12px 15px; background: var(--input-bg);
+            border: 1px solid var(--glass-border); border-radius: 10px;
+            font-size: 0.9rem; color: white; box-sizing: border-box;
+        }
         .input-group { display: flex; gap: 10px; }
-        .btn-picker { width: auto !important; white-space: nowrap; background: #6c5ce7; padding: 0 20px !important; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; border: none; color: white; }
+        
+        .btn-picker {
+            width: auto !important; white-space: nowrap; background: #6c5ce7; 
+            padding: 0 20px !important; display: flex; align-items: center; justify-content: center; 
+            border-radius: 10px; cursor: pointer; border: none; color: white; transition: 0.3s;
+        }
         .btn-picker:hover { background: #5649c0; }
 
-        button.main-btn { width: 100%; padding: 15px; border-radius: 10px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        button.main-btn {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff;
+            font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            font-size: 1rem; letter-spacing: 1px;
+        }
         button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
 
-        /* REMOTE DETECTED BADGE */
+        /* --- SPECIAL BADGES --- */
         .remote-badge {
-            display: none; width: 100%; padding: 10px; box-sizing: border-box;
-            background: rgba(46, 213, 115, 0.2); border: 1px solid #2ed573; color: #2ed573;
-            border-radius: 8px; margin-bottom: 10px; cursor: pointer; text-align: center;
+            display: none; width: 100%; padding: 12px; box-sizing: border-box;
+            background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573;
+            border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center;
             font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
             animation: pulse 2s infinite;
         }
-        .remote-badge:hover { background: rgba(46, 213, 115, 0.4); }
+        .remote-badge:hover { background: rgba(46, 213, 115, 0.3); }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
 
-        .upload-box { border: 2px dashed #00d2ff; border-radius: 15px; padding: 30px; text-align: center; background: rgba(0, 210, 255, 0.05); cursor: pointer; margin-bottom: 15px; transition: 0.3s; }
+        /* --- UPLOAD AREA --- */
+        .upload-box {
+            border: 2px dashed #00d2ff; border-radius: 15px; padding: 40px; text-align: center;
+            background: rgba(0, 210, 255, 0.05); cursor: pointer; margin-bottom: 15px; transition: 0.3s;
+        }
         .upload-box:hover { border-color: #ff00de; background: rgba(0, 210, 255, 0.1); }
 
-        /* PICKER STYLES */
-        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .picker-item { padding: 8px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; text-align: left; }
+        /* --- PICKER MODAL STYLES --- */
+        .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .picker-item {
+            padding: 10px; border-radius: 5px; cursor: pointer; display: flex; align-items: center;
+            gap: 10px; transition: background 0.2s; border: 1px solid transparent; color: #ddd; text-align: left;
+        }
         .picker-item:hover { background: rgba(255,255,255,0.1); }
         .picker-checkbox { width: 18px; height: 18px; accent-color: #00d2ff; cursor: pointer; margin-right: 10px; }
-        .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        
+        .picker-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 5px; }
         .picker-tab { padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; color: #888; transition: all 0.2s; }
         .picker-tab.active { background: #00d2ff; color: #fff; font-weight: bold; }
 
-        /* SEARCH STYLES */
-        .search-results { max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 10px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .search-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; }
-        .btn-add-search { background: #2ed573; border: none; color: #fff; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        /* --- SEARCH RESULTS --- */
+        .search-results {
+            max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.4);
+            border-radius: 10px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; }
+        .btn-add-search { background: #2ed573; border: none; color: #fff; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; font-weight: bold; }
+        .btn-del-search { background: #ff4757; border: none; color: #fff; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; }
 
-        .log-area { margin-top: 15px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; font-size: 0.75rem; font-family: monospace; }
+        /* --- LOGGING --- */
+        .log-area {
+            margin-top: 20px; max-height: 150px; overflow-y: auto; 
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; 
+            font-size: 0.8rem; font-family: 'Courier New', monospace; border: 1px solid rgba(255,255,255,0.05);
+        }
         
-        #loginOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,12,41,0.98); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(10px); }
-        .login-box { background:rgba(255,255,255,0.05); padding:40px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; width:300px; }
-        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        /* --- LOGIN OVERLAY --- */
+        #loginOverlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background:rgba(15,12,41,0.98); z-index:9999; 
+            display:flex; justify-content:center; align-items:center; backdrop-filter:blur(10px);
+        }
+        .login-box {
+            background:rgba(255,255,255,0.05); padding:50px; border-radius:20px; 
+            border:1px solid rgba(255,255,255,0.1); text-align:center; width:350px;
+        }
         
-        /* Advanced Settings Toggle */
+        /* --- ADVANCED TOGGLES --- */
         .toggle-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #2ed573; } input:checked + .slider:before { transform: translateX(26px); }
-        .advanced-section { display: none; margin-bottom: 20px; animation: slideDown 0.3s ease-out; border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; } 
+        .switch input { opacity: 0; width: 0; height: 0; } 
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; } 
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; } 
+        input:checked + .slider { background-color: #2ed573; } 
+        input:checked + .slider:before { transform: translateX(26px); }
+        .advanced-section { display: none; margin-bottom: 20px; animation: slideDown 0.3s ease-out; border:1px solid rgba(255,255,255,0.1); padding:20px; border-radius:10px; background:rgba(0,0,0,0.2); }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        ::-webkit-scrollbar { width: 6px; } 
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div id="tsparticles"></div>
 
+<!-- 1. LOGIN SYSTEM -->
 <div id="loginOverlay">
     <div class="login-box">
-        <h2 style="color:#00d2ff; margin-bottom:10px;">🔐 Akses Terkunci</h2>
-        <input type="password" id="gatePinInput" placeholder="PIN" style="text-align:center; font-size:1.5rem; letter-spacing:5px; background:rgba(0,0,0,0.5); color:white; border:1px solid #444; padding:10px; border-radius:5px; width:100%;">
-        <button onclick="unlockSite()" class="main-btn" style="margin-top:15px;">Masuk</button>
+        <h2 style="color:#00d2ff; margin-bottom:15px;">🔐 Akses Terkunci</h2>
+        <input type="password" id="gatePinInput" placeholder="PIN" style="text-align:center; font-size:1.5rem; letter-spacing:5px; background:rgba(0,0,0,0.5); color:white; border:1px solid #444; padding:15px; border-radius:10px; width:100%;">
+        <button onclick="unlockSite()" class="main-btn" style="margin-top:20px;">Masuk</button>
     </div>
 </div>
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v16.0)</p>
+    <p class="subtitle">Full Integrated System (v18.1)</p>
     
+    <!-- 2. TAB NAVIGATION -->
     <div class="tab-nav">
         <button class="tab-btn active" id="btnTabClone" onclick="switchTab('clone')">☁️ Clone</button>
         <button class="tab-btn" id="btnTabUpload" onclick="switchTab('upload')">📤 Upload</button>
@@ -128,21 +190,21 @@
         <input type="password" id="accessPin" placeholder="PIN Keamanan">
     </div>
 
-    <!-- PANEL 1: CLONING -->
+    <!-- 3. PANEL CLONE -->
     <div id="panelClone">
         <div class="form-group">
             <label>Link Sumber (Daftar Link)</label>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-               <button onclick="openSavedItems()" style="font-size:0.7rem; background:#e1b12c; border:none; padding:2px 8px; border-radius:4px; cursor:pointer;">📂 Item Tersimpan</button>
-               <button onclick="saveCurrentLink()" style="font-size:0.7rem; background:#0984e3; border:none; padding:2px 8px; border-radius:4px; cursor:pointer; color:white;">💾 Simpan Link</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+               <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Item Tersimpan</button>
+               <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Simpan Link</button>
             </div>
             
-            <!-- DETECTED BADGE -->
+            <!-- Badge Remote Detection -->
             <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">
-                📡 Server Remote Terdeteksi! Klik untuk Jelajah
+                📡 Server Remote Terdeteksi! Klik untuk Jelajah & Pilih File
             </div>
 
-            <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B) di sini..." style="height:100px;"></textarea>
+            <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B) di sini..." style="height:120px; font-family:monospace;"></textarea>
         </div>
         
         <div class="form-group">
@@ -153,8 +215,10 @@
             </div>
         </div>
 
-        <!-- Advanced Toggle -->
-        <div style="text-align:center; margin-bottom:10px; cursor:pointer; color:#00d2ff; font-size:0.8rem;" onclick="document.getElementById('advSec').style.display=document.getElementById('advSec').style.display==='block'?'none':'block'">🛠️ Pengaturan Lanjutan ▼</div>
+        <!-- Advanced Options Toggle -->
+        <div style="text-align:center; margin-bottom:15px; cursor:pointer; color:#00d2ff; font-size:0.85rem;" onclick="toggleAdvanced()">
+            🛠️ Pengaturan Lanjutan ▼
+        </div>
         
         <div class="advanced-section" id="advSec">
             <div class="form-group">
@@ -175,26 +239,28 @@
                 <input type="text" id="emailNotif" placeholder="email@gmail.com">
             </div>
             <div class="form-group">
-                <label>Buat Jadwal (Schedule)</label>
+                <label>Buat Jadwal (Auto-Backup)</label>
                 <div class="input-group">
                    <input type="text" id="schedLabel" placeholder="Nama Jadwal">
                    <button class="btn-picker" style="background:#20bf6b;" onclick="createSchedule()">➕ Add</button>
                 </div>
-                <div style="margin-top:5px; font-size:0.75rem; color:#aaa; cursor:pointer;" onclick="showScheduleList()">📅 Lihat Daftar Jadwal</div>
+                <div style="margin-top:8px; font-size:0.8rem; color:#aaa; cursor:pointer; text-decoration:underline;" onclick="showScheduleList()">📅 Lihat Daftar Jadwal</div>
             </div>
         </div>
 
         <button class="main-btn" onclick="startCloning()">Mulai Cloning 🚀</button>
     </div>
 
-    <!-- PANEL 2: UPLOAD (UPDATED WITH REMOTE SUPPORT) -->
+    <!-- 4. PANEL UPLOAD -->
     <div id="panelUpload" style="display:none;">
         <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-            <span style="font-size:2rem;">☁️</span>
-            <p>Pilih atau Tarik File ke Sini</p>
+            <span style="font-size:3rem;">☁️</span>
+            <p style="margin-top:10px;">Pilih atau Tarik File ke Sini</p>
             <input type="file" id="fileInput" style="display:none" multiple onchange="handleFileSelect(this)">
         </div>
-        <div id="uploadList" style="margin-bottom:15px; font-size:0.8rem; color:#aaa; text-align:center;">Belum ada file dipilih</div>
+        <div id="uploadList" style="margin-bottom:20px; font-size:0.85rem; color:#aaa; text-align:center;">
+            Belum ada file dipilih
+        </div>
         
         <div class="form-group">
             <label>Upload ke Folder</label>
@@ -202,13 +268,16 @@
                 <input type="text" id="uploadDestId" placeholder="ID/Link Folder Tujuan (Default: Root)">
                 <button type="button" class="btn-picker" onclick="openDestPicker('upload')">📂 Pilih</button>
             </div>
-            <div id="uploadTargetLabel" style="font-size:0.75rem; color:#f4b400; margin-top:5px; display:none;">⚠️ Target: Remote Server B</div>
+            <!-- Indicator for Remote Upload -->
+            <div id="uploadTargetLabel" style="font-size:0.8rem; color:#f4b400; margin-top:5px; display:none; background:rgba(244,180,0,0.1); padding:5px; border-radius:5px;">
+                ⚠️ Target: Remote Server B
+            </div>
         </div>
         
         <button class="main-btn" id="btnUploadNow" onclick="startUpload()" disabled>Upload File 📤</button>
     </div>
 
-    <!-- PANEL 3: SEARCH -->
+    <!-- 5. PANEL SEARCH -->
     <div id="panelSearch" style="display:none;">
         <div class="form-group">
             <label>Lokasi Pencarian</label>
@@ -216,7 +285,7 @@
                 <input type="text" id="searchLocName" placeholder="Seluruh Drive (Default)" readonly style="background:#2f3542; cursor:not-allowed;">
                 <input type="hidden" id="searchLocId" value="root">
                 <button class="btn-picker" onclick="openDestPicker('search_source')">📂 Filter Lokasi</button>
-                <button class="btn-picker" style="background:#ff4757; width:50px;" onclick="resetSearchLoc()">X</button>
+                <button class="btn-picker" style="background:#ff4757; width:60px;" onclick="resetSearchLoc()">Reset</button>
             </div>
         </div>
 
@@ -224,73 +293,128 @@
             <input type="text" id="searchInput" placeholder="Nama file/folder yang dicari..." onkeypress="if(event.key==='Enter') searchDrive()">
             <button class="btn-picker" onclick="searchDrive()" style="background:#00d2ff;">Cari</button>
         </div>
+        
         <div id="searchResults" class="search-results"></div>
     </div>
 
-    <!-- LOGGING -->
-    <div class="log-area" id="logArea"></div>
+    <!-- 6. LOGGING AREA -->
+    <div class="log-area" id="logArea">
+        <div>Ready to serve...</div>
+    </div>
 </div>
 
 <script>
-    // GANTI URL INI DENGAN DEPLOYMENT WEB APP ANDA
+    // --- KONFIGURASI SCRIPT UTAMA ---
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVMco1a7VA7GkY6OyxFm239RXZlqMsTUy9kheMJthucelNETE9Zu9B9jqMB9mgyWbr/exec"; 
     
-    // Global Vars
-    let activePickerMode = 'clone'; 
+    // Global Variables
+    let activePickerMode = 'clone'; // clone, upload, search_source
     let detectedRemoteUrl = null;
     let selectedRemoteSourceItems = [];
-    
-    // NEW: Variabel untuk menyimpan URL tujuan Upload (Local atau Remote)
     let uploadTargetUrl = SCRIPT_URL; 
 
+    // --- UI HELPERS ---
     function switchTab(mode) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btnTab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
         ['clone', 'upload', 'search'].forEach(m => document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display = (m===mode?'block':'none'));
     }
+    
+    function toggleAdvanced() {
+        const sec = document.getElementById('advSec');
+        sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
+    }
 
     async function unlockSite() {
         const pin = document.getElementById('gatePinInput').value;
         if(!pin) return;
+        
+        // Show Loading
+        document.querySelector('#loginOverlay h2').innerText = "Memverifikasi...";
+        
         const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
         const d = await res.json();
+        
         if(d.status === 'success') {
             document.getElementById('accessPin').value = pin;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainContainer').classList.add('visible');
         } else {
+            document.querySelector('#loginOverlay h2').innerText = "Akses Terkunci";
             Swal.fire('Gagal', 'PIN Salah!', 'error');
         }
     }
 
-    // --- SMART DETECTION LOGIC ---
+    // --- FITUR SEARCH (Local) ---
+    async function searchDrive() {
+        const q = document.getElementById('searchInput').value;
+        const pin = document.getElementById('accessPin').value;
+        const parentId = document.getElementById('searchLocId').value;
+        
+        const div = document.getElementById('searchResults');
+        div.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">⏳ Mencari...</div>';
+        
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'search_drive', query:q, pin:pin, parentId: parentId }) });
+        const d = await res.json();
+        
+        let h = '';
+        if(d.status==='success' && d.results.length > 0) {
+            d.results.forEach(f => {
+                const type = f.mimeType==='folder'?'folder':'file';
+                const icon = type==='folder' ? '📁' : '📄';
+                const safeName = f.name.replace(/'/g,"");
+                
+                h += `<div class="search-item">
+                        <span style="font-size:1.5rem;">${icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; font-size:0.9rem;">${f.name}</div>
+                            <div style="font-size:0.75rem; color:#aaa;">${f.size} | ${f.date}</div>
+                        </div>
+                        <button class="btn-add-search" onclick="addToQueue('${f.url}', '${safeName}')">➕ Clone</button>
+                        <button class="btn-del-search" onclick="deleteLocalItem('${f.id}', '${type}', '${safeName}')">🗑️</button>
+                      </div>`;
+            });
+        } else {
+            h = '<div style="padding:20px; text-align:center; color:#aaa;">Tidak ditemukan hasil.</div>';
+        }
+        div.innerHTML = h;
+    }
+
+    async function deleteLocalItem(id, type, name) {
+        const result = await Swal.fire({ title: 'Hapus Item?', text: `Yakin ingin menghapus ${name}? Item akan masuk ke Trash.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus!' });
+        if (result.isConfirmed) {
+            const pin = document.getElementById('accessPin').value;
+            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type, pin:pin }) });
+            const d = await res.json();
+            if(d.status === 'success') { Swal.fire('Terhapus!', d.message, 'success'); searchDrive(); }
+            else Swal.fire('Gagal', d.message, 'error');
+        }
+    }
+
+    // --- REMOTE SOURCE PICKER & REMOTE DELETE ---
     const detectRemote = () => {
         const val = document.getElementById('folderUrls').value;
-        const scriptRegex = /https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i;
-        const match = val.match(scriptRegex);
+        const match = val.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
         const panel = document.getElementById('remoteDetectedPanel');
-
-        if (match) {
-            detectedRemoteUrl = match[0];
-            panel.style.display = 'block';
-        } else {
-            detectedRemoteUrl = null;
-            panel.style.display = 'none';
+        if (match) { 
+            detectedRemoteUrl = match[0]; 
+            panel.style.display = 'block'; 
+        } else { 
+            detectedRemoteUrl = null; 
+            panel.style.display = 'none'; 
         }
     };
     
     document.getElementById('folderUrls').addEventListener('input', detectRemote);
-    document.getElementById('folderUrls').addEventListener('change', detectRemote);
     document.getElementById('folderUrls').addEventListener('paste', () => setTimeout(detectRemote, 100));
 
-    // --- REMOTE SOURCE PICKER ---
     window.openRemoteSourcePicker = function() {
         if (!detectedRemoteUrl) return;
         selectedRemoteSourceItems = [];
         Swal.fire({
-            title: 'Jelajah Server Remote',
-            html: `<div id="remoteSourcePickerContent" style="text-align:left; min-height:200px;">Loading...</div>`,
-            showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
+            title: 'Jelajah Server Remote (Akun B)',
+            html: `<div id="remoteSourcePickerContent" style="text-align:left; min-height:250px;">Loading data...</div>`,
+            showConfirmButton: false, width: '650px', background: '#1a1a2e', color: '#fff',
             didOpen: () => { loadRemoteSourceContent('root'); }
         });
     };
@@ -298,34 +422,43 @@
     async function loadRemoteSourceContent(parentId) {
         const container = document.getElementById('remoteSourcePickerContent');
         if(!container) return;
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Mengambil data...</div>';
+        
         try {
             const res = await fetch(detectedRemoteUrl, { method:'POST', body:JSON.stringify({ action:'browse_remote', parentId:parentId }) });
             const data = await res.json();
+            
             if(data.status==='success') {
                 let html = `
                     <div class="picker-header">
                         <div style="font-weight:bold; color:#2ed573;">📂 ${data.currentName}</div>
-                        ${data.parentId ? `<div style="cursor:pointer; color:#f4b400;" onclick="loadRemoteSourceContent('${data.parentId}')">⬅ Back</div>` : ''}
+                        ${data.parentId ? `<div style="cursor:pointer; color:#f4b400; font-weight:bold;" onclick="loadRemoteSourceContent('${data.parentId}')">⬅ Back</div>` : ''}
                     </div>
-                    <div class="picker-container" style="max-height:250px; overflow-y:auto;">`;
+                    <div class="picker-container" style="max-height:300px; overflow-y:auto;">`;
+                
+                if(data.items.length === 0) html += '<div style="padding:20px; text-align:center; color:#666;">Folder Kosong</div>';
                 
                 data.items.forEach(f => {
                     const icon = f.type==='folder'?'📁':'📄';
                     const nav = f.type==='folder' ? `onclick="loadRemoteSourceContent('${f.id}')"` : '';
                     const cursor = f.type==='folder' ? 'cursor:pointer;' : '';
+                    const nameSafe = f.name.replace(/'/g, "");
+                    
                     html += `
                     <div class="picker-item">
                         <input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
-                        <span style="flex:1; margin-left:5px; ${cursor}" ${nav}>${icon} ${f.name}</span>
+                        <span style="flex:1; margin-left:5px; ${cursor}" ${nav}>${icon} ${f.name} <small style="color:#888;">(${f.size})</small></span>
+                        <button class="btn-del-search" style="padding:2px 8px; font-size:0.7rem;" onclick="deleteRemoteItem('${f.id}', '${f.type}', '${nameSafe}', '${parentId}')">🗑️</button>
                     </div>`;
                 });
+                
                 html += `</div>
-                <div style="margin-top:15px; text-align:center;">
-                    <button style="background:#2ed573; padding:10px; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold;" onclick="confirmRemoteSelection()">✅ Tambahkan Item Terpilih</button>
+                <div style="margin-top:15px; text-align:center; border-top:1px solid #444; padding-top:10px;">
+                    <button style="background:#2ed573; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold;" onclick="confirmRemoteSelection()">✅ Tambahkan & Unlock Terpilih</button>
                 </div>`;
                 container.innerHTML = html;
-            } else { container.innerText = data.message; }
-        } catch(e) { container.innerText = e.message; }
+            } else { container.innerText = "Error: " + data.message; }
+        } catch(e) { container.innerText = "Connection Error: " + e.message; }
     }
 
     window.toggleRemoteSelect = function(cb) {
@@ -337,22 +470,39 @@
         if(selectedRemoteSourceItems.length === 0) return Swal.showValidationMessage("Pilih minimal satu item!");
         
         const container = document.getElementById('remoteSourcePickerContent');
-        container.innerHTML = `<div style="text-align:center; padding:20px;">🔓 Membuka izin akses (${selectedRemoteSourceItems.length} item)...</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:30px;">
+            <h3>🔓 Memproses...</h3>
+            <p>Membuka izin akses & Membuat link (${selectedRemoteSourceItems.length} item)</p>
+        </div>`;
         
         try {
+            // Unlock di sisi remote
             await fetch(detectedRemoteUrl, { method:'POST', body:JSON.stringify({ action:'unlock_files', ids:selectedRemoteSourceItems }) });
+            
+            // Generate link
             let newLinks = selectedRemoteSourceItems.map(id => `https://drive.google.com/file/d/${id}/view`).join('\n');
             const ta = document.getElementById('folderUrls');
             ta.value = ta.value + (ta.value ? '\n' : '') + newLinks;
             
             Swal.close();
-            Swal.fire({ icon:'success', title:'Berhasil', text:'Link berhasil ditambahkan & di-unlock.', timer:1500, showConfirmButton:false });
+            Swal.fire({ icon:'success', title:'Berhasil', text:'Link berhasil ditambahkan ke antrean.', timer:1500, showConfirmButton:false });
         } catch(e) { Swal.fire('Error', e.message, 'error'); }
     };
 
-    // --- PICKER SYSTEM (GENERIC DESTINATION) ---
+    async function deleteRemoteItem(id, type, name, parentId) {
+        const result = await Swal.fire({ title: 'Hapus Remote?', text: `Hapus ${name} dari Server Client selamanya?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Hapus' });
+        if (result.isConfirmed) {
+            try {
+                await fetch(detectedRemoteUrl, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type }) });
+                Swal.fire('Terhapus!', '', 'success');
+                loadRemoteSourceContent(parentId); // Refresh list
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+    }
+
+    // --- GENERIC PICKER SYSTEM (Local & Remote Destination) ---
     function openDestPicker(mode) {
-        activePickerMode = mode; 
+        activePickerMode = mode;
         const pin = document.getElementById('accessPin').value;
         if(!pin) return Swal.fire('Error', 'PIN belum diisi', 'error');
         
@@ -366,9 +516,9 @@
                     <div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">📁 Local Drive</div>
                     <div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">☁️ Saved Cloud</div>
                 </div>
-                <div id="destPickerContent" style="min-height:200px;">Loading...</div>
+                <div id="destPickerContent" style="min-height:250px;">Loading...</div>
             `,
-            showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
+            showConfirmButton: false, width: '650px', background: '#1a1a2e', color: '#fff',
             didOpen: () => { switchDestTab('local'); }
         });
     }
@@ -376,8 +526,6 @@
     window.switchDestTab = function(type) {
         document.getElementById('tabLocal').className = (type === 'local') ? 'picker-tab active' : 'picker-tab';
         document.getElementById('tabRemote').className = (type === 'remote') ? 'picker-tab active' : 'picker-tab';
-        const container = document.getElementById('destPickerContent');
-        container.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
         const pin = document.getElementById('accessPin').value;
         
         if (type === 'local') loadLocalPicker('root', pin);
@@ -386,6 +534,8 @@
 
     async function loadLocalPicker(parentId, pin) {
         const container = document.getElementById('destPickerContent');
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
+        
         try {
             const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'browse_folders', parentId: parentId, pin: pin }) });
             const data = await res.json();
@@ -394,12 +544,15 @@
                 let html = `
                     <div class="picker-header">
                         <div style="font-weight:bold; color:#2ed573;">${data.currentName}</div>
-                        ${data.parentId ? `<div onclick="loadLocalPicker('${data.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
-                        <div style="cursor:pointer; color:#2ed573;" onclick="createLocalFolder('${data.currentId}', '${pin}')">➕ New</div>
+                        <div style="display:flex; gap:10px;">
+                            ${data.parentId ? `<div onclick="loadLocalPicker('${data.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
+                            <div style="cursor:pointer; color:#2ed573;" onclick="createLocalFolder('${data.currentId}', '${pin}')">➕ New Folder</div>
+                        </div>
                     </div>
-                    <div style="max-height:200px; overflow-y:auto; text-align:left;">`;
+                    <div style="max-height:250px; overflow-y:auto; text-align:left;">`;
                 
-                if(data.folders.length === 0) html += `<div style="padding:10px; color:#666;">Folder kosong</div>`;
+                if(data.folders.length === 0) html += `<div style="padding:10px; color:#666; text-align:center;">Folder kosong</div>`;
+                
                 data.folders.forEach(f => {
                     html += `<div class="picker-item" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>`;
                 });
@@ -408,8 +561,8 @@
                 if(activePickerMode === 'search_source') btnText = "🔍 Cari di Folder Ini";
 
                 html += `</div>
-                <div style="margin-top:10px;">
-                    <button style="background:#0984e3; padding:8px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer;" 
+                <div style="margin-top:15px; padding-top:10px; border-top:1px solid #444;">
+                    <button style="background:#0984e3; padding:10px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;" 
                     onclick="selectLocalDest('${data.currentId}', '${data.currentName}')">${btnText}</button>
                 </div>`;
                 container.innerHTML = html;
@@ -425,41 +578,43 @@
         }
     }
 
+    // LOGIKA SELECT TUJUAN
     window.selectLocalDest = function(id, name) {
-        // Reset ke Local URL jika sebelumnya Remote
-        if (activePickerMode === 'upload') {
-            uploadTargetUrl = SCRIPT_URL; // Reset target ke Local
+        if (activePickerMode === 'clone') {
+            document.getElementById('destUrl').value = `https://drive.google.com/drive/folders/${id}`;
+        } else if (activePickerMode === 'upload') {
+            uploadTargetUrl = SCRIPT_URL; // Reset ke local
             document.getElementById('uploadDestId').value = id; 
             document.getElementById('uploadTargetLabel').style.display = 'none';
-        } else if (activePickerMode === 'clone') {
-            document.getElementById('destUrl').value = `https://drive.google.com/drive/folders/${id}`;
         } else if (activePickerMode === 'search_source') {
             document.getElementById('searchLocId').value = id;
             document.getElementById('searchLocName').value = name;
         }
         Swal.close();
-        Swal.fire({ icon:'success', title: 'Folder Terpilih (Lokal)', text: `Folder: ${name}`, timer: 1500, showConfirmButton:false });
+        let msg = (activePickerMode === 'search_source') ? 'Lokasi Pencarian Diset!' : 'Folder Tujuan Diset!';
+        Swal.fire({ icon:'success', title: msg, text: `Folder: ${name}`, timer: 1500, showConfirmButton:false });
     };
 
-    // --- REMOTE PICKER LOGIC (DESTINATION) ---
+    // --- REMOTE DESTINATION PICKER ---
     async function loadSavedRemotes(pin) {
         const container = document.getElementById('destPickerContent');
         const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
         const data = await res.json();
-        let html = '<div style="max-height:200px; overflow-y:auto;">';
+        
+        let html = '<div style="max-height:250px; overflow-y:auto; text-align:left;">';
         if(data.list && data.list.length > 0) {
             data.list.forEach(item => { 
                 if(item.type === 'server' || !item.type) {
-                    html += `<div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">☁️ ${item.label} (${item.email})</div>`;
+                    html += `<div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">☁️ ${item.label} <small>(${item.email})</small></div>`;
                 }
             });
-        } else { html += '<div style="padding:10px;">Belum ada akun remote.</div>'; }
+        } else { html += '<div style="padding:20px; text-align:center;">Belum ada akun remote tersimpan.</div>'; }
         html += '</div>';
         container.innerHTML = html;
     }
 
     window.browseRemoteDest = function(url, label) {
-        document.getElementById('destPickerContent').innerHTML = 'Loading Remote...';
+        document.getElementById('destPickerContent').innerHTML = '<div style="padding:20px; text-align:center;">Loading Remote...</div>';
         loadRemoteDestContent(url, 'root', label);
     };
 
@@ -468,21 +623,31 @@
         try {
             const res = await fetch(url, { method: 'POST', body: JSON.stringify({ action: 'browse_remote', parentId: parentId }) });
             const data = await res.json();
+            
             if (data.status === 'success') {
                 let html = `
                     <div class="picker-header">
                         <div style="font-weight:bold; color:#00d2ff;">${label} > ${data.currentName}</div>
                         ${data.parentId ? `<div onclick="loadRemoteDestContent('${url}','${data.parentId}','${label}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : `<div onclick="switchDestTab('remote')" style="cursor:pointer; color:#f4b400;">⬅ Accounts</div>`}
                     </div>
-                    <div style="max-height:200px; overflow-y:auto; text-align:left;">`;
-                data.items.forEach(f => { if (f.type === 'folder') html += `<div class="picker-item" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>`; });
+                    <div style="max-height:250px; overflow-y:auto; text-align:left;">`;
                 
-                // Button Logic
+                data.items.forEach(f => { 
+                    if (f.type === 'folder') html += `<div class="picker-item" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>`; 
+                });
+                
                 let btnHtml = '';
-                btnHtml = `<button style="background:#0984e3; padding:8px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer;" 
-                onclick="selectRemoteDest('${url}', '${parentId}', '${data.currentName}', '${label}')">🎯 Pilih Folder Ini (Remote)</button>`;
+                if(activePickerMode === 'clone') {
+                    btnHtml = `<button style="background:#0984e3; padding:10px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;" 
+                    onclick="selectRemoteDest('${url}', '${parentId}', '${data.currentName}', '${label}')">🎯 Pilih Folder Ini (Remote)</button>`;
+                } else if(activePickerMode === 'upload') {
+                    btnHtml = `<button style="background:#f0932b; padding:10px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;" 
+                    onclick="selectRemoteDest('${url}', '${parentId}', '${data.currentName}', '${label}')">📤 Upload ke Folder Ini (Remote)</button>`;
+                } else {
+                    btnHtml = `<div style="text-align:center; color:#aaa; font-size:0.8rem; padding:10px;">Fitur ini tidak tersedia untuk mode Search.</div>`;
+                }
 
-                html += `</div><div style="margin-top:10px;">${btnHtml}</div>`;
+                html += `</div><div style="margin-top:15px; padding-top:10px; border-top:1px solid #444;">${btnHtml}</div>`;
                 container.innerHTML = html;
             }
         } catch(e) { container.innerHTML = "Error: " + e.message; }
@@ -490,21 +655,19 @@
 
     window.selectRemoteDest = async function(url, id, name, label) {
         if (activePickerMode === 'upload') {
-            // SET UPLOAD TARGET KE REMOTE URL
             uploadTargetUrl = url; 
             document.getElementById('uploadDestId').value = id;
             
-            // UI Feedback
             const lbl = document.getElementById('uploadTargetLabel');
             lbl.style.display = 'block';
             lbl.innerHTML = `⚠️ Target: Remote Server (${label})`;
             
             Swal.close();
-            Swal.fire('Sukses', `Target Upload diset ke Akun B: ${label}`, 'success');
+            Swal.fire('Sukses', `Target Upload diset ke Akun B: ${label} > ${name}`, 'success');
             return;
         }
 
-        // Logic Clone (Handshake)
+        // Clone Mode (Handshake Folder)
         const pin = document.getElementById('accessPin').value;
         const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'connect_remote_dest', pin:pin, targetUrl:url, targetId:id }) });
         const d = await res.json();
@@ -517,51 +680,7 @@
         }
     };
 
-    // --- SEARCH ---
-    function resetSearchLoc() {
-        document.getElementById('searchLocId').value = 'root';
-        document.getElementById('searchLocName').value = 'Seluruh Drive (Default)';
-    }
-
-    async function searchDrive() {
-        const q = document.getElementById('searchInput').value;
-        const pin = document.getElementById('accessPin').value;
-        const parentId = document.getElementById('searchLocId').value; 
-        
-        const div = document.getElementById('searchResults');
-        div.innerHTML = '<div style="padding:10px; text-align:center;">Mencari...</div>';
-        
-        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'search_drive', query:q, pin:pin, parentId: parentId }) });
-        const d = await res.json();
-        
-        let h = '';
-        if(d.status==='success') {
-            if (d.results.length > 0) {
-                 d.results.forEach(f => {
-                    h += `<div class="search-item">
-                            <span style="font-size:1.2rem;">${f.mimeType==='folder'?'📁':'📄'}</span>
-                            <div style="flex:1;">
-                                <div style="font-weight:bold; font-size:0.85rem;">${f.name}</div>
-                                <div style="font-size:0.7rem; color:#aaa;">${f.size} | ${f.date}</div>
-                            </div>
-                            <button class="btn-add-search" onclick="addToQueue('${f.url}', '${f.name}')">➕ Clone</button>
-                          </div>`;
-                });
-            } else {
-                 h = '<div style="padding:10px; text-align:center;">Tidak ditemukan di lokasi ini.</div>';
-            }
-        } else { h = `<div style="padding:10px; color:red;">Error: ${d.message}</div>`; }
-        div.innerHTML = h;
-    }
-
-    function addToQueue(url, name) {
-        const ta = document.getElementById('folderUrls');
-        ta.value = ta.value + (ta.value ? '\n' : '') + url;
-        switchTab('clone');
-        Swal.fire({ icon:'success', title:'Ditambahkan', text:name, timer:1000, showConfirmButton:false });
-    }
-
-    // --- UPLOAD LOGIC ---
+    // --- UPLOAD SYSTEM ---
     let selectedFiles = [];
     function handleFileSelect(input) {
         selectedFiles = Array.from(input.files);
@@ -573,21 +692,17 @@
         const pin = document.getElementById('accessPin').value;
         let destId = document.getElementById('uploadDestId').value;
         if(destId.includes('folder/')) destId = destId.split('folder/')[1].split('?')[0];
+        
         if(!pin) return Swal.fire('Error', 'PIN kosong', 'error');
 
         addLog("🚀 Memulai Upload...", "info");
-        
-        // Cek target URL
-        if(uploadTargetUrl !== SCRIPT_URL) {
-            addLog("📡 Target: Server Remote (Akun B)", "warning");
-        }
+        if(uploadTargetUrl !== SCRIPT_URL) addLog("📡 Target: Server Remote (Akun B)", "warning");
 
         for(let f of selectedFiles) {
             try {
                 addLog("⏳ Mengunggah: " + f.name, "info");
                 const b64 = await toBase64(f);
                 
-                // Fetch ke URL Target (Bisa Lokal A atau Remote B)
                 const res = await fetch(uploadTargetUrl, { 
                     method:'POST', 
                     body: JSON.stringify({ 
@@ -600,7 +715,7 @@
                     }) 
                 });
                 const d = await res.json();
-                if(d.status === 'success') addLog(`✅ Berhasil: <a href="${d.fileUrl}" target="_blank">${d.fileName}</a>`, 'success');
+                if(d.status === 'success') addLog(`✅ Berhasil: ${d.fileName}`, 'success');
                 else addLog("❌ Gagal: " + d.message, 'error');
             } catch(e) { addLog("❌ Error Network: " + f.name, 'error'); }
         }
@@ -610,22 +725,20 @@
         reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
     });
 
-    // --- SAVED ITEMS & SCHEDULE LOGIC ---
+    // --- UTILS: Saved Links & Schedule ---
     async function openSavedItems() {
         const pin = document.getElementById('accessPin').value;
         if(!pin) return;
         const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
         const d = await res.json();
-        let h = '<div style="max-height:200px; overflow-y:auto; text-align:left;">';
+        let h = '<div style="max-height:250px; overflow-y:auto; text-align:left;">';
         if(d.list.length > 0) d.list.forEach(i => h += `<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`);
         else h += "Kosong";
         h += '</div>';
         Swal.fire({ title:'Item Tersimpan', html:h, background:'#1a1a2e', color:'#fff' });
     }
     function insertSaved(u) {
-        const t = document.getElementById('folderUrls');
-        t.value = t.value + (t.value ? '\n' : '') + u;
-        Swal.close();
+        const t = document.getElementById('folderUrls'); t.value = t.value + (t.value ? '\n' : '') + u; Swal.close();
     }
     async function saveCurrentLink() {
         const u = document.getElementById('folderUrls').value.split('\n')[0];
@@ -646,7 +759,7 @@
         const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'get_schedule_list', pin:pin }) });
         const d = await res.json();
         let h = '<div style="max-height:200px; overflow-y:auto; text-align:left;">';
-        if(d.list.length) d.list.forEach(i => h += `<div style="border-bottom:1px solid #444; padding:5px;">${i.label} <button onclick="delSched('${i.id}')" style="float:right;background:red;color:white;border:none;">Del</button></div>`);
+        if(d.list.length) d.list.forEach(i => h += `<div style="border-bottom:1px solid #444; padding:5px;">${i.label} <button onclick="delSched('${i.id}')" style="float:right;background:red;color:white;border:none;border-radius:3px;">Del</button></div>`);
         else h+="Kosong";
         h+='</div>';
         Swal.fire({ title:'Jadwal', html:h, background:'#1a1a2e', color:'#fff' });
@@ -655,14 +768,13 @@
         await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_schedule_item', id:id, pin:document.getElementById('accessPin').value }) });
         Swal.close(); Swal.fire('Dihapus','','success');
     }
-
-    // --- CORE COPY START ---
+    
+    // --- CORE CLONING PROCESS ---
     async function startCloning() {
         const urls = document.getElementById('folderUrls').value.split('\n').filter(u=>u);
         const pin = document.getElementById('accessPin').value;
         if(urls.length===0 || !pin) return Swal.fire('Warning', 'Isi link & PIN', 'warning');
         
-        // Config Object
         const config = {
             mode: document.getElementById('duplicateMode').value,
             destUrl: document.getElementById('destUrl').value,
@@ -704,6 +816,19 @@
         const l = document.getElementById('logArea');
         l.innerHTML += `<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}; margin-bottom:5px;">${m}</div>`;
         l.scrollTop = l.scrollHeight;
+    }
+    
+    // UTILS
+    function resetSearchLoc() {
+        document.getElementById('searchLocId').value = 'root';
+        document.getElementById('searchLocName').value = 'Seluruh Drive (Default)';
+    }
+    
+    function addToQueue(url, name) {
+        const ta = document.getElementById('folderUrls');
+        ta.value = ta.value + (ta.value ? '\n' : '') + url;
+        switchTab('clone');
+        Swal.fire({ icon:'success', title:'Ditambahkan', text:name, timer:1000, showConfirmButton:false });
     }
 
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.1 }, size: { value: 3 }, move: { enable: true, speed: 0.5 } } });
