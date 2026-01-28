@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.15 (Fix: PIN Error on AI Tools)
+  VERSION: 20.16 (Added: AI Chat Support Feature)
   ============================================================================
 -->
 <html lang="id">
@@ -177,7 +177,7 @@
 <!-- 2. MAIN APP -->
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.15)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.16)</p>
     
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
@@ -314,6 +314,14 @@
             <button class="ai-btn" style="background: linear-gradient(135deg, #f0932b 0%, #eb4d4b 100%);" onclick="runAiAnalyze()">🔍 Analisa Struktur Folder</button>
             
             <div id="aiResultArea" class="ai-result"></div>
+        </div>
+
+        <!-- Feature 3: App Chat (NEW) -->
+        <div class="ai-box">
+            <div class="ai-title">💬 Tanya Jawab Aplikasi (Chat Support)</div>
+            <textarea id="chatPrompt" placeholder="Tanya tentang cara pakai, fitur, atau kode aplikasi ini..." style="height:60px;"></textarea>
+            <button class="ai-btn" style="background: linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%);" onclick="runAppChat()">Kirim Pertanyaan</button>
+            <div id="chatResultArea" class="ai-result"></div>
         </div>
     </div>
 
@@ -739,6 +747,38 @@
             if(d.status === 'success') {
                 resDiv.innerText = d.analysis;
                 addLog(`✨ AI Analisa: ${d.folderName}`, 'success');
+            } else {
+                resDiv.innerText = "Error: " + d.message;
+            }
+        } catch(e) { resDiv.innerText = "Error: " + e.message; }
+    }
+
+    // --- NEW: CHAT SUPPORT FUNCTION ---
+    async function runAppChat() {
+        const key = document.getElementById('geminiKey').value;
+        if(!key) return Swal.fire('Stop', 'Masukkan API Key dulu!', 'warning');
+        
+        const prompt = document.getElementById('chatPrompt').value;
+        if(!prompt) return Swal.fire('Info', 'Tulis pertanyaan dulu', 'info');
+        
+        const resDiv = document.getElementById('chatResultArea');
+        resDiv.style.display = 'block';
+        resDiv.innerText = "🤔 Sedang berpikir...";
+        
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'gemini_ai', 
+                    mode: 'chat_app', 
+                    apiKey: key, 
+                    prompt: prompt,
+                    pin: document.getElementById('accessPin').value 
+                })
+            });
+            const d = await res.json();
+            if(d.status === 'success') {
+                resDiv.innerText = d.answer;
             } else {
                 resDiv.innerText = "Error: " + d.message;
             }
