@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.5 (FIXED: Remote Server Detection Logic)
+  VERSION: 20.5 (FINAL COMPLETE: All Features Integrated)
   ============================================================================
 -->
 <html lang="id">
@@ -33,7 +33,7 @@
         .progress-track { height: 8px; background: #444; border-radius: 4px; overflow: hidden; }
         .progress-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.5s ease; }
 
-        /* Remote Badge (Detection) - Important! */
+        /* Remote Badge (Detection) */
         .remote-badge { display: none; width: 100%; box-sizing: border-box; background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573; padding: 12px; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.9rem; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
 
@@ -89,7 +89,7 @@
             <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold;">🔍 Smart Check</button>
         </div>
         
-        <!-- REMOTE DETECTED PANEL (HIDDEN BY DEFAULT) -->
+        <!-- REMOTE DETECTED PANEL -->
         <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">
             📡 Server Remote Terdeteksi! Klik untuk Jelajah isi folder...
         </div>
@@ -134,6 +134,7 @@
         <div id="searchResults"></div>
     </div>
 
+    <!-- Stats Bar -->
     <div id="statsBar" class="stats-bar">
         <div class="stats-row">
             <span id="timerEl">⏱️ 00:00:00</span>
@@ -173,10 +174,10 @@
         } else { Swal.fire('Error', 'PIN Salah', 'error'); }
     }
 
-    // --- DETECT REMOTE URL (FIXED) ---
+    // --- DETECT REMOTE URL (Updated Logic) ---
     function performRemoteDetection() {
         const text = document.getElementById('folderUrls').value;
-        // Regex yang lebih fleksibel untuk menangkap URL script Google
+        // Regex fleksibel untuk menangkap URL script Google
         const match = text.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
         const panel = document.getElementById('remoteDetectedPanel');
         
@@ -189,7 +190,7 @@
         }
     }
 
-    // Pasang listener pada semua kejadian input
+    // Attach listeners
     const urlInput = document.getElementById('folderUrls');
     urlInput.addEventListener('input', performRemoteDetection);
     urlInput.addEventListener('change', performRemoteDetection);
@@ -288,7 +289,7 @@
         const text = document.getElementById('folderUrls').value;
         const u = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
         
-        // Trigger Remote Detection juga saat klik Smart Check (Safety)
+        // Trigger remote detection on click too
         performRemoteDetection();
 
         const p=document.getElementById('accessPin').value; 
@@ -300,7 +301,7 @@
             const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'check_stats',url:u[0],pin:p,deepScan:d})});
             const res=await r.json();
             if(res.status==='success'){
-                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;"><h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3><table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Size</td><td>${res.stats.size}</td></tr></table>${res.type==='folder'&&!d?'<br><button onclick="checkSmartLink(true)">Deep Scan</button>':''}</div>`;
+                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;"><h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3><table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Access</td><td>${res.access}</td></tr><tr><td>Size</td><td style="color:#00d2ff;font-weight:bold;">${res.stats.size}</td></tr>${isDeep?`<tr><td>Files</td><td>${res.stats.files}</td></tr>`:''}</table>${res.type==='folder'&&!d?'<br><button onclick="checkSmartLink(true)" style="width:100%; padding:8px; background:#f0932b; border:none; color:white; border-radius:5px; cursor:pointer;">🕵️ Deep Scan Size</button>':''}</div>`;
                 Swal.fire({title:'Info',html:html,background:'#1a1a2e',color:'#fff',showCancelButton:true,confirmButtonText:'Clone Now'}).then((r)=>{if(r.isConfirmed) startCloning();});
             } else Swal.fire('Err',res.message,'error');
         }catch(e){Swal.fire('Err',e.message,'error');}
@@ -308,7 +309,6 @@
 
     // --- REMOTE PICKERS ---
     window.openRemoteSourcePicker=()=>{if(!detectedRemoteUrl)return;selectedRemoteSourceItems=[];Swal.fire({title:'Jelajah Remote',html:`<div id="remoteSourcePickerContent" style="text-align:left; min-height:250px;">Loading...</div>`,showConfirmButton:false,width:'650px',background:'#1a1a2e',color:'#fff',didOpen:()=>{loadRemoteSourceContent('root');}});};
-    
     async function loadRemoteSourceContent(pid){const c=document.getElementById('remoteSourcePickerContent');if(!c)return;c.innerHTML='Loading...';try{const res=await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})}),d=await res.json();if(d.status==='success'){let h=`<div class="picker-header"><b>${d.currentName}</b>${d.parentId?`<div onclick="loadRemoteSourceContent('${d.parentId}')" style="cursor:pointer;color:#f4b400;">⬅ Back</div>`:''}</div><div style="max-height:300px; overflow-y:auto;">`;d.items.forEach(f=>{h+=`<div class="picker-item"><div style="display:flex;align-items:center;flex:1;"><input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)"><span style="flex:1;margin-left:5px;${f.type==='folder'?'cursor:pointer;':''}" ${f.type==='folder'?`onclick="loadRemoteSourceContent('${f.id}')"`:''}>${f.type==='folder'?'📁':'📄'} ${f.name}</span></div><button class="btn-del-picker" onclick="deleteRemoteItem('${f.id}','${f.type}','${f.name.replace(/'/g,"")}')">🗑️</button></div>`;});h+=`</div><div style="margin-top:15px;text-align:center;"><button style="background:#2ed573;padding:10px;border:none;border-radius:5px;color:white;" onclick="confirmRemoteSelection()">✅ Tambahkan</button></div>`;c.innerHTML=h;}else c.innerText=d.message;}catch(e){c.innerText=e.message;}}
     window.toggleRemoteSelect=(c)=>{if(c.checked)selectedRemoteSourceItems.push(c.value);else selectedRemoteSourceItems=selectedRemoteSourceItems.filter(id=>id!==c.value);};
     window.confirmRemoteSelection=async()=>{if(selectedRemoteSourceItems.length===0)return;document.getElementById('remoteSourcePickerContent').innerHTML='Unlocking...';await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'unlock_files',ids:selectedRemoteSourceItems})});const newLinks=selectedRemoteSourceItems.map(id=>`https://drive.google.com/file/d/${id}/view`).join('\n');const ta=document.getElementById('folderUrls');ta.value=ta.value+(ta.value?'\n':'')+newLinks;Swal.close();};
@@ -317,16 +317,17 @@
     // --- OTHER PICKERS ---
     function openDestPicker(m){activePickerMode=m;Swal.fire({title:'Tujuan', html:`<div class="picker-tabs"><div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">Local</div><div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">Remote</div></div><div id="destPickerContent" style="min-height:200px;">Loading...</div>`, background:'#1a1a2e', color:'#fff', didOpen:()=>switchDestTab('local')});}
     window.switchDestTab=(t)=>{document.getElementById('tabLocal').className=(t==='local'?'picker-tab active':'picker-tab');document.getElementById('tabRemote').className=(t==='remote'?'picker-tab active':'picker-tab');if(t==='local')loadLocalPicker('root');else loadSavedRemotes();};
-    async function loadLocalPicker(pid){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'browse_folders',parentId:pid,pin:document.getElementById('accessPin').value})});const d=await r.json();if(d.status==='success'){let h=`<div><b>${d.currentName}</b> ${d.parentId?`<span onclick="loadLocalPicker('${d.parentId}')" style="cursor:pointer;color:yellow;">⬅</span>`:''} <span onclick="createLocalFolder('${d.currentId}')" style="color:#2ed573;cursor:pointer;">+New</span></div>`;d.folders.forEach(f=>{h+=`<div class="picker-item" onclick="loadLocalPicker('${f.id}')">📁 ${f.name}</div>`});h+=`<button onclick="selectDest('${d.currentId}','${d.currentName}',false)" style="margin-top:10px;width:100%;padding:5px;background:#0984e3;border:none;color:white;">Pilih Ini</button>`;c.innerHTML=h;}else c.innerText=d.message;}
+    async function loadLocalPicker(pid){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'browse_folders',parentId:pid,pin:document.getElementById('accessPin').value})});const d=await r.json();if(d.status==='success'){let h=`<div><b>${d.currentName}</b> ${d.parentId?`<span onclick="loadLocalPicker('${d.parentId}')" style="cursor:pointer;color:yellow;">⬅</span>`:''} <span onclick="createLocalFolder('${d.currentId}')" style="color:#2ed573;cursor:pointer;">+New</span></div>`;d.folders.forEach(f=>{h+=`<div class="picker-item" onclick="loadLocalPicker('${f.id}')">📁 ${f.name}</div><button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','local','${pid}')">🗑️</button>`});h+=`<button onclick="selectDest('${d.currentId}','${d.currentName}',false)" style="margin-top:10px;width:100%;padding:5px;background:#0984e3;border:none;color:white;">Pilih Ini</button>`;c.innerHTML=h;}else c.innerText=d.message;}
     async function createLocalFolder(pid){const{value:n}=await Swal.fire({title:'Nama Folder',input:'text',background:'#1a1a2e',color:'#fff'});if(n){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'create_folder_tool',parentId:pid,name:n,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}}
     async function loadSavedRemotes(){const c=document.getElementById('destPickerContent');const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='';d.list.forEach(i=>{if(i.type==='server')h+=`<div class="picker-item" onclick="browseRemoteDest('${i.url}','root','${i.label}')">☁️ ${i.label}</div>`});c.innerHTML=h;}
     async function browseRemoteDest(u,pid,l){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(u,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})});const d=await r.json();if(d.status==='success'){let h=`<div><b>${l}>${d.currentName}</b> ${d.parentId?`<span onclick="browseRemoteDest('${u}','${d.parentId}','${l}')" style="cursor:pointer;color:yellow;">⬅</span>`:`<span onclick="switchDestTab('remote')" style="cursor:pointer;">⬅</span>`}</div>`;d.items.forEach(f=>{if(f.type==='folder')h+=`<div class="picker-item" onclick="browseRemoteDest('${u}','${f.id}','${l}')">📁 ${f.name}</div>`});h+=`<button onclick="selectDest('${u}','${d.currentName}',true,'${d.currentId}','${l}')" style="margin-top:10px;width:100%;padding:5px;background:#f0932b;border:none;color:white;">Pilih Remote Ini</button>`;c.innerHTML=h;}}
     async function selectDest(val,name,isRemote,remoteId,label){Swal.close();if(activePickerMode==='clone'){if(isRemote){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:document.getElementById('accessPin').value,targetUrl:val,targetId:remoteId})});const d=await r.json();if(d.status==='success')document.getElementById('destUrl').value=d.folderUrl;}else{document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${val}`;}}else if(activePickerMode==='upload'){if(isRemote){uploadTargetUrl=val;document.getElementById('uploadDestId').value=remoteId;document.getElementById('uploadTargetLabel').style.display='block';}else{uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=val;document.getElementById('uploadTargetLabel').style.display='none';}}else{document.getElementById('searchLocId').value=val;document.getElementById('searchLocName').value=name;}Swal.fire('Set',name,'success');}
+    async function deleteInsidePicker(id,type,name,mode,pid,rUrl,rLabel){const r=await Swal.fire({title:'Hapus?',text:name,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){if(mode==='local'){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}else{await fetch(rUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type})});browseRemoteDest(rUrl,pid,rLabel);}Swal.fire('Terhapus','','success');}}
 
     // --- UPLOAD & SEARCH ---
     function handleFileSelect(i){selectedFiles=Array.from(i.files);document.getElementById('uploadList').innerHTML=selectedFiles.map(f=>`<div>📄 ${f.name}</div>`).join('');document.getElementById('btnUploadNow').disabled=!selectedFiles.length;}
     async function startUpload(){addLog("Upload...","info");const pin=document.getElementById('accessPin').value;for(let f of selectedFiles){const b64=await new Promise(r=>{const rd=new FileReader();rd.readAsDataURL(f);rd.onload=()=>r(rd.result)});await fetch(uploadTargetUrl,{method:'POST',body:JSON.stringify({action:'direct_upload',pin:pin,fileName:f.name,mimeType:f.type,fileData:b64,destId:document.getElementById('uploadDestId').value})});addLog("✅ "+f.name,"success");}}
-    async function searchDrive(){const q=document.getElementById('searchInput').value;document.getElementById('searchResults').innerHTML='Searching...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'search_drive',query:q,pin:document.getElementById('accessPin').value,parentId:document.getElementById('searchLocId').value})});const d=await r.json();let h='';if(d.results)d.results.forEach(f=>{h+=`<div class="search-item" style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #444;"><div>${f.mimeType==='folder'?'📁':'📄'} ${f.name}</div><button onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')" style="background:#2ed573;border:none;color:white;">+</button></div>`});document.getElementById('searchResults').innerHTML=h||'No results';}
+    async function searchDrive(){const q=document.getElementById('searchInput').value;document.getElementById('searchResults').innerHTML='Searching...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'search_drive',query:q,pin:document.getElementById('accessPin').value,parentId:document.getElementById('searchLocId').value})});const d=await r.json();let h='';if(d.results)d.results.forEach(f=>{h+=`<div class="search-item" style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #444;"><div>${f.mimeType==='folder'?'📁':'📄'} ${f.name}</div><div><button onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')" style="background:#2ed573;border:none;color:white;">+</button></div></div>`;});document.getElementById('searchResults').innerHTML=h||'No results';}
     function addToQueue(u,n){const t=document.getElementById('folderUrls');t.value+=(t.value?'\n':'')+u;switchTab('clone');Swal.fire('Added',n,'success');}
     function addLog(m,t){const l=document.getElementById('logArea');l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}">${m}</div>`;l.scrollTop=l.scrollHeight;}
     
@@ -337,6 +338,7 @@
     async function createSchedule(){const lbl=document.getElementById('schedLabel').value;if(!lbl)return;await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add_schedule_item',pin:document.getElementById('accessPin').value,label:lbl,config:{urls:document.getElementById('folderUrls').value.split('\n'),destUrl:document.getElementById('destUrl').value,maxBackups:30}})});Swal.fire('Success','','success');}
     async function showScheduleList(){const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_schedule_list',pin:document.getElementById('accessPin').value})});const d=await res.json();let h='<div style="max-height:200px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div>${i.label} <button onclick="delSched('${i.id}')" style="color:red;">Del</button></div>`});Swal.fire({title:'Jadwal',html:h});}
     async function delSched(id){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_schedule_item',id:id,pin:document.getElementById('accessPin').value})});Swal.fire('Deleted','','success');}
+    function resetSearchLoc(){document.getElementById('searchLocId').value='root';document.getElementById('searchLocName').value='Seluruh Drive';}
 
     // Init
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.1 }, size: { value: 3 }, move: { enable: true, speed: 0.5 } } });
