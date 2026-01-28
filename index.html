@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.11 (FINAL FIX: Search Feature & UI Restored)
+  VERSION: 20.12 (Added: Select All Button in Remote Browser)
   ============================================================================
 -->
 <html lang="id">
@@ -168,7 +168,7 @@
 <!-- 2. MAIN APP -->
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.11)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.12)</p>
     
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
@@ -500,8 +500,56 @@
 
     // --- REMOTE PICKERS ---
     window.openRemoteSourcePicker=()=>{if(!detectedRemoteUrl)return;selectedRemoteSourceItems=[];Swal.fire({title:'Jelajah Remote',html:`<div id="remoteSourcePickerContent" style="min-height:250px;">Loading...</div>`,showConfirmButton:false,width:'650px',background:'#1a1a2e',color:'#fff',didOpen:()=>{loadRemoteSourceContent('root');}});};
-    async function loadRemoteSourceContent(pid){const c=document.getElementById('remoteSourcePickerContent');if(!c)return;c.innerHTML='Loading...';try{const res=await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})}),d=await res.json();if(d.status==='success'){let h=`<div class="picker-container"><div class="picker-header-sticky"><div>📂 ${d.currentName}</div>${d.parentId?`<div style="cursor:pointer;color:#f4b400;" onclick="loadRemoteSourceContent('${d.parentId}')">⬅ Back</div>`:''}</div><div class="picker-list-area">`;d.items.forEach(f=>{h+=`<div class="browse-row"><div class="browse-check"><input type="checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)"></div><div class="browse-icon">${f.type==='folder'?'📁':'📄'}</div><div class="browse-name" ${f.type==='folder'?`onclick="loadRemoteSourceContent('${f.id}')"`:''}>${f.name}</div><div class="browse-meta">${f.size}</div><div class="browse-action"><button class="btn-mini-del" onclick="deleteRemoteItem('${f.id}','${f.type}','${f.name.replace(/'/g,"")}')">🗑️</button></div></div>`;});h+=`</div><div style="padding:10px;text-align:center;background:#2f3542;"><button style="background:#2ed573;padding:8px 20px;border:none;border-radius:5px;color:white;font-weight:bold;" onclick="confirmRemoteSelection()">✅ Tambahkan Pilihan</button></div></div>`;c.innerHTML=h;}else c.innerText=d.message;}catch(e){c.innerText=e.message;}}
-    window.toggleRemoteSelect=(c)=>{if(c.checked)selectedRemoteSourceItems.push(c.value);else selectedRemoteSourceItems=selectedRemoteSourceItems.filter(id=>id!==c.value);};
+    
+    // [MODIFIED] Added Select All Button
+    async function loadRemoteSourceContent(pid){
+        const c=document.getElementById('remoteSourcePickerContent');if(!c)return;c.innerHTML='Loading...';
+        try{
+            const res=await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})}),d=await res.json();
+            if(d.status==='success'){
+                let h=`<div class="picker-container">
+                    <div class="picker-header-sticky">
+                        <div style="display:flex;align-items:center;gap:5px;">
+                             <input type="checkbox" id="remoteSelectAllBox" onchange="toggleAllRemoteItems(this)" style="width:16px;height:16px;margin:0;">
+                             <label for="remoteSelectAllBox" style="margin:0;font-size:0.8rem;cursor:pointer;">All</label>
+                        </div>
+                        <div style="flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 5px;">📂 ${d.currentName}</div>
+                        ${d.parentId?`<div style="cursor:pointer;color:#f4b400;" onclick="loadRemoteSourceContent('${d.parentId}')">⬅ Back</div>`:''}
+                    </div>
+                    <div class="picker-list-area">`;
+                
+                d.items.forEach(f=>{
+                    h+=`<div class="browse-row">
+                        <div class="browse-check"><input type="checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)"></div>
+                        <div class="browse-icon">${f.type==='folder'?'📁':'📄'}</div>
+                        <div class="browse-name" ${f.type==='folder'?`onclick="loadRemoteSourceContent('${f.id}')"`:''}>${f.name}</div>
+                        <div class="browse-meta">${f.size}</div>
+                        <div class="browse-action"><button class="btn-mini-del" onclick="deleteRemoteItem('${f.id}','${f.type}','${f.name.replace(/'/g,"")}')">🗑️</button></div>
+                    </div>`;
+                });
+                
+                h+=`</div><div style="padding:10px;text-align:center;background:#2f3542;"><button style="background:#2ed573;padding:8px 20px;border:none;border-radius:5px;color:white;font-weight:bold;" onclick="confirmRemoteSelection()">✅ Tambahkan Pilihan</button></div></div>`;
+                c.innerHTML=h;
+            }else c.innerText=d.message;
+        }catch(e){c.innerText=e.message;}
+    }
+
+    // [NEW] Toggle All Checkboxes
+    window.toggleAllRemoteItems = (master) => {
+        const checkboxes = document.querySelectorAll('.browse-check input');
+        checkboxes.forEach(chk => {
+            chk.checked = master.checked;
+            toggleRemoteSelect(chk); // Update array
+        });
+    }
+
+    // [MODIFIED] Safer selection logic
+    window.toggleRemoteSelect=(c)=>{
+        // Remove first to prevent duplicates
+        selectedRemoteSourceItems = selectedRemoteSourceItems.filter(id => id !== c.value);
+        if(c.checked) selectedRemoteSourceItems.push(c.value);
+    };
+
     window.confirmRemoteSelection=async()=>{if(selectedRemoteSourceItems.length===0)return;document.getElementById('remoteSourcePickerContent').innerHTML='Unlocking...';await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'unlock_files',ids:selectedRemoteSourceItems})});const newLinks=selectedRemoteSourceItems.map(id=>`https://drive.google.com/file/d/${id}/view`).join('\n');const ta=document.getElementById('folderUrls');ta.value=ta.value+(ta.value?'\n':'')+newLinks;Swal.close();performRemoteDetection();};
     async function deleteRemoteItem(id,t,n){const r=await Swal.fire({title:'Hapus?',text:`Hapus ${n}?`,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:t})});loadRemoteSourceContent('root');Swal.fire('Terhapus','','success');}}
 
