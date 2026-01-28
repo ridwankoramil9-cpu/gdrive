@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.10 (FINAL: All Features + Fixes Included)
+  VERSION: 20.11 (FINAL FIX: Search Feature & UI Restored)
   ============================================================================
 -->
 <html lang="id">
@@ -114,7 +114,7 @@
 
         .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; border: 1px solid rgba(255,255,255,0.05); }
         
-        /* --- PICKER UI --- */
+        /* --- PICKER & SEARCH RESULTS --- */
         .picker-container { display: flex; flex-direction: column; height: 350px; text-align: left; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; }
         .picker-header-sticky { background: #2f3542; padding: 10px 15px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; position: sticky; top: 0; z-index: 10; }
         .picker-list-area { flex: 1; overflow-y: auto; padding: 0; }
@@ -128,11 +128,22 @@
         .btn-mini-del { background: rgba(255, 71, 87, 0.1); border: 1px solid #ff4757; color: #ff4757; padding: 4px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
         .btn-mini-del:hover { background: #ff4757; color: white; }
 
+        /* FIX: SEARCH RESULTS CONTAINER */
+        .search-results {
+            max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.4);
+            border-radius: 10px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);
+            min-height: 50px;
+        }
+        .search-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-item:hover { background: rgba(255,255,255,0.05); }
+
         .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
         .picker-tab { padding: 8px 15px; cursor: pointer; border-radius: 5px; color: #888; background: rgba(255,255,255,0.05); flex:1; text-align: center; }
         .picker-tab.active { background: #00d2ff; color: white; font-weight: bold; }
         
-        /* Check Stats Table */
         .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
         .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
         .check-table td:first-child { font-weight:bold; color:#00d2ff; width:100px; }
@@ -157,7 +168,7 @@
 <!-- 2. MAIN APP -->
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v20.10)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.11)</p>
     
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
@@ -255,6 +266,7 @@
             <button onclick="searchDrive()" style="background:#00d2ff; border:none; padding:0 20px; border-radius:10px; cursor:pointer; color:white; font-weight:bold;">Cari</button>
         </div>
         
+        <!-- FIXED: Added class 'search-results' -->
         <div id="searchResults" class="search-results"></div>
     </div>
 
@@ -503,14 +515,54 @@
     async function selectDest(val,name,isRemote,remoteId,label){Swal.close();if(activePickerMode==='clone'){if(isRemote){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:document.getElementById('accessPin').value,targetUrl:val,targetId:remoteId})});const d=await r.json();if(d.status==='success')document.getElementById('destUrl').value=d.folderUrl;}else{document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${val}`;}}else if(activePickerMode==='upload'){if(isRemote){uploadTargetUrl=val;document.getElementById('uploadDestId').value=remoteId;document.getElementById('uploadTargetLabel').style.display='block';}else{uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=val;document.getElementById('uploadTargetLabel').style.display='none';}}else{document.getElementById('searchLocId').value=val;document.getElementById('searchLocName').value=name;}Swal.fire('Set',name,'success');}
     async function deleteInsidePicker(id,type,name,mode,pid,rUrl,rLabel){const r=await Swal.fire({title:'Hapus?',text:name,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){if(mode==='local'){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}else{await fetch(rUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type})});browseRemoteDest(rUrl,pid,rLabel);}Swal.fire('Terhapus','','success');}}
 
-    // --- UPLOAD & SEARCH ---
+    // --- UPLOAD & SEARCH (FIXED) ---
     function handleFileSelect(i){selectedFiles=Array.from(i.files);document.getElementById('uploadList').innerHTML=selectedFiles.map(f=>`<div>📄 ${f.name}</div>`).join('');document.getElementById('btnUploadNow').disabled=!selectedFiles.length;}
     async function startUpload(){addLog("Upload...","info");const pin=document.getElementById('accessPin').value;for(let f of selectedFiles){const b64=await new Promise(r=>{const rd=new FileReader();rd.readAsDataURL(f);rd.onload=()=>r(rd.result)});await fetch(uploadTargetUrl,{method:'POST',body:JSON.stringify({action:'direct_upload',pin:pin,fileName:f.name,mimeType:f.type,fileData:b64,destId:document.getElementById('uploadDestId').value})});addLog("✅ "+f.name,"success");}}
-    async function searchDrive(){const q=document.getElementById('searchInput').value;document.getElementById('searchResults').innerHTML='Searching...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'search_drive',query:q,pin:document.getElementById('accessPin').value,parentId:document.getElementById('searchLocId').value})});const d=await r.json();let h='';if(d.results)d.results.forEach(f=>{h+=`<div class="search-item" style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #444;"><div>${f.mimeType==='folder'?'📁':'📄'} ${f.name}</div><button onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')" style="background:#2ed573;border:none;color:white;">+</button></div>`});document.getElementById('searchResults').innerHTML=h||'No results';}
+    
+    // [FIXED SEARCH]
+    async function searchDrive(){
+        const q = document.getElementById('searchInput').value;
+        const pin = document.getElementById('accessPin').value;
+        const parentId = document.getElementById('searchLocId').value;
+        
+        document.getElementById('searchResults').innerHTML='<div style="padding:10px;text-align:center;">⏳ Mencari...</div>';
+        
+        try {
+            const r = await fetch(SCRIPT_URL, {
+                method:'POST', 
+                body: JSON.stringify({ action:'search_drive', query:q, pin:pin, parentId:parentId })
+            });
+            const d = await r.json();
+            
+            if(d.status === 'error') {
+                 document.getElementById('searchResults').innerHTML = `<div style="padding:10px;color:#ff4757;text-align:center;">${d.message}</div>`;
+                 return;
+            }
+
+            let h='';
+            if(d.results && d.results.length > 0) {
+                d.results.forEach(f=>{
+                     h+=`<div class="search-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid rgba(255,255,255,0.1);">
+                        <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:10px;">
+                            <span style="font-size:1.2em;margin-right:5px;">${f.mimeType==='folder'?'📁':'📄'}</span> ${f.name}
+                            <div style="font-size:0.7em;color:#aaa;">${f.size} • ${f.date}</div>
+                        </div>
+                        <button onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')" style="background:#2ed573;border:none;color:white;border-radius:5px;padding:5px 10px;cursor:pointer;font-weight:bold;">+</button>
+                     </div>`;
+                });
+            } else {
+                h = '<div style="padding:20px;text-align:center;color:#aaa;">Tidak ditemukan hasil.</div>';
+            }
+            document.getElementById('searchResults').innerHTML = h;
+        } catch(e) {
+            document.getElementById('searchResults').innerHTML = `<div style="padding:10px;color:#ff4757;">Error: ${e.message}</div>`;
+        }
+    }
+
     function addToQueue(u,n){const t=document.getElementById('folderUrls');t.value+=(t.value?'\n':'')+u;switchTab('clone');Swal.fire('Added',n,'success');}
     function addLog(m,t){const l=document.getElementById('logArea');l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}">${m}</div>`;l.scrollTop=l.scrollHeight;}
     
-    // --- SAVED & SCHEDULE (UPDATED: Show Name & Email) ---
+    // --- SAVED & SCHEDULE ---
     async function openSavedItems(){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{
         h += `
         <div class="picker-item" style="display:flex; justify-content:space-between; align-items:center;">
@@ -532,6 +584,7 @@
         }
     }
 
+    // [FIX: AUTO DETECT TRIGGER]
     function insertSaved(u){
         const t=document.getElementById('folderUrls');
         t.value += (t.value ? '\n' : '') + u;
