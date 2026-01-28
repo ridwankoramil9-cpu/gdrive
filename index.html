@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 18.2 (Added: Delete Button in Pickers & UI Refinements)
+  VERSION: 18.5 (Added: Smart Check Link Feature)
   ============================================================================
 -->
 <html lang="id">
@@ -168,6 +168,11 @@
         
         ::-webkit-scrollbar { width: 6px; } 
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        
+        /* Smart Check Table */
+        .check-table { width:100%; border-collapse:collapse; margin-top:10px; }
+        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); text-align:left; font-size:0.9rem; }
+        .check-table td:first-child { font-weight:bold; color:#00d2ff; width:100px; }
     </style>
 </head>
 <body>
@@ -185,7 +190,7 @@
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v18.2)</p>
+    <p class="subtitle">Full Integrated System (v18.5)</p>
     
     <!-- 2. TAB NAVIGATION -->
     <div class="tab-nav">
@@ -203,9 +208,13 @@
     <div id="panelClone">
         <div class="form-group">
             <label>Link Sumber (Daftar Link)</label>
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-               <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Item Tersimpan</button>
-               <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Simpan Link</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+               <div style="display:flex; gap:5px;">
+                   <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Item Tersimpan</button>
+                   <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Simpan Link</button>
+               </div>
+               <!-- TOMBOL SMART CHECK -->
+               <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; color:white; font-weight:bold; box-shadow:0 0 10px rgba(108, 92, 231, 0.4);">🔍 Smart Check</button>
             </div>
             
             <!-- Badge Remote Detection -->
@@ -353,6 +362,71 @@
             Swal.fire('Gagal', 'PIN Salah!', 'error');
         }
     }
+
+    // --- SMART CHECK FUNCTION (BARU) ---
+    async function checkSmartLink() {
+        const text = document.getElementById('folderUrls').value;
+        const pin = document.getElementById('accessPin').value;
+        
+        // Ambil URL pertama yang valid
+        const urlMatch = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
+        
+        if (!urlMatch) return Swal.fire('Error', 'Tidak ditemukan link Google Drive yang valid.', 'error');
+        if (!pin) return Swal.fire('Error', 'Masukkan PIN Akses terlebih dahulu.', 'warning');
+
+        Swal.fire({
+            title: 'Memeriksa Link...',
+            html: 'Menghubungi server...',
+            didOpen: () => Swal.showLoading(),
+            background: '#1a1a2e', color: '#fff'
+        });
+
+        try {
+            const res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'check_stats', url: urlMatch[0], pin: pin }) 
+            });
+            const d = await res.json();
+
+            if (d.status === 'success') {
+                let icon = d.type === 'folder' ? '📁' : '📄';
+                let accessColor = d.access === 'Writer' ? '#2ed573' : (d.access === 'Viewer' ? '#f1c40f' : '#ff4757');
+                
+                let html = `
+                    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
+                        <div style="font-size:3rem; margin-bottom:10px;">${icon}</div>
+                        <h3 style="color:#fff; margin:0 0 15px 0;">${d.name}</h3>
+                        <table class="check-table">
+                            <tr><td>Tipe</td><td>${d.type.toUpperCase()}</td></tr>
+                            <tr><td>Owner</td><td>${d.ownerEmail}</td></tr>
+                            <tr><td>Akses Bot</td><td style="color:${accessColor}; font-weight:bold;">${d.access}</td></tr>
+                            <tr><td>Size (Meta)</td><td>${d.stats.size}</td></tr>
+                        </table>
+                        ${d.type === 'folder' ? '<div style="margin-top:10px; font-size:0.8rem; color:#aaa;">*Size folder mungkin perlu scan mendalam untuk akurasi total.</div>' : ''}
+                    </div>
+                `;
+                
+                Swal.fire({
+                    title: 'Hasil Pengecekan',
+                    html: html,
+                    background: '#1a1a2e', color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonText: 'Lanjut Clone',
+                    cancelButtonText: 'Tutup',
+                    confirmButtonColor: '#00d2ff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        startCloning(); // Opsional: Langsung mulai jika user mau
+                    }
+                });
+            } else {
+                Swal.fire('Gagal', d.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error', e.message, 'error');
+        }
+    }
+
 
     // --- FITUR SEARCH (Local) ---
     async function searchDrive() {
