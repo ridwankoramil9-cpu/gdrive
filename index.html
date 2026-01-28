@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.7 (FIXED: Auto Detect on "Insert Saved Link")
+  VERSION: 20.8 (FIXED: Delete Saved Remote Account Added)
   ============================================================================
 -->
 <html lang="id">
@@ -72,7 +72,7 @@
 
 <div class="container" id="mainContainer" style="display:none;">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.7)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.8)</p>
     
     <div class="tab-nav">
         <button class="tab-btn active" onclick="switchTab('clone')">☁️ Clone</button>
@@ -303,7 +303,7 @@
     window.switchDestTab=(t)=>{document.getElementById('tabLocal').className=(t==='local'?'picker-tab active':'picker-tab');document.getElementById('tabRemote').className=(t==='remote'?'picker-tab active':'picker-tab');if(t==='local')loadLocalPicker('root');else loadSavedRemotes();};
     async function loadLocalPicker(pid){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'browse_folders',parentId:pid,pin:document.getElementById('accessPin').value})});const d=await r.json();if(d.status==='success'){let h=`<div class="picker-container"><div class="picker-header-sticky"><div>${d.currentName}</div><div style="display:flex;gap:10px;">${d.parentId?`<span onclick="loadLocalPicker('${d.parentId}')" style="cursor:pointer;color:#f4b400;">⬅ Back</span>`:''} <span onclick="createLocalFolder('${d.currentId}')" style="cursor:pointer;color:#2ed573;">+ New</span></div></div><div class="picker-list-area">`;d.folders.forEach(f=>{h+=`<div class="browse-row"><div class="browse-icon">📁</div><div class="browse-name" onclick="loadLocalPicker('${f.id}')">${f.name}</div><div class="browse-action"><button class="btn-mini-del" onclick="deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','local','${pid}')">🗑️</button></div></div>`});h+=`</div><div style="padding:10px;background:#2f3542;"><button onclick="selectDest('${d.currentId}','${d.currentName}',false)" style="width:100%;padding:8px;background:#0984e3;border:none;color:white;border-radius:5px;">Pilih Folder Ini</button></div></div>`;c.innerHTML=h;}else c.innerText=d.message;}
     async function loadSavedRemotes(){const c=document.getElementById('destPickerContent');const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h=`<div class="picker-container"><div class="picker-list-area">`;if(d.list)d.list.forEach(i=>{if(i.type==='server')h+=`<div class="browse-row" onclick="browseRemoteDest('${i.url}','root','${i.label}')"><div class="browse-icon">☁️</div><div class="browse-name">${i.label}</div><div class="browse-meta">(${i.email})</div></div>`});h+=`</div></div>`;c.innerHTML=h;}
-    async function browseRemoteDest(u,pid,l){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(u,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})});const d=await r.json();if(d.status==='success'){let h=`<div class="picker-container"><div class="picker-header-sticky"><div>${l} > ${d.currentName}</div>${d.parentId?`<span onclick="browseRemoteDest('${u}','${d.parentId}','${l}')" style="cursor:pointer;color:#f4b400;">⬅ Back</span>`:`<span onclick="switchDestTab('remote')" style="cursor:pointer;">⬅ Accounts</span>`}</div><div class="picker-list-area">`;d.items.forEach(f=>{if(f.type==='folder')h+=`<div class="browse-row"><div class="browse-icon">📁</div><div class="browse-name" onclick="browseRemoteDest('${u}','${f.id}','${l}')">${f.name}</div><div class="browse-action"><button class="btn-mini-del" onclick="deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','remote','${pid}','${u}','${l}')">🗑️</button></div></div>`});h+=`</div><div style="padding:10px;background:#2f3542;"><button onclick="selectDest('${u}','${d.currentName}',true,'${d.currentId}','${l}')" style="width:100%;padding:8px;background:#f0932b;border:none;color:white;border-radius:5px;">Pilih Remote Ini</button></div></div>`;c.innerHTML=h;}}
+    async function browseRemoteDest(u,pid,l){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(u,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})});const d=await r.json();if(d.status==='success'){let h=`<div class="picker-container"><div class="picker-header-sticky"><div>${l} > ${d.currentName}</div>${d.parentId?`<span onclick="browseRemoteDest('${u}','${d.parentId}','${l}')" style="cursor:pointer;color:yellow;">⬅ Back</span>`:`<span onclick="switchDestTab('remote')" style="cursor:pointer;">⬅ Accounts</span>`}</div><div class="picker-list-area">`;d.items.forEach(f=>{if(f.type==='folder')h+=`<div class="browse-row"><div class="browse-icon">📁</div><div class="browse-name" onclick="browseRemoteDest('${u}','${f.id}','${l}')">${f.name}</div><div class="browse-action"><button class="btn-mini-del" onclick="deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','remote','${pid}','${u}','${l}')">🗑️</button></div></div>`});h+=`</div><div style="padding:10px;background:#2f3542;"><button onclick="selectDest('${u}','${d.currentName}',true,'${d.currentId}','${l}')" style="width:100%;padding:8px;background:#f0932b;border:none;color:white;border-radius:5px;">Pilih Remote Ini</button></div></div>`;c.innerHTML=h;}}
     async function createLocalFolder(pid){const{value:n}=await Swal.fire({title:'Nama Folder',input:'text',background:'#1a1a2e',color:'#fff'});if(n){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'create_folder_tool',parentId:pid,name:n,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}}
     async function selectDest(val,name,isRemote,remoteId,label){Swal.close();if(activePickerMode==='clone'){if(isRemote){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:document.getElementById('accessPin').value,targetUrl:val,targetId:remoteId})});const d=await r.json();if(d.status==='success')document.getElementById('destUrl').value=d.folderUrl;}else{document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${val}`;}}else if(activePickerMode==='upload'){if(isRemote){uploadTargetUrl=val;document.getElementById('uploadDestId').value=remoteId;document.getElementById('uploadTargetLabel').style.display='block';}else{uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=val;document.getElementById('uploadTargetLabel').style.display='none';}}else{document.getElementById('searchLocId').value=val;document.getElementById('searchLocName').value=name;}Swal.fire('Set',name,'success');}
     async function deleteInsidePicker(id,type,name,mode,pid,rUrl,rLabel){const r=await Swal.fire({title:'Hapus?',text:name,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){if(mode==='local'){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}else{await fetch(rUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type})});browseRemoteDest(rUrl,pid,rLabel);}Swal.fire('Terhapus','','success');}}
@@ -316,8 +316,36 @@
     function addLog(m,t){const l=document.getElementById('logArea');l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}">${m}</div>`;l.scrollTop=l.scrollHeight;}
     
     // --- SAVED & SCHEDULE ---
-    async function openSavedItems(){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`});h+='</div>';Swal.fire({title:'Saved',html:h});}
+    async function openSavedItems(){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{
+        h += `
+        <div class="picker-item" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1; cursor:pointer;" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>
+            <button class="btn-mini-del" onclick="deleteSavedRemote('${i.id}', '${i.label}')">🗑️</button>
+        </div>`;
+    });h+='</div>';Swal.fire({title:'Saved',html:h});}
     
+    async function deleteSavedRemote(id, label) {
+        const r = await Swal.fire({ title: 'Hapus?', text: `Hapus link ${label}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
+        if (r.isConfirmed) {
+            Swal.showLoading();
+            const res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'delete_remote_account', 
+                    id: id, 
+                    pin: document.getElementById('accessPin').value 
+                }) 
+            });
+            const d = await res.json();
+            if (d.status === 'success') {
+                Swal.close();
+                openSavedItems(); // Refresh list immediately
+            } else {
+                Swal.fire('Gagal', d.message, 'error');
+            }
+        }
+    }
+
     // [FIX: AUTO DETECT TRIGGER]
     function insertSaved(u){
         const t=document.getElementById('folderUrls');
