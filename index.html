@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 18.5 (Added: Smart Check Link Feature)
+  VERSION: 18.6 (Added: Deep Scan Button in Smart Check)
   ============================================================================
 -->
 <html lang="id">
@@ -190,7 +190,7 @@
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v18.5)</p>
+    <p class="subtitle">Full Integrated System (v18.6)</p>
     
     <!-- 2. TAB NAVIGATION -->
     <div class="tab-nav">
@@ -363,8 +363,8 @@
         }
     }
 
-    // --- SMART CHECK FUNCTION (BARU) ---
-    async function checkSmartLink() {
+    // --- MODIFIED: SMART CHECK FUNCTION WITH DEEP SCAN SUPPORT ---
+    async function checkSmartLink(isDeep = false) {
         const text = document.getElementById('folderUrls').value;
         const pin = document.getElementById('accessPin').value;
         
@@ -375,8 +375,8 @@
         if (!pin) return Swal.fire('Error', 'Masukkan PIN Akses terlebih dahulu.', 'warning');
 
         Swal.fire({
-            title: 'Memeriksa Link...',
-            html: 'Menghubungi server...',
+            title: isDeep ? '🕵️ Deep Scanning...' : 'Memeriksa Link...',
+            html: isDeep ? 'Menghitung total size (bisa lama)...' : 'Menghubungi server...',
             didOpen: () => Swal.showLoading(),
             background: '#1a1a2e', color: '#fff'
         });
@@ -384,7 +384,7 @@
         try {
             const res = await fetch(SCRIPT_URL, { 
                 method: 'POST', 
-                body: JSON.stringify({ action: 'check_stats', url: urlMatch[0], pin: pin }) 
+                body: JSON.stringify({ action: 'check_stats', url: urlMatch[0], pin: pin, deepScan: isDeep }) 
             });
             const d = await res.json();
 
@@ -392,6 +392,13 @@
                 let icon = d.type === 'folder' ? '📁' : '📄';
                 let accessColor = d.access === 'Writer' ? '#2ed573' : (d.access === 'Viewer' ? '#f1c40f' : '#ff4757');
                 
+                // Show deep scan button ONLY if it's a folder AND we haven't deep scanned yet
+                let deepBtn = (d.type === 'folder' && !isDeep) ? 
+                    `<br><button onclick="checkSmartLink(true)" style="background:#f0932b; border:none; color:white; padding:8px 15px; border-radius:5px; cursor:pointer; margin-top:10px; font-weight:bold; width:100%;">🕵️ Lakukan Deep Scan Size</button>` : '';
+
+                let extraNote = (d.type === 'folder' && !isDeep) ? 
+                    '<div style="margin-top:5px; font-size:0.75rem; color:#aaa; font-style:italic;">*Size folder mungkin perlu scan mendalam untuk akurasi total.</div>' : '';
+
                 let html = `
                     <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
                         <div style="font-size:3rem; margin-bottom:10px;">${icon}</div>
@@ -400,9 +407,11 @@
                             <tr><td>Tipe</td><td>${d.type.toUpperCase()}</td></tr>
                             <tr><td>Owner</td><td>${d.ownerEmail}</td></tr>
                             <tr><td>Akses Bot</td><td style="color:${accessColor}; font-weight:bold;">${d.access}</td></tr>
-                            <tr><td>Size (Meta)</td><td>${d.stats.size}</td></tr>
+                            <tr><td>Size</td><td style="font-weight:bold; color:#00d2ff;">${d.stats.size}</td></tr>
+                            ${isDeep ? `<tr><td>Total File</td><td>${d.stats.files}</td></tr>` : ''}
                         </table>
-                        ${d.type === 'folder' ? '<div style="margin-top:10px; font-size:0.8rem; color:#aaa;">*Size folder mungkin perlu scan mendalam untuk akurasi total.</div>' : ''}
+                        ${extraNote}
+                        ${deepBtn}
                     </div>
                 `;
                 
