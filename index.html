@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.4 (FINAL: Timer, ETA, Stop Button, & Full Features)
+  VERSION: 20.5 (FIXED: Remote Server Detection Logic)
   ============================================================================
 -->
 <html lang="id">
@@ -11,109 +11,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-Drive Ultimate Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.0/tsparticles.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        /* --- CORE THEME --- */
-        :root {
-            --primary: #00d2ff; 
-            --secondary: #ff00de;
-            --glass-bg: rgba(20, 20, 30, 0.85); 
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-color: #ffffff; 
-            --input-bg: rgba(0, 0, 0, 0.5);
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #0f0c29; 
-            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0; padding: 20px; 
-            color: var(--text-color); overflow-x: hidden; position: relative;
-        }
+        :root { --primary: #00d2ff; --glass-bg: rgba(20, 20, 30, 0.85); --input-bg: rgba(0, 0, 0, 0.5); }
+        body { font-family: 'Poppins', sans-serif; background: #0f0c29; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; color: #fff; }
         #tsparticles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
-        
-        /* --- LOGIN OVERLAY --- */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(15, 12, 41, 0.98); z-index: 9999; 
-            display: flex; justify-content: center; align-items: center; 
-            backdrop-filter: blur(10px);
-        }
-        .login-box {
-            background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px; 
-            border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; width: 350px;
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
-        }
-        
-        /* --- MAIN CONTAINER --- */
-        .container {
-            position: relative; z-index: 1; background: var(--glass-bg);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            padding: 2.5rem; border-radius: 20px; border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 680px;
-            display: none; /* Hidden by default until login */
-        }
-        
-        h1 {
-            font-size: 2rem; margin-bottom: 0.5rem; text-align: center;
-            background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-        
-        /* --- TABS --- */
+        .container { position: relative; z-index: 1; background: var(--glass-bg); padding: 2.5rem; border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5); width: 100%; max-width: 680px; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; text-align: center; color: var(--primary); }
         .tab-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .tab-btn {
-            background: transparent; border: none; color: #888; font-weight: 600; 
-            padding: 10px 15px; cursor: pointer; transition: 0.3s; 
-            font-size: 0.9rem; border-bottom: 2px solid transparent; flex: 1;
-        }
-        .tab-btn.active { color: #00d2ff; border-bottom-color: #00d2ff; background: rgba(0,210,255,0.05); }
-
-        /* --- INPUTS & BUTTONS --- */
-        label { display: block; margin-bottom: 0.5rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
-        input, textarea, select {
-            width: 100%; padding: 12px 15px; background: var(--input-bg);
-            border: 1px solid var(--glass-border); border-radius: 10px;
-            font-size: 0.9rem; color: white; box-sizing: border-box; margin-bottom: 15px;
-        }
+        .tab-btn { background: transparent; border: none; color: #888; font-weight: 600; padding: 10px; cursor: pointer; flex: 1; }
+        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        input, textarea, select { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #444; border-radius: 10px; color: white; margin-bottom: 15px; box-sizing: border-box; }
+        button.main-btn { width: 100%; padding: 15px; border-radius: 10px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff; font-weight: 700; cursor: pointer; }
+        button.main-btn.stop-mode { background: linear-gradient(45deg, #ff4757, #ff6b81); }
+        .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; }
         
-        button.main-btn {
-            width: 100%; padding: 15px; border-radius: 10px; border: none;
-            background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff;
-            font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase;
-            font-size: 1rem; letter-spacing: 1px;
-        }
-        button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
-        button.main-btn.stop-mode {
-            background: linear-gradient(45deg, #ff4757, #ff6b81);
-            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
-        }
-
-        /* --- STATS BAR (NEW) --- */
-        .stats-bar {
-            display: none; background: rgba(255,255,255,0.08); padding: 12px;
-            border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
+        .stats-bar { display: none; background: rgba(255,255,255,0.08); padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); }
         .stats-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-family: monospace; }
         .progress-track { height: 8px; background: #444; border-radius: 4px; overflow: hidden; }
         .progress-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.5s ease; }
 
-        /* --- UTILS --- */
-        .remote-badge { display: none; width: 100%; padding: 10px; box-sizing: border-box; background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.85rem; }
+        /* Remote Badge (Detection) - Important! */
+        .remote-badge { display: none; width: 100%; box-sizing: border-box; background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573; padding: 12px; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.9rem; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
+
+        /* Login */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 12, 41, 0.98); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; width: 350px; }
         
-        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
-        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
-        .check-table td:first-child { font-weight:bold; color:#00d2ff; width:100px; }
-        
-        .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; border: 1px solid rgba(255,255,255,0.05); }
-        
-        /* Picker Modal */
+        /* Picker */
         .picker-header { display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #444; margin-bottom: 10px; }
         .picker-item { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .picker-item:hover { background: rgba(255,255,255,0.1); }
@@ -121,16 +49,17 @@
         .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
         .picker-tab { padding: 5px 10px; cursor: pointer; border-radius: 5px; color: #888; }
         .picker-tab.active { background: #00d2ff; color: white; font-weight: bold; }
-
+        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
+        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
+        
         ::-webkit-scrollbar { width: 6px; } 
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
-
 <div id="tsparticles"></div>
 
-<!-- 1. LOGIN SYSTEM -->
+<!-- Login Overlay -->
 <div id="loginOverlay">
     <div class="login-box">
         <h2 style="color:#00d2ff; margin-bottom:15px;">🔐 G-Drive Pro</h2>
@@ -139,109 +68,72 @@
     </div>
 </div>
 
-<!-- 2. MAIN APP -->
-<div class="container" id="mainContainer">
+<div class="container" id="mainContainer" style="display:none;">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.4)</p>
     
-    <!-- TAB NAVIGATION -->
     <div class="tab-nav">
-        <button class="tab-btn active" id="btnTabClone" onclick="switchTab('clone')">☁️ Clone</button>
-        <button class="tab-btn" id="btnTabUpload" onclick="switchTab('upload')">📤 Upload</button>
-        <button class="tab-btn" id="btnTabSearch" onclick="switchTab('search')">🔍 Cari File</button>
+        <button class="tab-btn active" onclick="switchTab('clone')">☁️ Clone</button>
+        <button class="tab-btn" onclick="switchTab('upload')">📤 Upload</button>
+        <button class="tab-btn" onclick="switchTab('search')">🔍 Search</button>
     </div>
 
-    <!-- Hidden Input for Session PIN -->
-    <input type="hidden" id="accessPin">
+    <input type="password" id="accessPin" placeholder="PIN Keamanan">
 
-    <!-- PANEL CLONE -->
     <div id="panelClone">
         <label>Link Sumber</label>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
-           <div style="display:flex; gap:5px;">
-               <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Saved</button>
-               <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Save</button>
-           </div>
-           <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold; box-shadow:0 0 10px rgba(108, 92, 231, 0.4);">🔍 Smart Check</button>
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <div>
+                <button onclick="openSavedItems()" style="padding:5px 10px; background:#e1b12c; border:none; border-radius:5px; color:white; font-size:0.7rem;">📂 Saved</button>
+                <button onclick="saveCurrentLink()" style="padding:5px 10px; background:#0984e3; border:none; border-radius:5px; color:white; font-size:0.7rem;">💾 Save</button>
+            </div>
+            <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold;">🔍 Smart Check</button>
         </div>
         
-        <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">📡 Server Remote Terdeteksi! Klik untuk Jelajah</div>
-
+        <!-- REMOTE DETECTED PANEL (HIDDEN BY DEFAULT) -->
+        <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">
+            📡 Server Remote Terdeteksi! Klik untuk Jelajah isi folder...
+        </div>
+        
         <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B) di sini..." style="height:100px; font-family:monospace;"></textarea>
         
         <label>Folder Tujuan</label>
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" id="destUrl" placeholder="Link/ID Folder tujuan (Default)" style="margin-bottom:0;">
-            <button onclick="openDestPicker('clone')" style="background:#6c5ce7; border:none; width:50px; border-radius:10px; cursor:pointer; color:white;">📂</button>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="destUrl" placeholder="Link/ID Tujuan">
+            <button onclick="openDestPicker('clone')" style="width:auto; padding:0 20px; background:#6c5ce7; border:none; border-radius:5px; color:white;">📂</button>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-            <label style="margin:0;">Mode Copy</label>
-            <span style="font-size:0.8rem; color:#00d2ff; cursor:pointer;" onclick="toggleAdvanced()">⚙️ Opsi Lanjutan</span>
-        </div>
-        
+        <label>Mode Copy</label>
         <select id="duplicateMode">
             <option value="copy_duplicate">Duplikat (Default)</option>
-            <option value="copy_replace">Replace jika ada (Recommended)</option>
+            <option value="copy_replace">Replace jika ada (Perfected)</option>
             <option value="copy_skip">Skip jika ada</option>
             <option value="rename_duplicate">Rename Sumber</option>
         </select>
 
-        <div id="advSec" style="display:none; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; margin-bottom:15px;">
-            <div style="margin-bottom:10px;">
-                <input type="checkbox" id="bgToggle"> <label style="display:inline;">Run in Background (Server Process)</label>
-            </div>
-            <input type="text" id="emailNotif" placeholder="Email untuk Notifikasi">
-            
-            <label>Jadwal Otomatis</label>
-            <div style="display:flex; gap:5px;">
-               <input type="text" id="schedLabel" placeholder="Label Jadwal" style="margin:0;">
-               <button style="background:#20bf6b; border:none; color:white; border-radius:5px; padding:0 15px;" onclick="createSchedule()">+ Add</button>
-            </div>
-            <div style="margin-top:5px; text-align:right; font-size:0.8rem; color:#aaa; cursor:pointer;" onclick="showScheduleList()">📅 Lihat Daftar Jadwal</div>
+        <div style="margin-bottom:15px;">
+            <label><input type="checkbox" id="bgToggle"> Run in Background</label>
         </div>
+        <input type="text" id="emailNotif" placeholder="Email Notifikasi">
 
         <button class="main-btn" id="btnAction" onclick="handleMainButton()">Mulai Cloning 🚀</button>
     </div>
 
-    <!-- PANEL UPLOAD -->
+    <!-- Panel Upload -->
     <div id="panelUpload" style="display:none;">
-        <div class="upload-box" onclick="document.getElementById('fileInput').click()" style="border:2px dashed #00d2ff; padding:30px; text-align:center; border-radius:15px; margin-bottom:15px; cursor:pointer;">
-            <span style="font-size:3rem;">☁️</span>
-            <p style="margin-top:10px;">Klik untuk Pilih File</p>
-            <input type="file" id="fileInput" style="display:none" multiple onchange="handleFileSelect(this)">
-        </div>
-        <div id="uploadList" style="margin-bottom:15px; font-size:0.85rem; color:#aaa; text-align:center;"></div>
-        
-        <label>Tujuan Upload</label>
-        <div style="display:flex; gap:10px; margin-bottom:5px;">
-            <input type="text" id="uploadDestId" placeholder="ID/Link Folder (Default: Root)" style="margin-bottom:0;">
-            <button onclick="openDestPicker('upload')" style="background:#6c5ce7; border:none; width:50px; border-radius:10px; cursor:pointer; color:white;">📂</button>
-        </div>
-        <div id="uploadTargetLabel" style="font-size:0.8rem; color:#f4b400; margin-bottom:15px; display:none;">⚠️ Target: Remote Server</div>
-        
-        <button class="main-btn" id="btnUploadNow" onclick="startUpload()" disabled>Upload File 📤</button>
+        <input type="file" id="fileInput" multiple onchange="handleFileSelect(this)">
+        <div id="uploadList"></div>
+        <input type="text" id="uploadDestId" placeholder="ID Tujuan">
+        <button onclick="openDestPicker('upload')">📂</button>
+        <button class="main-btn" id="btnUploadNow" onclick="startUpload()">Upload</button>
     </div>
-
-    <!-- PANEL SEARCH -->
+    
+    <!-- Panel Search -->
     <div id="panelSearch" style="display:none;">
-        <label>Lokasi Pencarian</label>
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" id="searchLocName" placeholder="Seluruh Drive" readonly style="background:#333; margin-bottom:0;">
-            <input type="hidden" id="searchLocId" value="root">
-            <button onclick="openDestPicker('search_source')" style="background:#6c5ce7; border:none; padding:0 15px; border-radius:10px; cursor:pointer; color:white;">Filter</button>
-            <button onclick="resetSearchLoc()" style="background:#ff4757; border:none; padding:0 10px; border-radius:10px; cursor:pointer; color:white;">Reset</button>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" id="searchInput" placeholder="Nama file..." style="margin-bottom:0;" onkeypress="if(event.key==='Enter') searchDrive()">
-            <button onclick="searchDrive()" style="background:#00d2ff; border:none; padding:0 20px; border-radius:10px; cursor:pointer; color:white; font-weight:bold;">Cari</button>
-        </div>
-        
-        <div id="searchResults" class="search-results"></div>
+        <input type="text" id="searchInput" placeholder="Cari...">
+        <button class="main-btn" onclick="searchDrive()">Cari</button>
+        <div id="searchResults"></div>
     </div>
 
-    <!-- NEW: STATS BAR (Timer & ETA) -->
     <div id="statsBar" class="stats-bar">
         <div class="stats-row">
             <span id="timerEl">⏱️ 00:00:00</span>
@@ -252,112 +144,102 @@
         <div style="text-align:right; font-size:0.7rem; color:#aaa; margin-top:2px;" id="progressText">0%</div>
     </div>
 
-    <!-- LOGGING -->
     <div class="log-area" id="logArea">System Ready...</div>
 </div>
 
 <script>
-    // --- KONFIGURASI ---
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVMco1a7VA7GkY6OyxFm239RXZlqMsTUy9kheMJthucelNETE9Zu9B9jqMB9mgyWbr/exec"; 
-    
-    let activePickerMode = 'clone';
-    let detectedRemoteUrl = null;
-    let selectedRemoteSourceItems = [];
-    let uploadTargetUrl = SCRIPT_URL; 
-    let isProcessing = false; 
-    let stopSignal = false;
-    let selectedFiles = [];
-    
-    // Timer Variables
-    let jobStartTime = 0;
-    let timerInterval = null;
+    let isProcessing = false; let stopSignal = false;
+    let jobStartTime = 0; let timerInterval = null;
+    let detectedRemoteUrl = null; let selectedRemoteSourceItems = []; let activePickerMode = 'clone'; let uploadTargetUrl = SCRIPT_URL; let selectedFiles = [];
 
-    // --- UI LOGIC ---
-    function switchTab(mode) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btnTab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-        ['clone', 'upload', 'search'].forEach(m => document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display = (m===mode?'block':'none'));
-    }
-    
-    function toggleAdvanced() {
-        const sec = document.getElementById('advSec');
-        sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
+    // --- UI HELPERS ---
+    function switchTab(m) {
+        document.querySelectorAll('#panelClone, #panelUpload, #panelSearch').forEach(el=>el.style.display='none');
+        document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display='block';
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        event.target.classList.add('active');
     }
 
     async function unlockSite() {
         const pin = document.getElementById('gatePinInput').value;
-        if(!pin) return Swal.fire('Error', 'Masukkan PIN', 'warning');
-        
-        document.querySelector('#loginOverlay h2').innerText = "Memverifikasi...";
-        try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
-            const d = await res.json();
-            
-            if(d.status === 'success') {
-                document.getElementById('accessPin').value = pin;
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'block';
-                document.getElementById('mainContainer').classList.add('visible');
-            } else {
-                document.querySelector('#loginOverlay h2').innerText = "Gagal";
-                Swal.fire('Akses Ditolak', 'PIN Salah!', 'error');
-                document.querySelector('#loginOverlay h2').innerText = "🔐 G-Drive Pro";
-            }
-        } catch(e) { Swal.fire('Error', 'Koneksi Gagal: '+e.message, 'error'); }
+        if(!pin) return;
+        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
+        const d = await res.json();
+        if(d.status === 'success') {
+            document.getElementById('accessPin').value = pin;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+        } else { Swal.fire('Error', 'PIN Salah', 'error'); }
     }
 
+    // --- DETECT REMOTE URL (FIXED) ---
+    function performRemoteDetection() {
+        const text = document.getElementById('folderUrls').value;
+        // Regex yang lebih fleksibel untuk menangkap URL script Google
+        const match = text.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
+        const panel = document.getElementById('remoteDetectedPanel');
+        
+        if (match) {
+            detectedRemoteUrl = match[0];
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+            detectedRemoteUrl = null;
+        }
+    }
+
+    // Pasang listener pada semua kejadian input
+    const urlInput = document.getElementById('folderUrls');
+    urlInput.addEventListener('input', performRemoteDetection);
+    urlInput.addEventListener('change', performRemoteDetection);
+    urlInput.addEventListener('paste', () => setTimeout(performRemoteDetection, 100));
+
+    // --- BUTTON HANDLER ---
     async function handleMainButton() {
         const btn = document.getElementById('btnAction');
         if (isProcessing) {
-            stopSignal = true; btn.innerText = "⏳ Menghentikan..."; btn.disabled = true;
-            if(document.getElementById('bgToggle').checked) {
-                 await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'stop_background', pin:document.getElementById('accessPin').value }) });
-                 addLog("📡 Sinyal Stop Background dikirim...", "warning");
-            } else { addLog("🛑 Stop diminta...", "warning"); }
+            stopSignal = true; btn.innerText = "⏳ Stopping..."; btn.disabled = true;
+            if(document.getElementById('bgToggle').checked) await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'stop_background', pin:document.getElementById('accessPin').value})});
         } else { startCloning(); }
     }
 
-    // --- CLONING LOGIC ---
     async function startCloning() {
         const urls = document.getElementById('folderUrls').value.split('\n').filter(u=>u);
         const pin = document.getElementById('accessPin').value;
-        if(urls.length===0) return Swal.fire('Warning', 'Link kosong', 'warning');
-        
+        if(!urls.length || !pin) return Swal.fire('Error','Data kurang','error');
+
         isProcessing = true; stopSignal = false;
-        const btn = document.getElementById('btnAction');
-        btn.innerHTML = "⛔ STOP PROSES"; btn.classList.add('stop-mode');
+        const btn = document.getElementById('btnAction'); btn.innerHTML = "⛔ STOP PROSES"; btn.classList.add('stop-mode');
         
-        // Reset Timer
         jobStartTime = Date.now();
         document.getElementById('statsBar').style.display = 'block';
         if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(updateTimerDisplay, 1000);
         updateTimerDisplay();
-        
+
         const config = { mode: document.getElementById('duplicateMode').value, destUrl: document.getElementById('destUrl').value, email: document.getElementById('emailNotif').value };
-        addLog("🔄 Memulai Proses...", "info");
-        
+        addLog("🔄 Start...", "info");
+
         try {
             if (document.getElementById('bgToggle').checked) {
-                 await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'start_background_multi', pin:pin, urls:urls, ...config }) });
-                 addLog("✅ Background Started. Boleh tutup tab.", "success");
+                await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'start_background_multi', pin:pin, urls:urls, ...config})});
+                addLog("✅ Background Started.", "success");
             } else {
                 for(let url of urls) {
                     if(stopSignal) break;
-                    const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'initialize', pin:pin, url:url, ...config }) });
+                    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'initialize', pin:pin, url:url, ...config})});
                     const d = await res.json();
-                    if(d.status === 'success') {
-                         addLog(`✅ Init: ${d.sourceName}`, 'success');
-                         await processJob(d.jobId, pin);
-                    } else addLog(`❌ Gagal: ${d.message}`, 'error');
+                    if(d.status==='success') await processJob(d.jobId, pin);
+                    else addLog("❌ Init Error: "+d.message, "error");
                 }
             }
-        } catch(e) { addLog("Err: " + e.message, "error"); } 
+        } catch(e) { addLog("Err: "+e.message, "error"); }
         finally {
             if(!document.getElementById('bgToggle').checked || stopSignal) {
                 isProcessing = false; btn.innerHTML = "Mulai Cloning 🚀"; btn.classList.remove('stop-mode'); btn.disabled = false;
                 clearInterval(timerInterval);
-                addLog("🏁 Selesai.", stopSignal?"warning":"success");
+                addLog("🏁 Selesai.", "success");
             }
         }
     }
@@ -373,11 +255,10 @@
     async function processJob(jobId, pin) {
         let done = false;
         while(!done && !stopSignal) {
-            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'process_batch', jobId:jobId, pin:pin }) });
+            const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'process_batch', jobId:jobId, pin:pin})});
             const d = await res.json();
-            if(d.status !== 'success' || d.action === 'complete') done = true;
+            if(d.status!=='success' || d.action==='complete') done=true;
             
-            // Stats Update
             if(d.progress) {
                 let p = d.progress;
                 let pct = Math.round((p.processed / p.total) * 100);
@@ -398,162 +279,66 @@
                 
                 addLog(`⏳ Processing...`, 'info');
             }
-            
-            if(d.processedList) d.processedList.forEach(i => addLog(`📄 ${i.name} (${i.status})`, i.status==='success'?'success':'error'));
+            if(d.processedList) d.processedList.forEach(i=>addLog(`📄 ${i.name} (${i.status})`, i.status==='success'?'success':'error'));
         }
     }
 
     // --- SMART CHECK ---
-    async function checkSmartLink(isDeep = false) {
-        const url = document.getElementById('folderUrls').value.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
-        const pin = document.getElementById('accessPin').value;
-        if (!url) return Swal.fire('Error', 'Link tidak valid', 'error');
+    async function checkSmartLink(d=false){
+        const text = document.getElementById('folderUrls').value;
+        const u = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
         
-        Swal.fire({ title: isDeep?'Deep Scanning...':'Checking...', didOpen:()=>Swal.showLoading(), background:'#1a1a2e', color:'#fff' });
-        try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'check_stats', url: url[0], pin: pin, deepScan: isDeep }) });
-            const d = await res.json();
-            if (d.status === 'success') {
-                let html = `<div style="text-align:left; background:rgba(255,255,255,0.1); padding:10px; border-radius:5px;">
-                    <h3>${d.type==='folder'?'📁':'📄'} ${d.name}</h3>
-                    <table class="check-table"><tr><td>Owner</td><td>${d.ownerEmail}</td></tr><tr><td>Access</td><td>${d.access}</td></tr><tr><td>Size</td><td style="color:#00d2ff;font-weight:bold;">${d.stats.size}</td></tr>${isDeep?`<tr><td>Files</td><td>${d.stats.files}</td></tr>`:''}</table>
-                    ${d.type==='folder'&&!isDeep ? '<br><button onclick="checkSmartLink(true)" style="width:100%; padding:8px; background:#f0932b; border:none; color:white; border-radius:5px; cursor:pointer;">🕵️ Deep Scan Size</button>' : ''}
-                </div>`;
-                Swal.fire({title:'Info', html:html, background:'#1a1a2e', color:'#fff', showCancelButton:true, confirmButtonText:'Clone Now'}).then((r)=>{if(r.isConfirmed) startCloning();});
-            } else Swal.fire('Gagal', d.message, 'error');
-        } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        // Trigger Remote Detection juga saat klik Smart Check (Safety)
+        performRemoteDetection();
+
+        const p=document.getElementById('accessPin').value; 
+        if(!u||!p)return Swal.fire('Err','Link/PIN?','error'); 
+        
+        Swal.fire({title:d?'Deep Scanning...':'Checking...',didOpen:()=>Swal.showLoading(),background:'#1a1a2e',color:'#fff'});
+        
+        try{
+            const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'check_stats',url:u[0],pin:p,deepScan:d})});
+            const res=await r.json();
+            if(res.status==='success'){
+                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;"><h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3><table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Size</td><td>${res.stats.size}</td></tr></table>${res.type==='folder'&&!d?'<br><button onclick="checkSmartLink(true)">Deep Scan</button>':''}</div>`;
+                Swal.fire({title:'Info',html:html,background:'#1a1a2e',color:'#fff',showCancelButton:true,confirmButtonText:'Clone Now'}).then((r)=>{if(r.isConfirmed) startCloning();});
+            } else Swal.fire('Err',res.message,'error');
+        }catch(e){Swal.fire('Err',e.message,'error');}
     }
 
-    // --- PICKERS ---
-    function openDestPicker(m) {
-        activePickerMode = m;
-        const pin = document.getElementById('accessPin').value;
-        if(!pin) return Swal.fire('Error', 'PIN kosong', 'error');
-        Swal.fire({
-            title: 'Pilih Tujuan',
-            html: `<div class="picker-tabs"><div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">Local</div><div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">Remote</div></div><div id="destPickerContent" style="min-height:250px;">Loading...</div>`,
-            showConfirmButton: false, width: '600px', background: '#1a1a2e', color: '#fff',
-            didOpen: () => switchDestTab('local')
-        });
-    }
+    // --- REMOTE PICKERS ---
+    window.openRemoteSourcePicker=()=>{if(!detectedRemoteUrl)return;selectedRemoteSourceItems=[];Swal.fire({title:'Jelajah Remote',html:`<div id="remoteSourcePickerContent" style="text-align:left; min-height:250px;">Loading...</div>`,showConfirmButton:false,width:'650px',background:'#1a1a2e',color:'#fff',didOpen:()=>{loadRemoteSourceContent('root');}});};
     
-    window.switchDestTab = function(t) {
-        document.getElementById('tabLocal').className = (t === 'local') ? 'picker-tab active' : 'picker-tab';
-        document.getElementById('tabRemote').className = (t === 'remote') ? 'picker-tab active' : 'picker-tab';
-        if (t === 'local') loadLocalPicker('root'); else loadSavedRemotes();
-    };
+    async function loadRemoteSourceContent(pid){const c=document.getElementById('remoteSourcePickerContent');if(!c)return;c.innerHTML='Loading...';try{const res=await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})}),d=await res.json();if(d.status==='success'){let h=`<div class="picker-header"><b>${d.currentName}</b>${d.parentId?`<div onclick="loadRemoteSourceContent('${d.parentId}')" style="cursor:pointer;color:#f4b400;">⬅ Back</div>`:''}</div><div style="max-height:300px; overflow-y:auto;">`;d.items.forEach(f=>{h+=`<div class="picker-item"><div style="display:flex;align-items:center;flex:1;"><input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)"><span style="flex:1;margin-left:5px;${f.type==='folder'?'cursor:pointer;':''}" ${f.type==='folder'?`onclick="loadRemoteSourceContent('${f.id}')"`:''}>${f.type==='folder'?'📁':'📄'} ${f.name}</span></div><button class="btn-del-picker" onclick="deleteRemoteItem('${f.id}','${f.type}','${f.name.replace(/'/g,"")}')">🗑️</button></div>`;});h+=`</div><div style="margin-top:15px;text-align:center;"><button style="background:#2ed573;padding:10px;border:none;border-radius:5px;color:white;" onclick="confirmRemoteSelection()">✅ Tambahkan</button></div>`;c.innerHTML=h;}else c.innerText=d.message;}catch(e){c.innerText=e.message;}}
+    window.toggleRemoteSelect=(c)=>{if(c.checked)selectedRemoteSourceItems.push(c.value);else selectedRemoteSourceItems=selectedRemoteSourceItems.filter(id=>id!==c.value);};
+    window.confirmRemoteSelection=async()=>{if(selectedRemoteSourceItems.length===0)return;document.getElementById('remoteSourcePickerContent').innerHTML='Unlocking...';await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'unlock_files',ids:selectedRemoteSourceItems})});const newLinks=selectedRemoteSourceItems.map(id=>`https://drive.google.com/file/d/${id}/view`).join('\n');const ta=document.getElementById('folderUrls');ta.value=ta.value+(ta.value?'\n':'')+newLinks;Swal.close();};
+    async function deleteRemoteItem(id,t,n){const r=await Swal.fire({title:'Hapus Remote?',text:`Hapus ${n}?`,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:t})});loadRemoteSourceContent('root');Swal.fire('Terhapus','','success');}}
 
-    async function loadLocalPicker(pid) {
-        const c = document.getElementById('destPickerContent'); c.innerHTML = 'Loading...';
-        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'browse_folders', parentId: pid, pin: document.getElementById('accessPin').value }) });
-        const d = await res.json();
-        if(d.status === 'success') {
-            let h = `<div class="picker-header"><b>${d.currentName}</b> ${d.parentId?`<span onclick="loadLocalPicker('${d.parentId}')" style="cursor:pointer;color:#f4b400;">⬅ Back</span>`:''} <span onclick="createLocalFolder('${d.currentId}')" style="cursor:pointer;color:#2ed573;float:right;">+New</span></div><div style="max-height:250px;overflow-y:auto;text-align:left;">`;
-            d.folders.forEach(f => { h += `<div class="picker-item"><div style="flex:1;" onclick="loadLocalPicker('${f.id}')">📁 ${f.name}</div><button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','local','${pid}')">🗑️</button></div>`; });
-            h += `</div><button style="width:100%; padding:10px; margin-top:10px; background:#0984e3; border:none; color:white;" onclick="selectDest('${d.currentId}','${d.currentName}',false)">Pilih Ini</button>`;
-            c.innerHTML = h;
-        }
-    }
+    // --- OTHER PICKERS ---
+    function openDestPicker(m){activePickerMode=m;Swal.fire({title:'Tujuan', html:`<div class="picker-tabs"><div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">Local</div><div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">Remote</div></div><div id="destPickerContent" style="min-height:200px;">Loading...</div>`, background:'#1a1a2e', color:'#fff', didOpen:()=>switchDestTab('local')});}
+    window.switchDestTab=(t)=>{document.getElementById('tabLocal').className=(t==='local'?'picker-tab active':'picker-tab');document.getElementById('tabRemote').className=(t==='remote'?'picker-tab active':'picker-tab');if(t==='local')loadLocalPicker('root');else loadSavedRemotes();};
+    async function loadLocalPicker(pid){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'browse_folders',parentId:pid,pin:document.getElementById('accessPin').value})});const d=await r.json();if(d.status==='success'){let h=`<div><b>${d.currentName}</b> ${d.parentId?`<span onclick="loadLocalPicker('${d.parentId}')" style="cursor:pointer;color:yellow;">⬅</span>`:''} <span onclick="createLocalFolder('${d.currentId}')" style="color:#2ed573;cursor:pointer;">+New</span></div>`;d.folders.forEach(f=>{h+=`<div class="picker-item" onclick="loadLocalPicker('${f.id}')">📁 ${f.name}</div>`});h+=`<button onclick="selectDest('${d.currentId}','${d.currentName}',false)" style="margin-top:10px;width:100%;padding:5px;background:#0984e3;border:none;color:white;">Pilih Ini</button>`;c.innerHTML=h;}else c.innerText=d.message;}
+    async function createLocalFolder(pid){const{value:n}=await Swal.fire({title:'Nama Folder',input:'text',background:'#1a1a2e',color:'#fff'});if(n){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'create_folder_tool',parentId:pid,name:n,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}}
+    async function loadSavedRemotes(){const c=document.getElementById('destPickerContent');const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='';d.list.forEach(i=>{if(i.type==='server')h+=`<div class="picker-item" onclick="browseRemoteDest('${i.url}','root','${i.label}')">☁️ ${i.label}</div>`});c.innerHTML=h;}
+    async function browseRemoteDest(u,pid,l){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(u,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})});const d=await r.json();if(d.status==='success'){let h=`<div><b>${l}>${d.currentName}</b> ${d.parentId?`<span onclick="browseRemoteDest('${u}','${d.parentId}','${l}')" style="cursor:pointer;color:yellow;">⬅</span>`:`<span onclick="switchDestTab('remote')" style="cursor:pointer;">⬅</span>`}</div>`;d.items.forEach(f=>{if(f.type==='folder')h+=`<div class="picker-item" onclick="browseRemoteDest('${u}','${f.id}','${l}')">📁 ${f.name}</div>`});h+=`<button onclick="selectDest('${u}','${d.currentName}',true,'${d.currentId}','${l}')" style="margin-top:10px;width:100%;padding:5px;background:#f0932b;border:none;color:white;">Pilih Remote Ini</button>`;c.innerHTML=h;}}
+    async function selectDest(val,name,isRemote,remoteId,label){Swal.close();if(activePickerMode==='clone'){if(isRemote){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:document.getElementById('accessPin').value,targetUrl:val,targetId:remoteId})});const d=await r.json();if(d.status==='success')document.getElementById('destUrl').value=d.folderUrl;}else{document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${val}`;}}else if(activePickerMode==='upload'){if(isRemote){uploadTargetUrl=val;document.getElementById('uploadDestId').value=remoteId;document.getElementById('uploadTargetLabel').style.display='block';}else{uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=val;document.getElementById('uploadTargetLabel').style.display='none';}}else{document.getElementById('searchLocId').value=val;document.getElementById('searchLocName').value=name;}Swal.fire('Set',name,'success');}
+
+    // --- UPLOAD & SEARCH ---
+    function handleFileSelect(i){selectedFiles=Array.from(i.files);document.getElementById('uploadList').innerHTML=selectedFiles.map(f=>`<div>📄 ${f.name}</div>`).join('');document.getElementById('btnUploadNow').disabled=!selectedFiles.length;}
+    async function startUpload(){addLog("Upload...","info");const pin=document.getElementById('accessPin').value;for(let f of selectedFiles){const b64=await new Promise(r=>{const rd=new FileReader();rd.readAsDataURL(f);rd.onload=()=>r(rd.result)});await fetch(uploadTargetUrl,{method:'POST',body:JSON.stringify({action:'direct_upload',pin:pin,fileName:f.name,mimeType:f.type,fileData:b64,destId:document.getElementById('uploadDestId').value})});addLog("✅ "+f.name,"success");}}
+    async function searchDrive(){const q=document.getElementById('searchInput').value;document.getElementById('searchResults').innerHTML='Searching...';const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'search_drive',query:q,pin:document.getElementById('accessPin').value,parentId:document.getElementById('searchLocId').value})});const d=await r.json();let h='';if(d.results)d.results.forEach(f=>{h+=`<div class="search-item" style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #444;"><div>${f.mimeType==='folder'?'📁':'📄'} ${f.name}</div><button onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')" style="background:#2ed573;border:none;color:white;">+</button></div>`});document.getElementById('searchResults').innerHTML=h||'No results';}
+    function addToQueue(u,n){const t=document.getElementById('folderUrls');t.value+=(t.value?'\n':'')+u;switchTab('clone');Swal.fire('Added',n,'success');}
+    function addLog(m,t){const l=document.getElementById('logArea');l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}">${m}</div>`;l.scrollTop=l.scrollHeight;}
     
-    async function loadSavedRemotes() {
-        const c = document.getElementById('destPickerContent');
-        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: document.getElementById('accessPin').value }) });
-        const d = await res.json();
-        let h = '<div style="max-height:250px;overflow-y:auto;text-align:left;">';
-        if(d.list) d.list.forEach(i => { if(i.type==='server') h += `<div class="picker-item" onclick="browseRemote('${i.url}','root','${i.label}')">☁️ ${i.label}</div>`; });
-        h += '</div>'; c.innerHTML = h;
-    }
+    // --- SAVED & SCHEDULE ---
+    async function openSavedItems(){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`});h+='</div>';Swal.fire({title:'Saved',html:h});}
+    function insertSaved(u){const t=document.getElementById('folderUrls');t.value+=(t.value?'\n':'')+u;Swal.close();}
+    async function saveCurrentLink(){const u=document.getElementById('folderUrls').value.split('\n')[0];const{value:l}=await Swal.fire({title:'Label',input:'text'});if(l)fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save_remote_account',pin:document.getElementById('accessPin').value,targetUrl:u,label:l})});}
+    async function createSchedule(){const lbl=document.getElementById('schedLabel').value;if(!lbl)return;await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add_schedule_item',pin:document.getElementById('accessPin').value,label:lbl,config:{urls:document.getElementById('folderUrls').value.split('\n'),destUrl:document.getElementById('destUrl').value,maxBackups:30}})});Swal.fire('Success','','success');}
+    async function showScheduleList(){const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_schedule_list',pin:document.getElementById('accessPin').value})});const d=await res.json();let h='<div style="max-height:200px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div>${i.label} <button onclick="delSched('${i.id}')" style="color:red;">Del</button></div>`});Swal.fire({title:'Jadwal',html:h});}
+    async function delSched(id){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_schedule_item',id:id,pin:document.getElementById('accessPin').value})});Swal.fire('Deleted','','success');}
 
-    async function browseRemote(url, pid, label) {
-        const c = document.getElementById('destPickerContent'); c.innerHTML = 'Loading Remote...';
-        try {
-            const res = await fetch(url, { method:'POST', body: JSON.stringify({ action:'browse_remote', parentId:pid }) });
-            const d = await res.json();
-            if(d.status === 'success') {
-                let h = `<div class="picker-header"><b>${label} > ${d.currentName}</b> ${d.parentId?`<span onclick="browseRemote('${url}','${d.parentId}','${label}')" style="cursor:pointer;color:#f4b400;">⬅ Back</span>`:`<span onclick="switchDestTab('remote')" style="cursor:pointer;">⬅ List</span>`}</div><div style="max-height:250px;overflow-y:auto;text-align:left;">`;
-                d.items.forEach(f => { if(f.type==='folder') h += `<div class="picker-item"><div style="flex:1;" onclick="browseRemote('${url}','${f.id}','${label}')">📁 ${f.name}</div><button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','remote','${pid}','${url}','${label}')">🗑️</button></div>`; });
-                h += `</div><button style="width:100%; padding:10px; margin-top:10px; background:#f0932b; border:none; color:white;" onclick="selectDest('${url}','${d.currentName}',true,'${d.currentId}','${label}')">Pilih Remote Ini</button>`;
-                c.innerHTML = h;
-            }
-        } catch(e) { c.innerText = "Error: "+e.message; }
-    }
-
-    async function selectDest(val, name, isRemote, remoteId, label) {
-        Swal.close();
-        if (activePickerMode === 'upload') {
-            if(isRemote) { uploadTargetUrl=val; document.getElementById('uploadDestId').value=remoteId; document.getElementById('uploadTargetLabel').style.display='block'; document.getElementById('uploadTargetLabel').innerText=`Target: ${label}`; }
-            else { uploadTargetUrl=SCRIPT_URL; document.getElementById('uploadDestId').value=val; document.getElementById('uploadTargetLabel').style.display='none'; }
-        } else if (activePickerMode === 'clone') {
-            if(isRemote) {
-                const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'connect_remote_dest', pin:document.getElementById('accessPin').value, targetUrl:val, targetId:remoteId }) });
-                const d = await res.json();
-                if(d.status === 'success') document.getElementById('destUrl').value = d.folderUrl;
-            } else { document.getElementById('destUrl').value = `https://drive.google.com/drive/folders/${val}`; }
-        } else {
-            document.getElementById('searchLocId').value = val; document.getElementById('searchLocName').value = name;
-        }
-        Swal.fire('Set', name, 'success');
-    }
-
-    async function deleteInsidePicker(id, type, name, mode, pid, rUrl, rLabel) {
-        const r = await Swal.fire({ title:'Hapus?', text:name, icon:'warning', showCancelButton:true, confirmButtonColor:'#d33' });
-        if(r.isConfirmed) {
-            if(mode==='local') { await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type, pin:document.getElementById('accessPin').value }) }); loadLocalPicker(pid); }
-            else { await fetch(rUrl, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type }) }); browseRemote(rUrl, pid, rLabel); }
-            Swal.fire('Terhapus','','success');
-        }
-    }
-    
-    // --- CREATE FOLDER (UTILS) ---
-    async function createLocalFolder(pid) { const {value:n}=await Swal.fire({title:'Nama Folder',input:'text',background:'#1a1a2e',color:'#fff'}); if(n){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'create_folder_tool',parentId:pid,name:n,pin:document.getElementById('accessPin').value})}); loadLocalPicker(pid); }}
-
-    // --- UPLOAD ---
-    function handleFileSelect(i) { selectedFiles=Array.from(i.files); document.getElementById('uploadList').innerHTML=selectedFiles.map(f=>`<div>📄 ${f.name}</div>`).join(''); document.getElementById('btnUploadNow').disabled=!selectedFiles.length; }
-    async function startUpload() {
-        const pin = document.getElementById('accessPin').value;
-        addLog("🚀 Uploading...", "info");
-        for(let f of selectedFiles) {
-            const b64 = await new Promise(r=>{const rd=new FileReader();rd.readAsDataURL(f);rd.onload=()=>r(rd.result)});
-            try {
-                const res = await fetch(uploadTargetUrl, { method:'POST', body: JSON.stringify({ action:'direct_upload', pin:pin, fileName:f.name, mimeType:f.type, fileData:b64, destId:document.getElementById('uploadDestId').value }) });
-                const d = await res.json();
-                if(d.status==='success') addLog(`✅ ${f.name}`, 'success'); else addLog(`❌ ${d.message}`, 'error');
-            } catch(e) { addLog('Err: '+e.message, 'error'); }
-        }
-    }
-
-    // --- SEARCH ---
-    async function searchDrive() {
-        const q = document.getElementById('searchInput').value;
-        document.getElementById('searchResults').innerHTML = 'Mencari...';
-        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'search_drive', query:q, pin:document.getElementById('accessPin').value, parentId:document.getElementById('searchLocId').value }) });
-        const d = await res.json();
-        let h = '';
-        if(d.results) d.results.forEach(f => { h += `<div class="search-item" style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #444;"><div>${f.mimeType==='folder'?'📁':'📄'} ${f.name}</div><div><button onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')" style="background:#2ed573;border:none;color:white;">+</button></div></div>`; });
-        document.getElementById('searchResults').innerHTML = h || 'Tidak ditemukan';
-    }
-
-    // --- MISC UTILS ---
-    function addLog(m, t) { const l=document.getElementById('logArea'); l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'};">${m}</div>`; l.scrollTop=l.scrollHeight; }
-    function addToQueue(u,n) { const t=document.getElementById('folderUrls'); t.value+=(t.value?'\n':'')+u; switchTab('clone'); Swal.fire('Added',n,'success'); }
-    function resetSearchLoc() { document.getElementById('searchLocId').value='root'; document.getElementById('searchLocName').value='Seluruh Drive (Default)'; }
-    
-    // Remote Detection
-    document.getElementById('folderUrls').addEventListener('input', ()=>{
-        const m = document.getElementById('folderUrls').value.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
-        document.getElementById('remoteDetectedPanel').style.display = m ? 'block' : 'none';
-        if(m) detectedRemoteUrl = m[0];
-    });
-    
-    // Saved & Schedule
-    async function openSavedItems() { const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await res.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`});h+='</div>';Swal.fire({title:'Saved',html:h}); }
-    function insertSaved(u) { const t=document.getElementById('folderUrls'); t.value+=(t.value?'\n':'')+u; Swal.close(); }
-    async function saveCurrentLink() { const u=document.getElementById('folderUrls').value.split('\n')[0]; const{value:l}=await Swal.fire({title:'Label',input:'text'}); if(l) fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save_remote_account',pin:document.getElementById('accessPin').value,targetUrl:u,label:l})}); }
-    async function createSchedule() { const lbl=document.getElementById('schedLabel').value; if(!lbl)return; await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add_schedule_item',pin:document.getElementById('accessPin').value,label:lbl,config:{urls:document.getElementById('folderUrls').value.split('\n'),destUrl:document.getElementById('destUrl').value,maxBackups:30}})}); Swal.fire('Success','','success'); }
-    async function showScheduleList() { const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_schedule_list',pin:document.getElementById('accessPin').value})});const d=await res.json();let h='<div style="max-height:200px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div>${i.label} <button onclick="delSched('${i.id}')" style="color:red;">Del</button></div>`});Swal.fire({title:'Jadwal',html:h}); }
-    async function delSched(id) { await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_schedule_item',id:id,pin:document.getElementById('accessPin').value})}); Swal.fire('Deleted','','success'); }
-
-    // Init Particles
+    // Init
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.1 }, size: { value: 3 }, move: { enable: true, speed: 0.5 } } });
 </script>
 </body>
