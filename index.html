@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.10 (FIXED: "isDeep is not defined" Error Solved)
+  VERSION: 20.10 (FINAL: All Features + Fixes Included)
   ============================================================================
 -->
 <html lang="id">
@@ -11,36 +11,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>G-Drive Ultimate Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.0/tsparticles.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        :root { --primary: #00d2ff; --glass-bg: rgba(20, 20, 30, 0.85); --input-bg: rgba(0, 0, 0, 0.5); --item-hover: rgba(255, 255, 255, 0.08); }
-        body { font-family: 'Poppins', sans-serif; background: #0f0c29; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; color: #fff; }
+        /* --- CORE THEME --- */
+        :root {
+            --primary: #00d2ff; 
+            --secondary: #ff00de;
+            --glass-bg: rgba(20, 20, 30, 0.85); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff; 
+            --input-bg: rgba(0, 0, 0, 0.5);
+            --item-hover: rgba(255, 255, 255, 0.08);
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0f0c29; 
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; padding: 20px; 
+            color: var(--text-color); overflow-x: hidden; position: relative;
+        }
         #tsparticles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
-        .container { position: relative; z-index: 1; background: var(--glass-bg); padding: 2.5rem; border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5); width: 100%; max-width: 680px; }
-        h1 { font-size: 2rem; margin-bottom: 0.5rem; text-align: center; color: var(--primary); }
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .tab-btn { background: transparent; border: none; color: #888; font-weight: 600; padding: 10px; cursor: pointer; flex: 1; }
-        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
-        input, textarea, select { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid #444; border-radius: 10px; color: white; margin-bottom: 15px; box-sizing: border-box; }
-        button.main-btn { width: 100%; padding: 15px; border-radius: 10px; border: none; background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff; font-weight: 700; cursor: pointer; }
-        button.main-btn.stop-mode { background: linear-gradient(45deg, #ff4757, #ff6b81); }
-        .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; }
         
-        /* Stats Bar & Detection */
-        .stats-bar { display: none; background: rgba(255,255,255,0.08); padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); }
+        /* --- LOGIN OVERLAY --- */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 12, 41, 0.98); z-index: 9999; 
+            display: flex; justify-content: center; align-items: center; 
+            backdrop-filter: blur(10px);
+        }
+        .login-box {
+            background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; width: 350px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+        }
+        
+        /* --- MAIN CONTAINER --- */
+        .container {
+            position: relative; z-index: 1; background: var(--glass-bg);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 2.5rem; border-radius: 20px; border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 680px;
+            display: none; /* Hidden by default until login */
+            opacity: 0; transition: opacity 0.5s;
+        }
+        .container.visible { opacity: 1; display: block; }
+        
+        h1 {
+            font-size: 2rem; margin-bottom: 0.5rem; text-align: center;
+            background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        p.subtitle { text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 2rem; }
+
+        /* --- TABS --- */
+        .tab-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .tab-btn {
+            background: transparent; border: none; color: #888; font-weight: 600; 
+            padding: 10px 15px; cursor: pointer; transition: 0.3s; 
+            font-size: 0.9rem; border-bottom: 2px solid transparent; flex: 1;
+        }
+        .tab-btn.active { color: #00d2ff; border-bottom-color: #00d2ff; background: rgba(0,210,255,0.05); }
+
+        /* --- INPUTS & BUTTONS --- */
+        label { display: block; margin-bottom: 0.5rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
+        input, textarea, select {
+            width: 100%; padding: 12px 15px; background: var(--input-bg);
+            border: 1px solid var(--glass-border); border-radius: 10px;
+            font-size: 0.9rem; color: white; box-sizing: border-box; margin-bottom: 15px;
+        }
+        
+        button.main-btn {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5); color: #fff;
+            font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            font-size: 1rem; letter-spacing: 1px;
+        }
+        button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
+        button.main-btn.stop-mode {
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+        }
+
+        /* --- STATS BAR --- */
+        .stats-bar {
+            display: none; background: rgba(255,255,255,0.08); padding: 12px;
+            border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
         .stats-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-family: monospace; }
         .progress-track { height: 8px; background: #444; border-radius: 4px; overflow: hidden; }
         .progress-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.5s ease; }
+
+        /* --- UTILS --- */
         .remote-badge { display: none; width: 100%; box-sizing: border-box; background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573; padding: 12px; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.9rem; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 213, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 213, 115, 0); } }
 
-        /* Login */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 12, 41, 0.98); z-index: 9999; display: flex; justify-content: center; align-items: center; }
-        .login-box { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; width: 350px; }
+        .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; border: 1px solid rgba(255,255,255,0.05); }
         
-        /* Picker UI */
+        /* --- PICKER UI --- */
         .picker-container { display: flex; flex-direction: column; height: 350px; text-align: left; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; }
         .picker-header-sticky { background: #2f3542; padding: 10px 15px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; position: sticky; top: 0; z-index: 10; }
         .picker-list-area { flex: 1; overflow-y: auto; padding: 0; }
@@ -49,19 +123,29 @@
         .browse-check { width: 20px; } .browse-icon { font-size: 1.2rem; width: 25px; text-align: center; }
         .browse-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; color: #eee; }
         .browse-meta { font-size: 0.75rem; color: #888; width: 70px; text-align: right; }
+        .browse-action { width: 30px; text-align: right; }
+
         .btn-mini-del { background: rgba(255, 71, 87, 0.1); border: 1px solid #ff4757; color: #ff4757; padding: 4px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-mini-del:hover { background: #ff4757; color: white; }
+
         .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
         .picker-tab { padding: 8px 15px; cursor: pointer; border-radius: 5px; color: #888; background: rgba(255,255,255,0.05); flex:1; text-align: center; }
         .picker-tab.active { background: #00d2ff; color: white; font-weight: bold; }
-        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; } .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
         
-        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        /* Check Stats Table */
+        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
+        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
+        .check-table td:first-child { font-weight:bold; color:#00d2ff; width:100px; }
+
+        ::-webkit-scrollbar { width: 6px; } 
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
+
 <div id="tsparticles"></div>
 
-<!-- Login Overlay -->
+<!-- 1. LOGIN SYSTEM -->
 <div id="loginOverlay">
     <div class="login-box">
         <h2 style="color:#00d2ff; margin-bottom:15px;">🔐 G-Drive Pro</h2>
@@ -70,29 +154,32 @@
     </div>
 </div>
 
-<div class="container" id="mainContainer" style="display:none;">
+<!-- 2. MAIN APP -->
+<div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.10)</p>
+    <p class="subtitle">Full Integrated System (v20.10)</p>
     
+    <!-- TAB NAVIGATION -->
     <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('clone')">☁️ Clone</button>
-        <button class="tab-btn" onclick="switchTab('upload')">📤 Upload</button>
-        <button class="tab-btn" onclick="switchTab('search')">🔍 Search</button>
+        <button class="tab-btn active" id="btnTabClone" onclick="switchTab('clone')">☁️ Clone</button>
+        <button class="tab-btn" id="btnTabUpload" onclick="switchTab('upload')">📤 Upload</button>
+        <button class="tab-btn" id="btnTabSearch" onclick="switchTab('search')">🔍 Cari File</button>
     </div>
 
-    <input type="password" id="accessPin" placeholder="PIN Keamanan">
+    <!-- Hidden Input for Session PIN -->
+    <input type="hidden" id="accessPin">
 
+    <!-- PANEL CLONE -->
     <div id="panelClone">
         <label>Link Sumber</label>
-        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <div>
-                <button onclick="openSavedItems()" style="padding:5px 10px; background:#e1b12c; border:none; border-radius:5px; color:white; font-size:0.7rem;">📂 Saved</button>
-                <button onclick="saveCurrentLink()" style="padding:5px 10px; background:#0984e3; border:none; border-radius:5px; color:white; font-size:0.7rem;">💾 Save</button>
-            </div>
-            <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold;">🔍 Smart Check</button>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+           <div style="display:flex; gap:5px;">
+               <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Saved</button>
+               <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Save</button>
+           </div>
+           <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold; box-shadow:0 0 10px rgba(108, 92, 231, 0.4);">🔍 Smart Check</button>
         </div>
         
-        <!-- REMOTE DETECTED PANEL -->
         <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">
             📡 Server Remote Terdeteksi! Klik untuk Jelajah isi folder...
         </div>
@@ -100,44 +187,78 @@
         <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B) di sini..." style="height:100px; font-family:monospace;"></textarea>
         
         <label>Folder Tujuan</label>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="destUrl" placeholder="Link/ID Tujuan">
-            <button onclick="openDestPicker('clone')" style="width:auto; padding:0 20px; background:#6c5ce7; border:none; border-radius:5px; color:white;">📂</button>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input type="text" id="destUrl" placeholder="Link/ID Folder tujuan (Default)" style="margin-bottom:0;">
+            <button onclick="openDestPicker('clone')" style="background:#6c5ce7; border:none; width:50px; border-radius:10px; cursor:pointer; color:white;">📂</button>
         </div>
 
-        <label>Mode Copy</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <label style="margin:0;">Mode Copy</label>
+            <span style="font-size:0.8rem; color:#00d2ff; cursor:pointer;" onclick="toggleAdvanced()">⚙️ Opsi Lanjutan</span>
+        </div>
+        
         <select id="duplicateMode">
             <option value="copy_duplicate">Duplikat (Default)</option>
-            <option value="copy_replace">Replace jika ada (Perfected)</option>
+            <option value="copy_replace">Replace jika ada (Recommended)</option>
             <option value="copy_skip">Skip jika ada</option>
             <option value="rename_duplicate">Rename Sumber</option>
         </select>
 
-        <div style="margin-bottom:15px;">
-            <label><input type="checkbox" id="bgToggle"> Run in Background</label>
+        <div id="advSec" style="display:none; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; margin-bottom:15px;">
+            <div style="margin-bottom:10px;">
+                <input type="checkbox" id="bgToggle"> <label style="display:inline;">Run in Background (Server Process)</label>
+            </div>
+            <input type="text" id="emailNotif" placeholder="Email untuk Notifikasi">
+            
+            <label>Jadwal Otomatis</label>
+            <div style="display:flex; gap:5px;">
+               <input type="text" id="schedLabel" placeholder="Label Jadwal" style="margin:0;">
+               <button style="background:#20bf6b; border:none; color:white; border-radius:5px; padding:0 15px;" onclick="createSchedule()">+ Add</button>
+            </div>
+            <div style="margin-top:5px; text-align:right; font-size:0.8rem; color:#aaa; cursor:pointer;" onclick="showScheduleList()">📅 Lihat Daftar Jadwal</div>
         </div>
-        <input type="text" id="emailNotif" placeholder="Email Notifikasi">
 
         <button class="main-btn" id="btnAction" onclick="handleMainButton()">Mulai Cloning 🚀</button>
     </div>
 
-    <!-- Panel Upload -->
+    <!-- PANEL UPLOAD -->
     <div id="panelUpload" style="display:none;">
-        <input type="file" id="fileInput" multiple onchange="handleFileSelect(this)">
-        <div id="uploadList"></div>
-        <input type="text" id="uploadDestId" placeholder="ID Tujuan">
-        <button onclick="openDestPicker('upload')">📂</button>
-        <button class="main-btn" id="btnUploadNow" onclick="startUpload()">Upload</button>
-    </div>
-    
-    <!-- Panel Search -->
-    <div id="panelSearch" style="display:none;">
-        <input type="text" id="searchInput" placeholder="Cari...">
-        <button class="main-btn" onclick="searchDrive()">Cari</button>
-        <div id="searchResults"></div>
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()" style="border:2px dashed #00d2ff; padding:30px; text-align:center; border-radius:15px; margin-bottom:15px; cursor:pointer;">
+            <span style="font-size:3rem;">☁️</span>
+            <p style="margin-top:10px;">Klik untuk Pilih File</p>
+            <input type="file" id="fileInput" style="display:none" multiple onchange="handleFileSelect(this)">
+        </div>
+        <div id="uploadList" style="margin-bottom:15px; font-size:0.85rem; color:#aaa; text-align:center;"></div>
+        
+        <label>Tujuan Upload</label>
+        <div style="display:flex; gap:10px; margin-bottom:5px;">
+            <input type="text" id="uploadDestId" placeholder="ID/Link Folder (Default: Root)" style="margin-bottom:0;">
+            <button onclick="openDestPicker('upload')" style="background:#6c5ce7; border:none; width:50px; border-radius:10px; cursor:pointer; color:white;">📂</button>
+        </div>
+        <div id="uploadTargetLabel" style="font-size:0.8rem; color:#f4b400; margin-bottom:15px; display:none;">⚠️ Target: Remote Server</div>
+        
+        <button class="main-btn" id="btnUploadNow" onclick="startUpload()" disabled>Upload File 📤</button>
     </div>
 
-    <!-- Stats Bar -->
+    <!-- PANEL SEARCH -->
+    <div id="panelSearch" style="display:none;">
+        <label>Lokasi Pencarian</label>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input type="text" id="searchLocName" placeholder="Seluruh Drive" readonly style="background:#333; margin-bottom:0;">
+            <input type="hidden" id="searchLocId" value="root">
+            <button onclick="openDestPicker('search_source')" style="background:#6c5ce7; border:none; padding:0 15px; border-radius:10px; cursor:pointer; color:white;">Filter</button>
+            <button onclick="resetSearchLoc()" style="background:#ff4757; border:none; padding:0 10px; border-radius:10px; cursor:pointer; color:white;">Reset</button>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input type="text" id="searchInput" placeholder="Nama file..." style="margin-bottom:0;" onkeypress="if(event.key==='Enter') searchDrive()">
+            <button onclick="searchDrive()" style="background:#00d2ff; border:none; padding:0 20px; border-radius:10px; cursor:pointer; color:white; font-weight:bold;">Cari</button>
+        </div>
+        
+        <div id="searchResults" class="search-results"></div>
+    </div>
+
+    <!-- NEW: STATS BAR (Timer & ETA) -->
     <div id="statsBar" class="stats-bar">
         <div class="stats-row">
             <span id="timerEl">⏱️ 00:00:00</span>
@@ -148,32 +269,59 @@
         <div style="text-align:right; font-size:0.7rem; color:#aaa; margin-top:2px;" id="progressText">0%</div>
     </div>
 
+    <!-- LOGGING -->
     <div class="log-area" id="logArea">System Ready...</div>
 </div>
 
 <script>
+    // --- KONFIGURASI SCRIPT UTAMA ---
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVMco1a7VA7GkY6OyxFm239RXZlqMsTUy9kheMJthucelNETE9Zu9B9jqMB9mgyWbr/exec"; 
-    let isProcessing = false; let stopSignal = false;
-    let jobStartTime = 0; let timerInterval = null;
-    let detectedRemoteUrl = null; let selectedRemoteSourceItems = []; let activePickerMode = 'clone'; let uploadTargetUrl = SCRIPT_URL; let selectedFiles = [];
+    
+    // Global Variables
+    let activePickerMode = 'clone'; 
+    let detectedRemoteUrl = null;
+    let selectedRemoteSourceItems = [];
+    let uploadTargetUrl = SCRIPT_URL; 
+    let isProcessing = false; // Status Cloning
+    let stopSignal = false;   // Sinyal Stop
+    
+    // Timer Variables
+    let jobStartTime = 0;
+    let timerInterval = null;
+    let selectedFiles = [];
 
-    function switchTab(m) {
-        document.querySelectorAll('#panelClone, #panelUpload, #panelSearch').forEach(el=>el.style.display='none');
-        document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display='block';
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-        event.target.classList.add('active');
+    // --- UI HELPERS ---
+    function switchTab(mode) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btnTab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+        ['clone', 'upload', 'search'].forEach(m => document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display = (m===mode?'block':'none'));
+    }
+    
+    function toggleAdvanced() {
+        const sec = document.getElementById('advSec');
+        sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
     }
 
     async function unlockSite() {
         const pin = document.getElementById('gatePinInput').value;
-        if(!pin) return;
-        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
-        const d = await res.json();
-        if(d.status === 'success') {
-            document.getElementById('accessPin').value = pin;
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainContainer').style.display = 'block';
-        } else { Swal.fire('Error', 'PIN Salah', 'error'); }
+        if(!pin) return Swal.fire('Error', 'Masukkan PIN', 'warning');
+        
+        document.querySelector('#loginOverlay h2').innerText = "Memverifikasi...";
+        try {
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
+            const d = await res.json();
+            
+            if(d.status === 'success') {
+                document.getElementById('accessPin').value = pin;
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+                document.getElementById('mainContainer').classList.add('visible');
+            } else {
+                document.querySelector('#loginOverlay h2').innerText = "Gagal";
+                Swal.fire('Akses Ditolak', 'PIN Salah!', 'error');
+                document.querySelector('#loginOverlay h2').innerText = "🔐 G-Drive Pro";
+            }
+        } catch(e) { Swal.fire('Error', 'Koneksi Gagal: '+e.message, 'error'); }
     }
 
     // --- REMOTE DETECTION ---
@@ -181,59 +329,91 @@
         const text = document.getElementById('folderUrls').value;
         const match = text.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
         const panel = document.getElementById('remoteDetectedPanel');
-        if (match) { detectedRemoteUrl = match[0]; panel.style.display = 'block'; } 
-        else { panel.style.display = 'none'; detectedRemoteUrl = null; }
+        if (match) { 
+            detectedRemoteUrl = match[0]; 
+            panel.style.display = 'block'; 
+        } else { 
+            panel.style.display = 'none'; 
+            detectedRemoteUrl = null; 
+        }
     }
     const urlInput = document.getElementById('folderUrls');
     urlInput.addEventListener('input', performRemoteDetection);
     urlInput.addEventListener('change', performRemoteDetection);
     urlInput.addEventListener('paste', () => setTimeout(performRemoteDetection, 100));
 
-    // --- BUTTON HANDLER ---
+    // --- START/STOP BUTTON LOGIC ---
     async function handleMainButton() {
         const btn = document.getElementById('btnAction');
+        
         if (isProcessing) {
-            stopSignal = true; btn.innerText = "⏳ Stopping..."; btn.disabled = true;
-            if(document.getElementById('bgToggle').checked) await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'stop_background', pin:document.getElementById('accessPin').value})});
-        } else { startCloning(); }
+            // JIKA SEDANG JALAN -> STOP
+            stopSignal = true;
+            btn.innerText = "⏳ Menghentikan...";
+            btn.disabled = true;
+            
+            if (document.getElementById('bgToggle').checked) {
+                 const pin = document.getElementById('accessPin').value;
+                 await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'stop_background', pin:pin }) });
+                 addLog("📡 Sinyal Stop Background dikirim...", "warning");
+            } else {
+                 addLog("🛑 Permintaan Stop diterima...", "warning");
+            }
+        } else {
+            // JIKA IDLE -> START
+            startCloning();
+        }
     }
 
+    // --- CORE CLONING PROCESS ---
     async function startCloning() {
         const urls = document.getElementById('folderUrls').value.split('\n').filter(u=>u);
         const pin = document.getElementById('accessPin').value;
-        if(!urls.length || !pin) return Swal.fire('Error','Data kurang','error');
-
-        isProcessing = true; stopSignal = false;
-        const btn = document.getElementById('btnAction'); btn.innerHTML = "⛔ STOP PROSES"; btn.classList.add('stop-mode');
+        if(urls.length===0) return Swal.fire('Warning', 'Link kosong', 'warning');
         
+        // SET STATE RUNNING
+        isProcessing = true;
+        stopSignal = false;
+        const btn = document.getElementById('btnAction');
+        btn.innerHTML = "⛔ STOP PROSES";
+        btn.classList.add('stop-mode');
+        
+        // Reset Timer
         jobStartTime = Date.now();
         document.getElementById('statsBar').style.display = 'block';
         if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(updateTimerDisplay, 1000);
         updateTimerDisplay();
-
+        
         const config = { mode: document.getElementById('duplicateMode').value, destUrl: document.getElementById('destUrl').value, email: document.getElementById('emailNotif').value };
-        addLog("🔄 Start...", "info");
-
+        addLog("🔄 Memulai Proses...", "info");
+        
         try {
             if (document.getElementById('bgToggle').checked) {
-                await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'start_background_multi', pin:pin, urls:urls, ...config})});
-                addLog("✅ Background Started.", "success");
+                 await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'start_background_multi', pin:pin, urls:urls, ...config }) });
+                 addLog("✅ Background Started. Boleh tutup tab.", "success");
             } else {
                 for(let url of urls) {
-                    if(stopSignal) break;
-                    const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'initialize', pin:pin, url:url, ...config})});
-                    const d = await res.json();
-                    if(d.status==='success') await processJob(d.jobId, pin);
-                    else addLog("❌ Init Error: "+d.message, "error");
+                    if(stopSignal) break; // Cek Sinyal Stop
+                    try {
+                        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'initialize', pin:pin, url:url, ...config }) });
+                        const d = await res.json();
+                        if(d.status === 'success') {
+                             addLog(`✅ Init: ${d.sourceName}`, 'success');
+                             await processJob(d.jobId, pin);
+                        } else addLog(`❌ Gagal: ${d.message}`, 'error');
+                    } catch(e) { addLog(`Error: ${e}`, 'error'); }
                 }
             }
-        } catch(e) { addLog("Err: "+e.message, "error"); }
+        } catch(e) { addLog("System Error: " + e.message, "error"); } 
         finally {
             if(!document.getElementById('bgToggle').checked || stopSignal) {
-                isProcessing = false; btn.innerHTML = "Mulai Cloning 🚀"; btn.classList.remove('stop-mode'); btn.disabled = false;
+                isProcessing = false;
+                btn.innerHTML = "Mulai Cloning 🚀";
+                btn.classList.remove('stop-mode');
+                btn.disabled = false;
                 clearInterval(timerInterval);
-                addLog("🏁 Selesai.", "success");
+                addLog("🏁 Selesai.", stopSignal?"warning":"success");
             }
         }
     }
@@ -249,9 +429,11 @@
     async function processJob(jobId, pin) {
         let done = false;
         while(!done && !stopSignal) {
-            const res = await fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify({action:'process_batch', jobId:jobId, pin:pin})});
+            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'process_batch', jobId:jobId, pin:pin }) });
             const d = await res.json();
-            if(d.status!=='success' || d.action==='complete') done=true;
+            if(d.status !== 'success' || d.action === 'complete') done = true;
+            
+            // Stats Update
             if(d.progress) {
                 let p = d.progress;
                 let pct = Math.round((p.processed / p.total) * 100);
@@ -262,22 +444,28 @@
                 let rate = elapsedSec > 0 ? (p.processed / elapsedSec) : 0;
                 let remaining = p.total - p.processed;
                 let eta = rate > 0 ? Math.floor(remaining / rate) : 0;
+                
                 let eh = Math.floor(eta / 3600).toString().padStart(2,'0');
                 let em = Math.floor((eta % 3600) / 60).toString().padStart(2,'0');
                 let es = Math.floor(eta % 60).toString().padStart(2,'0');
+                
                 document.getElementById('speedEl').innerText = `⚡ ${rate.toFixed(1)} f/s`;
                 document.getElementById('etaEl').innerText = `⏳ Est: ${eh}:${em}:${es}`;
+                
                 addLog(`⏳ Processing...`, 'info');
             }
-            if(d.processedList) d.processedList.forEach(i=>addLog(`📄 ${i.name} (${i.status})`, i.status==='success'?'success':'error'));
+            if(d.processedList) d.processedList.forEach(i => addLog(`📄 ${i.name} (${i.status})`, i.status==='success'?'success':'error'));
         }
     }
 
-    // --- SMART CHECK (FIXED VARIABLE NAME) ---
+    // --- SMART CHECK ---
     async function checkSmartLink(d=false){
         const text = document.getElementById('folderUrls').value;
         const u = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
+        
+        // Trigger Remote Detection
         performRemoteDetection();
+
         const p=document.getElementById('accessPin').value; 
         if(!u||!p)return Swal.fire('Err','Link/PIN?','error'); 
         
@@ -287,11 +475,15 @@
             const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'check_stats',url:u[0],pin:p,deepScan:d})});
             const res=await r.json();
             if(res.status==='success'){
-                // Fixed: replaced isDeep with d in template literal
-                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;"><h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3><table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Access</td><td>${res.access}</td></tr><tr><td>Size</td><td style="color:#00d2ff;font-weight:bold;">${res.stats.size}</td></tr>${d?`<tr><td>Files</td><td>${res.stats.files}</td></tr>`:''}</table>${res.type==='folder'&&!d?'<br><button onclick="checkSmartLink(true)" style="width:100%; padding:8px; background:#f0932b; border:none; color:white; border-radius:5px; cursor:pointer;">🕵️ Deep Scan Size</button>':''}</div>`;
+                // FIX: Gunakan variabel 'd' (parameter fungsi), bukan 'isDeep'
+                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;">
+                    <h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3>
+                    <table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Access</td><td>${res.access}</td></tr><tr><td>Size</td><td style="color:#00d2ff;font-weight:bold;">${res.stats.size}</td></tr>${d?`<tr><td>Files</td><td>${res.stats.files}</td></tr>`:''}</table>
+                    ${res.type==='folder'&&!d ? '<br><button onclick="checkSmartLink(true)" style="width:100%; padding:8px; background:#f0932b; border:none; color:white; border-radius:5px; cursor:pointer;">🕵️ Deep Scan Size</button>' : ''}
+                </div>`;
                 Swal.fire({title:'Info',html:html,background:'#1a1a2e',color:'#fff',showCancelButton:true,confirmButtonText:'Clone Now'}).then((r)=>{if(r.isConfirmed) startCloning();});
-            } else Swal.fire('Err',res.message,'error');
-        }catch(e){Swal.fire('Err',e.message,'error');}
+            } else Swal.fire('Gagal', res.message, 'error');
+        }catch(e){Swal.fire('Error', e.message, 'error');}
     }
 
     // --- REMOTE PICKERS ---
@@ -318,7 +510,7 @@
     function addToQueue(u,n){const t=document.getElementById('folderUrls');t.value+=(t.value?'\n':'')+u;switchTab('clone');Swal.fire('Added',n,'success');}
     function addLog(m,t){const l=document.getElementById('logArea');l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}">${m}</div>`;l.scrollTop=l.scrollHeight;}
     
-    // --- SAVED & SCHEDULE ---
+    // --- SAVED & SCHEDULE (UPDATED: Show Name & Email) ---
     async function openSavedItems(){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{
         h += `
         <div class="picker-item" style="display:flex; justify-content:space-between; align-items:center;">
@@ -328,7 +520,7 @@
             </div>
             <button class="btn-mini-del" onclick="deleteSavedRemote('${i.id}', '${i.label}')">🗑️</button>
         </div>`;
-    });h+='</div>';Swal.fire({title:'Saved',html:h});}
+    });h+='</div>';Swal.fire({title:'Saved Accounts',html:h});}
 
     async function deleteSavedRemote(id, label) {
         const r = await Swal.fire({ title: 'Hapus?', text: `Hapus link ${label}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
