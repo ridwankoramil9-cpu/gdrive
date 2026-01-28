@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 19.3 (Added: Start/Stop Button Logic)
+  VERSION: 19.4 (FULL COMPLETE: Smart Check, Stop Button, Replace, Remote)
   ============================================================================
 -->
 <html lang="id">
@@ -87,7 +87,8 @@
             font-size: 1rem; letter-spacing: 1px;
         }
         button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
-        /* NEW: Stop Button State */
+        
+        /* Stop Button State */
         button.main-btn.stop-mode {
             background: linear-gradient(45deg, #ff4757, #ff6b81);
             box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
@@ -174,8 +175,8 @@
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
         
         /* Smart Check Table */
-        .check-table { width:100%; border-collapse:collapse; margin-top:10px; }
-        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); text-align:left; font-size:0.9rem; }
+        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
+        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
         .check-table td:first-child { font-weight:bold; color:#00d2ff; width:100px; }
     </style>
 </head>
@@ -194,7 +195,7 @@
 
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p class="subtitle">Full Integrated System (v19.3)</p>
+    <p class="subtitle">Full Integrated System (v19.4)</p>
     
     <!-- 2. TAB NAVIGATION -->
     <div class="tab-nav">
@@ -247,8 +248,8 @@
                 <label>Mode Copy</label>
                 <select id="duplicateMode">
                     <option value="copy_duplicate">Duplikat (Default)</option>
+                    <option value="copy_replace">Replace jika ada (Perfected)</option>
                     <option value="copy_skip">Skip jika ada</option>
-                    <option value="copy_replace">Replace jika ada</option>
                     <option value="rename_duplicate">Rename Sumber</option>
                 </select>
             </div>
@@ -291,6 +292,7 @@
                 <input type="text" id="uploadDestId" placeholder="ID/Link Folder Tujuan (Default: Root)">
                 <button type="button" class="btn-picker" onclick="openDestPicker('upload')">📂 Pilih</button>
             </div>
+            <!-- Indicator for Remote Upload -->
             <div id="uploadTargetLabel" style="font-size:0.8rem; color:#f4b400; margin-top:5px; display:none; background:rgba(244,180,0,0.1); padding:5px; border-radius:5px;">
                 ⚠️ Target: Remote Server B
             </div>
@@ -352,9 +354,13 @@
     async function unlockSite() {
         const pin = document.getElementById('gatePinInput').value;
         if(!pin) return;
+        
+        // Show Loading
         document.querySelector('#loginOverlay h2').innerText = "Memverifikasi...";
+        
         const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action:'verify_pin', pin: pin }) });
         const d = await res.json();
+        
         if(d.status === 'success') {
             document.getElementById('accessPin').value = pin;
             document.getElementById('loginOverlay').style.display = 'none';
@@ -413,7 +419,6 @@
             if (document.getElementById('bgToggle').checked) {
                  const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'start_background_multi', pin:pin, urls:urls, ...config }) });
                  addLog("✅ Background Started. Tekan STOP untuk membatalkan.", "success");
-                 // Untuk background, kita biarkan tombol Stop aktif agar user bisa membatalkan trigger
             } else {
                 for(let url of urls) {
                     if(stopSignal) break; // Cek Sinyal Stop
@@ -453,77 +458,579 @@
         }
     }
 
-    // --- SMART CHECK FUNCTION ---
+    // --- SMART CHECK FUNCTION (BARU) ---
     async function checkSmartLink(isDeep = false) {
         const text = document.getElementById('folderUrls').value;
         const pin = document.getElementById('accessPin').value;
+        
+        // Ambil URL pertama yang valid
         const urlMatch = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
+        
         if (!urlMatch) return Swal.fire('Error', 'Tidak ditemukan link Google Drive yang valid.', 'error');
         if (!pin) return Swal.fire('Error', 'Masukkan PIN Akses terlebih dahulu.', 'warning');
 
-        Swal.fire({ title: isDeep ? '🕵️ Deep Scanning...' : 'Memeriksa Link...', html: isDeep ? 'Menghitung total size (bisa lama)...' : 'Menghubungi server...', didOpen: () => Swal.showLoading(), background: '#1a1a2e', color: '#fff' });
+        Swal.fire({
+            title: isDeep ? '🕵️ Deep Scanning...' : 'Memeriksa Link...',
+            html: isDeep ? 'Menghitung total size (bisa lama)...' : 'Menghubungi server...',
+            didOpen: () => Swal.showLoading(),
+            background: '#1a1a2e', color: '#fff'
+        });
 
         try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'check_stats', url: urlMatch[0], pin: pin, deepScan: isDeep }) });
+            const res = await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'check_stats', url: urlMatch[0], pin: pin, deepScan: isDeep }) 
+            });
             const d = await res.json();
+
             if (d.status === 'success') {
                 let icon = d.type === 'folder' ? '📁' : '📄';
                 let accessColor = d.access === 'Writer' ? '#2ed573' : (d.access === 'Viewer' ? '#f1c40f' : '#ff4757');
-                let deepBtn = (d.type === 'folder' && !isDeep) ? `<br><button onclick="checkSmartLink(true)" style="background:#f0932b; border:none; color:white; padding:8px 15px; border-radius:5px; cursor:pointer; margin-top:10px; font-weight:bold; width:100%;">🕵️ Lakukan Deep Scan Size</button>` : '';
-                let extraNote = (d.type === 'folder' && !isDeep) ? '<div style="margin-top:5px; font-size:0.75rem; color:#aaa; font-style:italic;">*Size folder mungkin perlu scan mendalam untuk akurasi total.</div>' : '';
                 
-                let html = `<div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
-                        <div style="font-size:3rem; margin-bottom:10px;">${icon}</div><h3 style="color:#fff; margin:0 0 15px 0;">${d.name}</h3>
-                        <table class="check-table"><tr><td>Tipe</td><td>${d.type.toUpperCase()}</td></tr><tr><td>Owner</td><td>${d.ownerEmail}</td></tr><tr><td>Akses Bot</td><td style="color:${accessColor}; font-weight:bold;">${d.access}</td></tr><tr><td>Size</td><td style="font-weight:bold; color:#00d2ff;">${d.stats.size}</td></tr>${isDeep ? `<tr><td>Total File</td><td>${d.stats.files}</td></tr>` : ''}</table>${extraNote}${deepBtn}</div>`;
+                // Show deep scan button ONLY if it's a folder AND we haven't deep scanned yet
+                let deepBtn = (d.type === 'folder' && !isDeep) ? 
+                    `<br><button onclick="checkSmartLink(true)" style="background:#f0932b; border:none; color:white; padding:8px 15px; border-radius:5px; cursor:pointer; margin-top:10px; font-weight:bold; width:100%;">🕵️ Lakukan Deep Scan Size</button>` : '';
+
+                let extraNote = (d.type === 'folder' && !isDeep) ? 
+                    '<div style="margin-top:5px; font-size:0.75rem; color:#aaa; font-style:italic;">*Size folder mungkin perlu scan mendalam untuk akurasi total.</div>' : '';
+
+                let html = `
+                    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
+                        <div style="font-size:3rem; margin-bottom:10px;">${icon}</div>
+                        <h3 style="color:#fff; margin:0 0 15px 0;">${d.name}</h3>
+                        <table class="check-table">
+                            <tr><td>Tipe</td><td>${d.type.toUpperCase()}</td></tr>
+                            <tr><td>Owner</td><td>${d.ownerEmail}</td></tr>
+                            <tr><td>Akses Bot</td><td style="color:${accessColor}; font-weight:bold;">${d.access}</td></tr>
+                            <tr><td>Size</td><td style="font-weight:bold; color:#00d2ff;">${d.stats.size}</td></tr>
+                            ${isDeep ? `<tr><td>Total File</td><td>${d.stats.files}</td></tr>` : ''}
+                        </table>
+                        ${extraNote}
+                        ${deepBtn}
+                    </div>
+                `;
                 
-                Swal.fire({ title: 'Hasil Pengecekan', html: html, background: '#1a1a2e', color: '#fff', showCancelButton: true, confirmButtonText: 'Lanjut Clone', cancelButtonText: 'Tutup', confirmButtonColor: '#00d2ff' }).then((result) => { if (result.isConfirmed) { handleMainButton(); } });
-            } else { Swal.fire('Gagal', d.message, 'error'); }
-        } catch (e) { Swal.fire('Error', e.message, 'error'); }
+                Swal.fire({
+                    title: 'Hasil Pengecekan',
+                    html: html,
+                    background: '#1a1a2e', color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonText: 'Lanjut Clone',
+                    cancelButtonText: 'Tutup',
+                    confirmButtonColor: '#00d2ff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        startCloning(); 
+                    }
+                });
+            } else {
+                Swal.fire('Gagal', d.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error', e.message, 'error');
+        }
     }
 
-    // --- OTHER HELPERS ---
-    function addLog(m, t) { const l = document.getElementById('logArea'); l.innerHTML += `<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}; margin-bottom:5px;">${m}</div>`; l.scrollTop = l.scrollHeight; }
-    function resetSearchLoc() { document.getElementById('searchLocId').value = 'root'; document.getElementById('searchLocName').value = 'Seluruh Drive (Default)'; }
-    function addToQueue(url, name) { const ta = document.getElementById('folderUrls'); ta.value = ta.value + (ta.value ? '\n' : '') + url; switchTab('clone'); Swal.fire({ icon:'success', title:'Ditambahkan', text:name, timer:1000, showConfirmButton:false }); }
-    
-    // --- PICKERS & UPLOAD (Minified for brevity as they didn't change logic much) ---
-    async function searchDrive() { const q=document.getElementById('searchInput').value, pin=document.getElementById('accessPin').value, pid=document.getElementById('searchLocId').value; document.getElementById('searchResults').innerHTML='<div style="padding:20px; text-align:center; color:#aaa;">⏳ Mencari...</div>'; const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'search_drive',query:q,pin:pin,parentId:pid})}), d=await res.json(); let h=''; if(d.status==='success'&&d.results.length>0){d.results.forEach(f=>{h+=`<div class="search-item"><span style="font-size:1.5rem;">${f.mimeType==='folder'?'📁':'📄'}</span><div style="flex:1;"><div style="font-weight:bold; font-size:0.9rem;">${f.name}</div><div style="font-size:0.75rem; color:#aaa;">${f.size} | ${f.date}</div></div><button class="btn-add-search" onclick="addToQueue('${f.url}','${f.name.replace(/'/g,"")}')">➕ Clone</button><button class="btn-del-search" onclick="deleteLocalItem('${f.id}','${f.mimeType==='folder'?'folder':'file'}','${f.name.replace(/'/g,"")}')">🗑️</button></div>`;});}else{h='<div style="padding:20px; text-align:center; color:#aaa;">Tidak ditemukan hasil.</div>';} document.getElementById('searchResults').innerHTML=h; }
-    async function deleteLocalItem(id,t,n){const r=await Swal.fire({title:'Hapus Item?',text:`Yakin hapus ${n}?`,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:t,pin:document.getElementById('accessPin').value})});const d=await res.json();if(d.status==='success'){Swal.fire('Terhapus!',d.message,'success');if(document.getElementById('searchResults').innerHTML.includes(id))searchDrive();}else Swal.fire('Gagal',d.message,'error');}}
-    
-    // --- REMOTE PICKERS ---
-    const detectRemote=()=>{const v=document.getElementById('folderUrls').value, m=v.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i), p=document.getElementById('remoteDetectedPanel'); if(m){detectedRemoteUrl=m[0];p.style.display='block';}else{detectedRemoteUrl=null;p.style.display='none';}}; document.getElementById('folderUrls').addEventListener('input',detectRemote);
-    window.openRemoteSourcePicker=()=>{if(!detectedRemoteUrl)return;selectedRemoteSourceItems=[];Swal.fire({title:'Jelajah Remote',html:`<div id="remoteSourcePickerContent" style="text-align:left; min-height:250px;">Loading...</div>`,showConfirmButton:false,width:'650px',background:'#1a1a2e',color:'#fff',didOpen:()=>{loadRemoteSourceContent('root');}});};
-    async function loadRemoteSourceContent(pid){const c=document.getElementById('remoteSourcePickerContent');if(!c)return;c.innerHTML='Loading...';try{const res=await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})}),d=await res.json();if(d.status==='success'){let h=`<div class="picker-header"><b>${d.currentName}</b>${d.parentId?`<div onclick="loadRemoteSourceContent('${d.parentId}')" style="cursor:pointer;color:#f4b400;">⬅ Back</div>`:''}</div><div style="max-height:300px; overflow-y:auto;">`;d.items.forEach(f=>{h+=`<div class="picker-item"><div style="display:flex;align-items:center;flex:1;"><input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)"><span style="flex:1;margin-left:5px;${f.type==='folder'?'cursor:pointer;':''}" ${f.type==='folder'?`onclick="loadRemoteSourceContent('${f.id}')"`:''}>${f.type==='folder'?'📁':'📄'} ${f.name}</span></div><button class="btn-del-search" style="padding:2px 8px;font-size:0.7rem;" onclick="deleteRemoteItem('${f.id}','${f.type}','${f.name.replace(/'/g,"")}')">🗑️</button></div>`;});h+=`</div><div style="margin-top:15px;text-align:center;"><button style="background:#2ed573;padding:10px;border:none;border-radius:5px;color:white;" onclick="confirmRemoteSelection()">✅ Tambahkan</button></div>`;c.innerHTML=h;}else c.innerText=d.message;}catch(e){c.innerText=e.message;}}
-    window.toggleRemoteSelect=(c)=>{if(c.checked)selectedRemoteSourceItems.push(c.value);else selectedRemoteSourceItems=selectedRemoteSourceItems.filter(id=>id!==c.value);};
-    window.confirmRemoteSelection=async()=>{if(selectedRemoteSourceItems.length===0)return;document.getElementById('remoteSourcePickerContent').innerHTML='Unlocking...';await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'unlock_files',ids:selectedRemoteSourceItems})});const newLinks=selectedRemoteSourceItems.map(id=>`https://drive.google.com/file/d/${id}/view`).join('\n');const ta=document.getElementById('folderUrls');ta.value=ta.value+(ta.value?'\n':'')+newLinks;Swal.close();};
-    async function deleteRemoteItem(id,t,n){const r=await Swal.fire({title:'Hapus Remote?',text:`Hapus ${n}?`,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){await fetch(detectedRemoteUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:t})});loadRemoteSourceContent('root');Swal.fire('Terhapus','','success');}}
 
-    // --- DESTINATION PICKERS ---
-    function openDestPicker(m){activePickerMode=m;const pin=document.getElementById('accessPin').value;if(!pin)return Swal.fire('Error','PIN kosong','error');Swal.fire({title:'Pilih Tujuan',html:`<div class="picker-tabs"><div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">Local</div><div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">Remote</div></div><div id="destPickerContent" style="min-height:250px;">Loading...</div>`,showConfirmButton:false,width:'650px',background:'#1a1a2e',color:'#fff',didOpen:()=>{switchDestTab('local');}});}
-    window.switchDestTab=(t)=>{document.getElementById('tabLocal').className=(t==='local'?'picker-tab active':'picker-tab');document.getElementById('tabRemote').className=(t==='remote'?'picker-tab active':'picker-tab');if(t==='local')loadLocalPicker('root',document.getElementById('accessPin').value);else loadSavedRemotes(document.getElementById('accessPin').value);};
-    async function loadLocalPicker(pid,pin){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';try{const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'browse_folders',parentId:pid,pin:pin})}),d=await res.json();if(d.status==='success'){let h=`<div class="picker-header"><b>${d.currentName}</b><div style="display:flex;gap:10px;">${d.parentId?`<div onclick="loadLocalPicker('${d.parentId}','${pin}')" style="cursor:pointer;color:#f4b400;">⬅ Back</div>`:''}<div onclick="createLocalFolder('${d.currentId}','${pin}')" style="cursor:pointer;color:#2ed573;">➕ New</div></div></div><div style="max-height:250px;overflow-y:auto;text-align:left;">`;d.folders.forEach(f=>{h+=`<div class="picker-item"><div style="flex:1;cursor:pointer;" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div><button class="btn-del-picker" onclick="event.stopPropagation();deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','local','${pid}')">🗑️</button></div>`;});h+=`</div><button style="background:#0984e3;padding:10px;width:100%;border:none;margin-top:10px;border-radius:5px;color:white;" onclick="selectLocalDest('${d.currentId}','${d.currentName}')">🎯 Pilih Ini</button>`;c.innerHTML=h;}else c.innerText=d.message;}catch(e){c.innerText=e.message;}}
-    async function createLocalFolder(pid,pin){const{value:n}=await Swal.fire({title:'Nama Folder',input:'text',background:'#1a1a2e',color:'#fff'});if(n){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'create_folder_tool',parentId:pid,name:n,pin:pin})});loadLocalPicker(pid,pin);}}
-    window.selectLocalDest=(id,name)=>{if(activePickerMode==='clone')document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${id}`;else if(activePickerMode==='upload'){uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=id;document.getElementById('uploadTargetLabel').style.display='none';}else{document.getElementById('searchLocId').value=id;document.getElementById('searchLocName').value=name;}Swal.close();Swal.fire('Set!',name,'success');}
-    async function loadSavedRemotes(pin){const c=document.getElementById('destPickerContent'),res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:pin})}),d=await res.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{if(i.type==='server')h+=`<div class="picker-item" onclick="browseRemoteDest('${i.url}','${i.label}')">☁️ ${i.label}</div>`;});h+='</div>';c.innerHTML=h;}
-    window.browseRemoteDest=(u,l)=>{document.getElementById('destPickerContent').innerHTML='Loading...';loadRemoteDestContent(u,'root',l);};
-    async function loadRemoteDestContent(u,pid,l){const c=document.getElementById('destPickerContent');try{const res=await fetch(u,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})}),d=await res.json();if(d.status==='success'){let h=`<div class="picker-header"><b>${l}>${d.currentName}</b>${d.parentId?`<div onclick="loadRemoteDestContent('${u}','${d.parentId}','${l}')" style="cursor:pointer;color:#f4b400;">⬅ Back</div>`:`<div onclick="switchDestTab('remote')" style="cursor:pointer;color:#f4b400;">⬅</div>`}</div><div style="max-height:250px;overflow-y:auto;">`;d.items.forEach(f=>{if(f.type==='folder')h+=`<div class="picker-item"><div style="flex:1;cursor:pointer;" onclick="loadRemoteDestContent('${u}','${f.id}','${l}')">📁 ${f.name}</div><button class="btn-del-picker" onclick="event.stopPropagation();deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','remote','${pid}','${u}','${l}')">🗑️</button></div>`;});h+=`</div><button style="background:#f0932b;padding:10px;width:100%;border:none;margin-top:10px;border-radius:5px;color:white;" onclick="selectRemoteDest('${u}','${pid}','${d.currentName}','${l}')">🎯 Pilih Remote Ini</button>`;c.innerHTML=h;}}catch(e){c.innerHTML=e.message;}}
-    window.selectRemoteDest=async(u,id,n,l)=>{if(activePickerMode==='upload'){uploadTargetUrl=u;document.getElementById('uploadDestId').value=id;document.getElementById('uploadTargetLabel').style.display='block';document.getElementById('uploadTargetLabel').innerHTML=`Target Remote: ${l}`;Swal.close();return;}const pin=document.getElementById('accessPin').value,res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:pin,targetUrl:u,targetId:id})}),d=await res.json();if(d.status==='success'){document.getElementById('destUrl').value=d.folderUrl;Swal.close();Swal.fire('Set!',n,'success');}else Swal.fire('Error',d.message,'error');}
+    // --- FITUR SEARCH (Local) ---
+    async function searchDrive() {
+        const q = document.getElementById('searchInput').value;
+        const pin = document.getElementById('accessPin').value;
+        const parentId = document.getElementById('searchLocId').value;
+        
+        const div = document.getElementById('searchResults');
+        div.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">⏳ Mencari...</div>';
+        
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'search_drive', query:q, pin:pin, parentId: parentId }) });
+        const d = await res.json();
+        
+        let h = '';
+        if(d.status==='success' && d.results.length > 0) {
+            d.results.forEach(f => {
+                const type = f.mimeType==='folder'?'folder':'file';
+                const icon = type==='folder' ? '📁' : '📄';
+                const safeName = f.name.replace(/'/g,"");
+                
+                h += `<div class="search-item">
+                        <span style="font-size:1.5rem;">${icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; font-size:0.9rem;">${f.name}</div>
+                            <div style="font-size:0.75rem; color:#aaa;">${f.size} | ${f.date}</div>
+                        </div>
+                        <button class="btn-add-search" onclick="addToQueue('${f.url}', '${safeName}')">➕ Clone</button>
+                        <button class="btn-del-search" onclick="deleteLocalItem('${f.id}', '${type}', '${safeName}')">🗑️</button>
+                      </div>`;
+            });
+        } else {
+            h = '<div style="padding:20px; text-align:center; color:#aaa;">Tidak ditemukan hasil.</div>';
+        }
+        div.innerHTML = h;
+    }
+
+    async function deleteLocalItem(id, type, name) {
+        const result = await Swal.fire({ title: 'Hapus Item?', text: `Yakin ingin menghapus ${name}? Item akan masuk ke Trash.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus!' });
+        if (result.isConfirmed) {
+            const pin = document.getElementById('accessPin').value;
+            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type, pin:pin }) });
+            const d = await res.json();
+            if(d.status === 'success') { 
+                Swal.fire('Terhapus!', d.message, 'success'); 
+                // Jika sedang di Search, refresh search
+                if(document.getElementById('searchResults').innerHTML.includes(id)) {
+                     searchDrive();
+                }
+            }
+            else Swal.fire('Gagal', d.message, 'error');
+        }
+    }
+
+    // --- NEW: DELETE INSIDE PICKER FUNCTION ---
+    async function deleteInsidePicker(id, type, name, mode, parentId, remoteUrl = null, remoteLabel = null) {
+        const result = await Swal.fire({ 
+            title: `Hapus ${type === 'folder' ? 'Folder' : 'File'}?`, 
+            text: `Hapus "${name}" permanen dari tampilan ini?`, 
+            icon: 'warning', 
+            showCancelButton: true, 
+            confirmButtonColor: '#d33', 
+            confirmButtonText: 'Ya, Hapus' 
+        });
+
+        if (result.isConfirmed) {
+            const pin = document.getElementById('accessPin').value;
+            let res;
+            
+            if (mode === 'local') {
+                res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type, pin:pin }) });
+            } else {
+                res = await fetch(remoteUrl, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type }) });
+            }
+
+            const d = await res.json();
+            
+            if (d.status === 'success') {
+                Swal.fire({ title: 'Terhapus', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+                // Refresh Picker Content based on Mode
+                if (mode === 'local') {
+                    loadLocalPicker(parentId, pin);
+                } else {
+                    loadRemoteDestContent(remoteUrl, parentId, remoteLabel);
+                }
+            } else {
+                Swal.fire('Gagal', d.message, 'error');
+            }
+        }
+    }
+
+
+    // --- REMOTE SOURCE PICKER & REMOTE DELETE ---
+    const detectRemote = () => {
+        const val = document.getElementById('folderUrls').value;
+        const match = val.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
+        const panel = document.getElementById('remoteDetectedPanel');
+        if (match) { 
+            detectedRemoteUrl = match[0]; 
+            panel.style.display = 'block'; 
+        } else { 
+            detectedRemoteUrl = null; 
+            panel.style.display = 'none'; 
+        }
+    };
     
-    // --- DELETION UTILS ---
-    async function deleteInsidePicker(id,t,n,mode,pid,rUrl,rLabel){const r=await Swal.fire({title:'Hapus?',text:n,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){if(mode==='local'){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:t,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid,document.getElementById('accessPin').value);}else{await fetch(rUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:t})});loadRemoteDestContent(rUrl,pid,rLabel);}Swal.fire('Terhapus','','success');}}
+    document.getElementById('folderUrls').addEventListener('input', detectRemote);
+    document.getElementById('folderUrls').addEventListener('paste', () => setTimeout(detectRemote, 100));
+
+    window.openRemoteSourcePicker = function() {
+        if (!detectedRemoteUrl) return;
+        selectedRemoteSourceItems = [];
+        Swal.fire({
+            title: 'Jelajah Server Remote (Akun B)',
+            html: `<div id="remoteSourcePickerContent" style="text-align:left; min-height:250px;">Loading data...</div>`,
+            showConfirmButton: false, width: '650px', background: '#1a1a2e', color: '#fff',
+            didOpen: () => { loadRemoteSourceContent('root'); }
+        });
+    };
+
+    async function loadRemoteSourceContent(parentId) {
+        const container = document.getElementById('remoteSourcePickerContent');
+        if(!container) return;
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Mengambil data...</div>';
+        
+        try {
+            const res = await fetch(detectedRemoteUrl, { method:'POST', body:JSON.stringify({ action:'browse_remote', parentId:parentId }) });
+            const data = await res.json();
+            
+            if(data.status==='success') {
+                let html = `
+                    <div class="picker-header">
+                        <div style="font-weight:bold; color:#2ed573;">📂 ${data.currentName}</div>
+                        ${data.parentId ? `<div style="cursor:pointer; color:#f4b400; font-weight:bold;" onclick="loadRemoteSourceContent('${data.parentId}')">⬅ Back</div>` : ''}
+                    </div>
+                    <div class="picker-container" style="max-height:300px; overflow-y:auto;">`;
+                
+                if(data.items.length === 0) html += '<div style="padding:20px; text-align:center; color:#666;">Folder Kosong</div>';
+                
+                data.items.forEach(f => {
+                    const icon = f.type==='folder'?'📁':'📄';
+                    const nav = f.type==='folder' ? `onclick="loadRemoteSourceContent('${f.id}')"` : '';
+                    const cursor = f.type==='folder' ? 'cursor:pointer;' : '';
+                    const nameSafe = f.name.replace(/'/g, "");
+                    
+                    html += `
+                    <div class="picker-item">
+                        <div style="display:flex; align-items:center; flex:1;">
+                            <input type="checkbox" class="picker-checkbox" value="${f.id}" data-type="${f.type}" onchange="toggleRemoteSelect(this)">
+                            <span style="flex:1; margin-left:5px; ${cursor}" ${nav}>${icon} ${f.name} <small style="color:#888;">(${f.size})</small></span>
+                        </div>
+                        <button class="btn-del-search" style="padding:2px 8px; font-size:0.7rem;" onclick="deleteRemoteItem('${f.id}', '${f.type}', '${nameSafe}', '${parentId}')">🗑️</button>
+                    </div>`;
+                });
+                
+                html += `</div>
+                <div style="margin-top:15px; text-align:center; border-top:1px solid #444; padding-top:10px;">
+                    <button style="background:#2ed573; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; color:white; font-weight:bold;" onclick="confirmRemoteSelection()">✅ Tambahkan & Unlock Terpilih</button>
+                </div>`;
+                container.innerHTML = html;
+            } else { container.innerText = "Error: " + data.message; }
+        } catch(e) { container.innerText = "Connection Error: " + e.message; }
+    }
+
+    window.toggleRemoteSelect = function(cb) {
+        if(cb.checked) selectedRemoteSourceItems.push(cb.value);
+        else selectedRemoteSourceItems = selectedRemoteSourceItems.filter(id => id !== cb.value);
+    };
+
+    window.confirmRemoteSelection = async function() {
+        if(selectedRemoteSourceItems.length === 0) return Swal.showValidationMessage("Pilih minimal satu item!");
+        
+        const container = document.getElementById('remoteSourcePickerContent');
+        container.innerHTML = `<div style="text-align:center; padding:30px;">
+            <h3>🔓 Memproses...</h3>
+            <p>Membuka izin akses & Membuat link (${selectedRemoteSourceItems.length} item)</p>
+        </div>`;
+        
+        try {
+            // Unlock di sisi remote
+            await fetch(detectedRemoteUrl, { method:'POST', body:JSON.stringify({ action:'unlock_files', ids:selectedRemoteSourceItems }) });
+            
+            // Generate link
+            let newLinks = selectedRemoteSourceItems.map(id => `https://drive.google.com/file/d/${id}/view`).join('\n');
+            const ta = document.getElementById('folderUrls');
+            ta.value = ta.value + (ta.value ? '\n' : '') + newLinks;
+            
+            Swal.close();
+            Swal.fire({ icon:'success', title:'Berhasil', text:'Link berhasil ditambahkan ke antrean.', timer:1500, showConfirmButton:false });
+        } catch(e) { Swal.fire('Error', e.message, 'error'); }
+    };
+
+    async function deleteRemoteItem(id, type, name, parentId) {
+        const result = await Swal.fire({ title: 'Hapus Remote?', text: `Hapus ${name} dari Server Client selamanya?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Hapus' });
+        if (result.isConfirmed) {
+            try {
+                await fetch(detectedRemoteUrl, { method:'POST', body: JSON.stringify({ action:'delete_item', id:id, type:type }) });
+                Swal.fire('Terhapus!', '', 'success');
+                loadRemoteSourceContent(parentId); // Refresh list
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        }
+    }
+
+    // --- GENERIC PICKER SYSTEM (Local & Remote Destination) ---
+    function openDestPicker(mode) {
+        activePickerMode = mode;
+        const pin = document.getElementById('accessPin').value;
+        if(!pin) return Swal.fire('Error', 'PIN belum diisi', 'error');
+        
+        let title = "Pilih Folder Tujuan";
+        if(mode === 'search_source') title = "Pilih Lokasi Pencarian";
+
+        Swal.fire({
+            title: title,
+            html: `
+                <div class="picker-tabs">
+                    <div class="picker-tab active" id="tabLocal" onclick="switchDestTab('local')">📁 Local Drive</div>
+                    <div class="picker-tab" id="tabRemote" onclick="switchDestTab('remote')">☁️ Saved Cloud</div>
+                </div>
+                <div id="destPickerContent" style="min-height:250px;">Loading...</div>
+            `,
+            showConfirmButton: false, width: '650px', background: '#1a1a2e', color: '#fff',
+            didOpen: () => { switchDestTab('local'); }
+        });
+    }
+
+    window.switchDestTab = function(type) {
+        document.getElementById('tabLocal').className = (type === 'local') ? 'picker-tab active' : 'picker-tab';
+        document.getElementById('tabRemote').className = (type === 'remote') ? 'picker-tab active' : 'picker-tab';
+        const pin = document.getElementById('accessPin').value;
+        
+        if (type === 'local') loadLocalPicker('root', pin);
+        else loadSavedRemotes(pin);
+    };
+
+    // --- MODIFIED LOCAL PICKER WITH DELETE BUTTON ---
+    async function loadLocalPicker(parentId, pin) {
+        const container = document.getElementById('destPickerContent');
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Loading...</div>';
+        
+        try {
+            const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'browse_folders', parentId: parentId, pin: pin }) });
+            const data = await res.json();
+            
+            if(data.status === 'success') {
+                let html = `
+                    <div class="picker-header">
+                        <div style="font-weight:bold; color:#2ed573;">${data.currentName}</div>
+                        <div style="display:flex; gap:10px;">
+                            ${data.parentId ? `<div onclick="loadLocalPicker('${data.parentId}','${pin}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : ''}
+                            <div style="cursor:pointer; color:#2ed573;" onclick="createLocalFolder('${data.currentId}', '${pin}')">➕ New Folder</div>
+                        </div>
+                    </div>
+                    <div style="max-height:250px; overflow-y:auto; text-align:left;">`;
+                
+                if(data.folders.length === 0) html += `<div style="padding:10px; color:#666; text-align:center;">Folder kosong</div>`;
+                
+                data.folders.forEach(f => {
+                    const safeName = f.name.replace(/'/g, "");
+                    html += `
+                    <div class="picker-item">
+                        <div style="flex:1; cursor:pointer;" onclick="loadLocalPicker('${f.id}','${pin}')">📁 ${f.name}</div>
+                        <button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}', 'folder', '${safeName}', 'local', '${parentId}')">🗑️</button>
+                    </div>`;
+                });
+                
+                let btnText = "🎯 Pilih Folder Ini";
+                if(activePickerMode === 'search_source') btnText = "🔍 Cari di Folder Ini";
+
+                html += `</div>
+                <div style="margin-top:15px; padding-top:10px; border-top:1px solid #444;">
+                    <button style="background:#0984e3; padding:10px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;" 
+                    onclick="selectLocalDest('${data.currentId}', '${data.currentName}')">${btnText}</button>
+                </div>`;
+                container.innerHTML = html;
+            } else container.innerText = data.message;
+        } catch(e) { container.innerText = e.message; }
+    }
+
+    async function createLocalFolder(parentId, pin) {
+        const { value: name } = await Swal.fire({ title: 'Nama Folder Baru', input: 'text', background:'#1a1a2e', color:'#fff' });
+        if(name) {
+            await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'create_folder_tool', parentId:parentId, name:name, pin:pin }) });
+            loadLocalPicker(parentId, pin);
+        }
+    }
+
+    window.selectLocalDest = function(id, name) {
+        if (activePickerMode === 'clone') {
+            document.getElementById('destUrl').value = `https://drive.google.com/drive/folders/${id}`;
+        } else if (activePickerMode === 'upload') {
+            uploadTargetUrl = SCRIPT_URL; 
+            document.getElementById('uploadDestId').value = id; 
+            document.getElementById('uploadTargetLabel').style.display = 'none';
+        } else if (activePickerMode === 'search_source') {
+            document.getElementById('searchLocId').value = id;
+            document.getElementById('searchLocName').value = name;
+        }
+        Swal.close();
+        let msg = (activePickerMode === 'search_source') ? 'Lokasi Pencarian Diset!' : 'Folder Tujuan Diset!';
+        Swal.fire({ icon:'success', title: msg, text: `Folder: ${name}`, timer: 1500, showConfirmButton:false });
+    };
+
+    // --- REMOTE DESTINATION PICKER ---
+    async function loadSavedRemotes(pin) {
+        const container = document.getElementById('destPickerContent');
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
+        const data = await res.json();
+        
+        let html = '<div style="max-height:250px; overflow-y:auto; text-align:left;">';
+        if(data.list && data.list.length > 0) {
+            data.list.forEach(item => { 
+                if(item.type === 'server' || !item.type) {
+                    html += `<div class="picker-item" onclick="browseRemoteDest('${item.url}', '${item.label}')">☁️ ${item.label} <small>(${item.email})</small></div>`;
+                }
+            });
+        } else { html += '<div style="padding:20px; text-align:center;">Belum ada akun remote tersimpan.</div>'; }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.browseRemoteDest = function(url, label) {
+        document.getElementById('destPickerContent').innerHTML = '<div style="padding:20px; text-align:center;">Loading Remote...</div>';
+        loadRemoteDestContent(url, 'root', label);
+    };
+
+    async function loadRemoteDestContent(url, parentId, label) {
+        const container = document.getElementById('destPickerContent');
+        try {
+            const res = await fetch(url, { method: 'POST', body: JSON.stringify({ action: 'browse_remote', parentId: parentId }) });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                let html = `
+                    <div class="picker-header">
+                        <div style="font-weight:bold; color:#00d2ff;">${label} > ${data.currentName}</div>
+                        ${data.parentId ? `<div onclick="loadRemoteDestContent('${url}','${data.parentId}','${label}')" style="cursor:pointer; color:#f4b400;">⬅ Back</div>` : `<div onclick="switchDestTab('remote')" style="cursor:pointer; color:#f4b400;">⬅ Accounts</div>`}
+                    </div>
+                    <div style="max-height:250px; overflow-y:auto; text-align:left;">`;
+                
+                data.items.forEach(f => { 
+                    const safeName = f.name.replace(/'/g, "");
+                    if (f.type === 'folder') {
+                        html += `
+                        <div class="picker-item">
+                           <div style="flex:1; cursor:pointer;" onclick="loadRemoteDestContent('${url}','${f.id}','${label}')">📁 ${f.name}</div>
+                           <button class="btn-del-picker" onclick="event.stopPropagation(); deleteInsidePicker('${f.id}', 'folder', '${safeName}', 'remote', '${parentId}', '${url}', '${label}')">🗑️</button>
+                        </div>`; 
+                    }
+                });
+                
+                let btnHtml = '';
+                if(activePickerMode === 'clone') {
+                    btnHtml = `<button style="background:#0984e3; padding:10px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;" 
+                    onclick="selectRemoteDest('${url}', '${parentId}', '${data.currentName}', '${label}')">🎯 Pilih Folder Ini (Remote)</button>`;
+                } else if(activePickerMode === 'upload') {
+                    btnHtml = `<button style="background:#f0932b; padding:10px; width:100%; border:none; border-radius:5px; color:white; cursor:pointer; font-weight:bold;" 
+                    onclick="selectRemoteDest('${url}', '${parentId}', '${data.currentName}', '${label}')">📤 Upload ke Folder Ini (Remote)</button>`;
+                } else {
+                    btnHtml = `<div style="text-align:center; color:#aaa; font-size:0.8rem; padding:10px;">Fitur ini tidak tersedia untuk mode Search.</div>`;
+                }
+
+                html += `</div><div style="margin-top:15px; padding-top:10px; border-top:1px solid #444;">${btnHtml}</div>`;
+                container.innerHTML = html;
+            }
+        } catch(e) { container.innerHTML = "Error: " + e.message; }
+    }
+
+    window.selectRemoteDest = async function(url, id, name, label) {
+        if (activePickerMode === 'upload') {
+            uploadTargetUrl = url; 
+            document.getElementById('uploadDestId').value = id;
+            
+            const lbl = document.getElementById('uploadTargetLabel');
+            lbl.style.display = 'block';
+            lbl.innerHTML = `⚠️ Target: Remote Server (${label})`;
+            
+            Swal.close();
+            Swal.fire('Sukses', `Target Upload diset ke Akun B: ${label} > ${name}`, 'success');
+            return;
+        }
+
+        const pin = document.getElementById('accessPin').value;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'connect_remote_dest', pin:pin, targetUrl:url, targetId:id }) });
+        const d = await res.json();
+        if(d.status === 'success') {
+            document.getElementById('destUrl').value = d.folderUrl;
+            Swal.close();
+            Swal.fire('Sukses', `Tujuan Remote: ${name} (${label})`, 'success');
+        } else {
+            Swal.fire('Error', d.message, 'error');
+        }
+    };
+
+    // --- UPLOAD SYSTEM ---
+    let selectedFiles = [];
+    function handleFileSelect(input) {
+        selectedFiles = Array.from(input.files);
+        document.getElementById('uploadList').innerHTML = selectedFiles.map(f => `<div>📄 ${f.name} (${(f.size/1024).toFixed(1)} KB)</div>`).join('');
+        document.getElementById('btnUploadNow').disabled = selectedFiles.length === 0;
+    }
+
+    async function startUpload() {
+        const pin = document.getElementById('accessPin').value;
+        let destId = document.getElementById('uploadDestId').value;
+        if(destId.includes('folder/')) destId = destId.split('folder/')[1].split('?')[0];
+        
+        if(!pin) return Swal.fire('Error', 'PIN kosong', 'error');
+
+        addLog("🚀 Memulai Upload...", "info");
+        if(uploadTargetUrl !== SCRIPT_URL) addLog("📡 Target: Server Remote (Akun B)", "warning");
+
+        for(let f of selectedFiles) {
+            try {
+                addLog("⏳ Mengunggah: " + f.name, "info");
+                const b64 = await toBase64(f);
+                
+                const res = await fetch(uploadTargetUrl, { 
+                    method:'POST', 
+                    body: JSON.stringify({ 
+                        action:'direct_upload', 
+                        pin:pin, 
+                        fileName:f.name, 
+                        mimeType:f.type, 
+                        fileData:b64, 
+                        destId: destId 
+                    }) 
+                });
+                const d = await res.json();
+                if(d.status === 'success') addLog(`✅ Berhasil: ${d.fileName}`, 'success');
+                else addLog("❌ Gagal: " + d.message, 'error');
+            } catch(e) { addLog("❌ Error Network: " + f.name, 'error'); }
+        }
+    }
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
+    });
+
+    // --- UTILS: Saved Links & Schedule ---
+    async function openSavedItems() {
+        const pin = document.getElementById('accessPin').value;
+        if(!pin) return;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action: 'get_remote_accounts', pin: pin }) });
+        const d = await res.json();
+        let h = '<div style="max-height:250px; overflow-y:auto; text-align:left;">';
+        if(d.list.length > 0) d.list.forEach(i => h += `<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`);
+        else h += "Kosong";
+        h += '</div>';
+        Swal.fire({ title:'Item Tersimpan', html:h, background:'#1a1a2e', color:'#fff' });
+    }
+    function insertSaved(u) {
+        const t = document.getElementById('folderUrls'); t.value = t.value + (t.value ? '\n' : '') + u; Swal.close();
+    }
+    async function saveCurrentLink() {
+        const u = document.getElementById('folderUrls').value.split('\n')[0];
+        const pin = document.getElementById('accessPin').value;
+        if(!u || !pin) return;
+        const {value:l} = await Swal.fire({ title:'Label Link', input:'text', background:'#1a1a2e', color:'#fff' });
+        if(l) fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'save_remote_account', pin:pin, targetUrl:u, label:l }) });
+    }
+    async function createSchedule() {
+        const pin = document.getElementById('accessPin').value;
+        const lbl = document.getElementById('schedLabel').value;
+        if(!lbl || !pin) return;
+        await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'add_schedule_item', pin:pin, label:lbl, config:{ urls: document.getElementById('folderUrls').value.split('\n'), destUrl: document.getElementById('destUrl').value, maxBackups: 30 } }) });
+        Swal.fire('Jadwal Dibuat', '', 'success');
+    }
+    async function showScheduleList() {
+        const pin = document.getElementById('accessPin').value;
+        const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'get_schedule_list', pin:pin }) });
+        const d = await res.json();
+        let h = '<div style="max-height:200px; overflow-y:auto; text-align:left;">';
+        if(d.list.length) d.list.forEach(i => h += `<div style="border-bottom:1px solid #444; padding:5px;">${i.label} <button onclick="delSched('${i.id}')" style="float:right;background:red;color:white;border:none;border-radius:3px;">Del</button></div>`);
+        else h+="Kosong";
+        h+='</div>';
+        Swal.fire({ title:'Jadwal', html:h, background:'#1a1a2e', color:'#fff' });
+    }
+    async function delSched(id) {
+        await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'delete_schedule_item', id:id, pin:document.getElementById('accessPin').value }) });
+        Swal.close(); Swal.fire('Dihapus','','success');
+    }
     
-    // --- UPLOAD ---
-    function handleFileSelect(i){selectedFiles=Array.from(i.files);document.getElementById('uploadList').innerHTML=selectedFiles.map(f=>`<div>📄 ${f.name}</div>`).join('');document.getElementById('btnUploadNow').disabled=selectedFiles.length===0;}
-    async function startUpload(){const pin=document.getElementById('accessPin').value,did=document.getElementById('uploadDestId').value;if(!pin)return Swal.fire('Error','PIN?','error');addLog("🚀 Uploading...","info");for(let f of selectedFiles){try{const b64=await toBase64(f),res=await fetch(uploadTargetUrl,{method:'POST',body:JSON.stringify({action:'direct_upload',pin:pin,fileName:f.name,mimeType:f.type,fileData:b64,destId:did})}),d=await res.json();if(d.status==='success')addLog(`✅ ${d.fileName}`,'success');else addLog(`❌ ${d.message}`,'error');}catch(e){addLog("Error: "+e.message,'error');}}}
-    const toBase64=f=>new Promise((r,j)=>{const rd=new FileReader();rd.readAsDataURL(f);rd.onload=()=>r(rd.result);rd.onerror=j;});
+    // --- CORE CLONING PROCESS ---
+    function addLog(m, t) {
+        const l = document.getElementById('logArea');
+        l.innerHTML += `<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'}; margin-bottom:5px;">${m}</div>`;
+        l.scrollTop = l.scrollHeight;
+    }
     
-    // --- SCHEDULING ---
-    async function openSavedItems(){const pin=document.getElementById('accessPin').value;if(!pin)return;const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:pin})}),d=await res.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div class="picker-item" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>`;});h+='</div>';Swal.fire({title:'Saved',html:h});}
-    function insertSaved(u){const t=document.getElementById('folderUrls');t.value=t.value+(t.value?'\n':'')+u;Swal.close();}
-    async function saveCurrentLink(){const u=document.getElementById('folderUrls').value.split('\n')[0],pin=document.getElementById('accessPin').value;if(!u||!pin)return;const{value:l}=await Swal.fire({title:'Label',input:'text',background:'#1a1a2e',color:'#fff'});if(l)fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save_remote_account',pin:pin,targetUrl:u,label:l})});}
-    async function createSchedule(){const pin=document.getElementById('accessPin').value,lbl=document.getElementById('schedLabel').value;if(!lbl||!pin)return;await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add_schedule_item',pin:pin,label:lbl,config:{urls:document.getElementById('folderUrls').value.split('\n'),destUrl:document.getElementById('destUrl').value,maxBackups:30}})});Swal.fire('Jadwal Dibuat','','success');}
-    async function showScheduleList(){const pin=document.getElementById('accessPin').value,res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_schedule_list',pin:pin})}),d=await res.json();let h='<div style="max-height:200px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{h+=`<div>${i.label} <button onclick="delSched('${i.id}')" style="color:red;">Del</button></div>`;});Swal.fire({title:'Jadwal',html:h});}
-    async function delSched(id){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_schedule_item',id:id,pin:document.getElementById('accessPin').value})});Swal.fire('Hapus','','success');}
+    function resetSearchLoc() {
+        document.getElementById('searchLocId').value = 'root';
+        document.getElementById('searchLocName').value = 'Seluruh Drive (Default)';
+    }
+    
+    function addToQueue(url, name) {
+        const ta = document.getElementById('folderUrls');
+        ta.value = ta.value + (ta.value ? '\n' : '') + url;
+        switchTab('clone');
+        Swal.fire({ icon:'success', title:'Ditambahkan', text:name, timer:1000, showConfirmButton:false });
+    }
 
     tsParticles.load("tsparticles", { fpsLimit: 60, particles: { number: { value: 30 }, color: { value: "#ffffff" }, opacity: { value: 0.1 }, size: { value: 3 }, move: { enable: true, speed: 0.5 } } });
 </script>
