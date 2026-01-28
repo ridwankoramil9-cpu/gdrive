@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.0 (FINAL FIX: Login Overlay Restored & All Features)
+  VERSION: 20.4 (FINAL: Timer, ETA, Stop Button, & Full Features)
   ============================================================================
 -->
 <html lang="id">
@@ -14,6 +14,7 @@
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.11.0/tsparticles.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
         /* --- CORE THEME --- */
@@ -35,7 +36,7 @@
         }
         #tsparticles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; }
         
-        /* --- LOGIN OVERLAY (FIXED) --- */
+        /* --- LOGIN OVERLAY --- */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(15, 12, 41, 0.98); z-index: 9999; 
@@ -54,11 +55,9 @@
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             padding: 2.5rem; border-radius: 20px; border: 1px solid var(--glass-border);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); width: 100%; max-width: 680px;
-            opacity: 0; transition: opacity 1s; display: none; /* Hidden by default */
+            display: none; /* Hidden by default until login */
         }
-        .container.visible { opacity: 1; display: block; animation: fadeIn 0.8s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
+        
         h1 {
             font-size: 2rem; margin-bottom: 0.5rem; text-align: center;
             background: linear-gradient(to right, #00d2ff, #ff00de, #f4b400); 
@@ -75,7 +74,7 @@
         }
         .tab-btn.active { color: #00d2ff; border-bottom-color: #00d2ff; background: rgba(0,210,255,0.05); }
 
-        /* --- FORMS --- */
+        /* --- INPUTS & BUTTONS --- */
         label { display: block; margin-bottom: 0.5rem; color: #d1d8e0; font-size: 0.85rem; font-weight: 500; }
         input, textarea, select {
             width: 100%; padding: 12px 15px; background: var(--input-bg);
@@ -90,22 +89,39 @@
             font-size: 1rem; letter-spacing: 1px;
         }
         button.main-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
-        button.main-btn.stop-mode { background: linear-gradient(45deg, #ff4757, #ff6b81); box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3); }
+        button.main-btn.stop-mode {
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+        }
 
-        /* --- COMPONENTS --- */
-        .remote-badge { display: none; width: 100%; padding: 10px; background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.85rem; }
+        /* --- STATS BAR (NEW) --- */
+        .stats-bar {
+            display: none; background: rgba(255,255,255,0.08); padding: 12px;
+            border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-family: monospace; }
+        .progress-track { height: 8px; background: #444; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #2ed573; width: 0%; transition: width 0.5s ease; }
+
+        /* --- UTILS --- */
+        .remote-badge { display: none; width: 100%; padding: 10px; box-sizing: border-box; background: rgba(46, 213, 115, 0.15); border: 1px solid #2ed573; color: #2ed573; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 0.85rem; }
+        
+        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
+        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
+        .check-table td:first-child { font-weight:bold; color:#00d2ff; width:100px; }
+        
+        .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Picker Modal */
         .picker-header { display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #444; margin-bottom: 10px; }
         .picker-item { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .picker-item:hover { background: rgba(255,255,255,0.1); }
-        .check-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem; }
-        .check-table td { padding:8px; border-bottom:1px solid rgba(255,255,255,0.1); }
-        .log-area { margin-top: 20px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 0.8rem; font-family: monospace; border: 1px solid rgba(255,255,255,0.05); }
-        
-        /* Picker Tabs */
+        .btn-del-picker { background: rgba(255, 71, 87, 0.2); border: 1px solid #ff4757; color: #ff4757; padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
         .picker-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
         .picker-tab { padding: 5px 10px; cursor: pointer; border-radius: 5px; color: #888; }
         .picker-tab.active { background: #00d2ff; color: white; font-weight: bold; }
-        
+
         ::-webkit-scrollbar { width: 6px; } 
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
@@ -114,11 +130,10 @@
 
 <div id="tsparticles"></div>
 
-<!-- 1. LOGIN SYSTEM (PASTIKAN INI ADA) -->
+<!-- 1. LOGIN SYSTEM -->
 <div id="loginOverlay">
     <div class="login-box">
         <h2 style="color:#00d2ff; margin-bottom:15px;">🔐 G-Drive Pro</h2>
-        <p style="color:#aaa; font-size:0.8rem; margin-bottom:20px;">Masukkan PIN Keamanan</p>
         <input type="password" id="gatePinInput" placeholder="PIN" style="text-align:center; font-size:1.5rem; letter-spacing:5px; background:rgba(0,0,0,0.5); color:white; border:1px solid #444; padding:15px; border-radius:10px; width:100%;" onkeypress="if(event.key==='Enter') unlockSite()">
         <button onclick="unlockSite()" class="main-btn" style="margin-top:10px;">MASUK</button>
     </div>
@@ -127,7 +142,7 @@
 <!-- 2. MAIN APP -->
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.0)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.4)</p>
     
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
@@ -150,9 +165,9 @@
            <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold; box-shadow:0 0 10px rgba(108, 92, 231, 0.4);">🔍 Smart Check</button>
         </div>
         
-        <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">📡 Server Remote Terdeteksi! Jelajah isi folder...</div>
+        <div id="remoteDetectedPanel" class="remote-badge" onclick="openRemoteSourcePicker()">📡 Server Remote Terdeteksi! Klik untuk Jelajah</div>
 
-        <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B)..." style="height:100px; font-family:monospace;"></textarea>
+        <textarea id="folderUrls" placeholder="Paste link folder/file atau URL Script (Akun B) di sini..." style="height:100px; font-family:monospace;"></textarea>
         
         <label>Folder Tujuan</label>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -226,6 +241,17 @@
         <div id="searchResults" class="search-results"></div>
     </div>
 
+    <!-- NEW: STATS BAR (Timer & ETA) -->
+    <div id="statsBar" class="stats-bar">
+        <div class="stats-row">
+            <span id="timerEl">⏱️ 00:00:00</span>
+            <span id="speedEl">⚡ 0 file/s</span>
+            <span id="etaEl">⏳ Est: --:--</span>
+        </div>
+        <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
+        <div style="text-align:right; font-size:0.7rem; color:#aaa; margin-top:2px;" id="progressText">0%</div>
+    </div>
+
     <!-- LOGGING -->
     <div class="log-area" id="logArea">System Ready...</div>
 </div>
@@ -241,6 +267,10 @@
     let isProcessing = false; 
     let stopSignal = false;
     let selectedFiles = [];
+    
+    // Timer Variables
+    let jobStartTime = 0;
+    let timerInterval = null;
 
     // --- UI LOGIC ---
     function switchTab(mode) {
@@ -266,6 +296,7 @@
             if(d.status === 'success') {
                 document.getElementById('accessPin').value = pin;
                 document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
                 document.getElementById('mainContainer').classList.add('visible');
             } else {
                 document.querySelector('#loginOverlay h2').innerText = "Gagal";
@@ -296,6 +327,13 @@
         const btn = document.getElementById('btnAction');
         btn.innerHTML = "⛔ STOP PROSES"; btn.classList.add('stop-mode');
         
+        // Reset Timer
+        jobStartTime = Date.now();
+        document.getElementById('statsBar').style.display = 'block';
+        if(timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+        updateTimerDisplay();
+        
         const config = { mode: document.getElementById('duplicateMode').value, destUrl: document.getElementById('destUrl').value, email: document.getElementById('emailNotif').value };
         addLog("🔄 Memulai Proses...", "info");
         
@@ -318,9 +356,18 @@
         finally {
             if(!document.getElementById('bgToggle').checked || stopSignal) {
                 isProcessing = false; btn.innerHTML = "Mulai Cloning 🚀"; btn.classList.remove('stop-mode'); btn.disabled = false;
+                clearInterval(timerInterval);
                 addLog("🏁 Selesai.", stopSignal?"warning":"success");
             }
         }
+    }
+
+    function updateTimerDisplay() {
+        let diff = Math.floor((Date.now() - jobStartTime) / 1000);
+        let h = Math.floor(diff / 3600).toString().padStart(2,'0');
+        let m = Math.floor((diff % 3600) / 60).toString().padStart(2,'0');
+        let s = Math.floor(diff % 60).toString().padStart(2,'0');
+        document.getElementById('timerEl').innerText = `⏱️ ${h}:${m}:${s}`;
     }
 
     async function processJob(jobId, pin) {
@@ -329,7 +376,29 @@
             const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'process_batch', jobId:jobId, pin:pin }) });
             const d = await res.json();
             if(d.status !== 'success' || d.action === 'complete') done = true;
-            if(d.progress) addLog(`⏳ ${d.progress.processed}/${d.progress.total}`, 'info');
+            
+            // Stats Update
+            if(d.progress) {
+                let p = d.progress;
+                let pct = Math.round((p.processed / p.total) * 100);
+                document.getElementById('progressBar').style.width = pct + '%';
+                document.getElementById('progressText').innerText = `${p.processed} / ${p.total} (${pct}%)`;
+                
+                let elapsedSec = (Date.now() - jobStartTime) / 1000;
+                let rate = elapsedSec > 0 ? (p.processed / elapsedSec) : 0;
+                let remaining = p.total - p.processed;
+                let eta = rate > 0 ? Math.floor(remaining / rate) : 0;
+                
+                let eh = Math.floor(eta / 3600).toString().padStart(2,'0');
+                let em = Math.floor((eta % 3600) / 60).toString().padStart(2,'0');
+                let es = Math.floor(eta % 60).toString().padStart(2,'0');
+                
+                document.getElementById('speedEl').innerText = `⚡ ${rate.toFixed(1)} f/s`;
+                document.getElementById('etaEl').innerText = `⏳ Est: ${eh}:${em}:${es}`;
+                
+                addLog(`⏳ Processing...`, 'info');
+            }
+            
             if(d.processedList) d.processedList.forEach(i => addLog(`📄 ${i.name} (${i.status})`, i.status==='success'?'success':'error'));
         }
     }
@@ -467,7 +536,7 @@
     // --- MISC UTILS ---
     function addLog(m, t) { const l=document.getElementById('logArea'); l.innerHTML+=`<div style="color:${t==='success'?'#2ed573':t==='error'?'#ff4757':'#fff'};">${m}</div>`; l.scrollTop=l.scrollHeight; }
     function addToQueue(u,n) { const t=document.getElementById('folderUrls'); t.value+=(t.value?'\n':'')+u; switchTab('clone'); Swal.fire('Added',n,'success'); }
-    function resetSearchLoc() { document.getElementById('searchLocId').value='root'; document.getElementById('searchLocName').value='Seluruh Drive'; }
+    function resetSearchLoc() { document.getElementById('searchLocId').value='root'; document.getElementById('searchLocName').value='Seluruh Drive (Default)'; }
     
     // Remote Detection
     document.getElementById('folderUrls').addEventListener('input', ()=>{
