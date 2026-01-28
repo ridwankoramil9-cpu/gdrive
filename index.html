@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.13 (Added: Clear Button for Source Links)
+  VERSION: 20.15 (Fix: PIN Error on AI Tools)
   ============================================================================
 -->
 <html lang="id">
@@ -26,6 +26,7 @@
             --text-color: #ffffff; 
             --input-bg: rgba(0, 0, 0, 0.5);
             --item-hover: rgba(255, 255, 255, 0.08);
+            --ai-gradient: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%);
         }
         body {
             font-family: 'Poppins', sans-serif;
@@ -97,6 +98,14 @@
             background: linear-gradient(45deg, #ff4757, #ff6b81);
             box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
         }
+        
+        /* --- AI STYLES --- */
+        .ai-box { border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .ai-title { font-weight: bold; color: #a8c0ff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .ai-btn { background: var(--ai-gradient); border: none; width: 100%; padding: 12px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .ai-btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(168, 192, 255, 0.4); }
+        .ai-result { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; line-height: 1.5; color: #e0e0e0; display: none; white-space: pre-wrap; border-left: 3px solid #a8c0ff; }
+
 
         /* --- STATS BAR --- */
         .stats-bar {
@@ -168,13 +177,14 @@
 <!-- 2. MAIN APP -->
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.13)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.15)</p>
     
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
         <button class="tab-btn active" id="btnTabClone" onclick="switchTab('clone')">☁️ Clone</button>
         <button class="tab-btn" id="btnTabUpload" onclick="switchTab('upload')">📤 Upload</button>
         <button class="tab-btn" id="btnTabSearch" onclick="switchTab('search')">🔍 Cari File</button>
+        <button class="tab-btn" id="btnTabAi" onclick="switchTab('ai')" style="color:#a8c0ff;">🤖 AI Tools</button>
     </div>
 
     <!-- Hidden Input for Session PIN -->
@@ -187,7 +197,6 @@
            <div style="display:flex; gap:5px;">
                <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Saved</button>
                <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Save</button>
-               <!-- ADDED: Clear Button -->
                <button onclick="clearSourceLinks()" style="font-size:0.75rem; background:#ff4757; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">🧹 Clear</button>
            </div>
            <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold; box-shadow:0 0 10px rgba(108, 92, 231, 0.4);">🔍 Smart Check</button>
@@ -271,6 +280,42 @@
         <!-- FIXED: Added class 'search-results' -->
         <div id="searchResults" class="search-results"></div>
     </div>
+    
+    <!-- PANEL AI TOOLS (NEW) -->
+    <div id="panelAi" style="display:none;">
+        <div style="margin-bottom:15px;">
+            <input type="password" id="geminiKey" placeholder="🔑 Masukkan Gemini API Key Anda..." style="border-color:#a8c0ff;">
+            <div style="font-size:0.7rem; color:#aaa; margin-top:-10px; margin-bottom:10px;">*Key disimpan lokal di browser Anda.</div>
+        </div>
+    
+        <!-- Feature 1: AI Writer -->
+        <div class="ai-box">
+            <div class="ai-title">✨ AI Writer (Generate File)</div>
+            <textarea id="aiPrompt" placeholder="Contoh: Buatkan template surat penawaran harga untuk klien..." style="height:80px;"></textarea>
+            <input type="text" id="aiFileName" placeholder="Nama File (cth: Surat_Penawaran.txt)">
+            
+            <label>Simpan ke:</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" id="aiDestId" placeholder="ID Folder Tujuan" style="margin-bottom:0;">
+                <button onclick="openDestPicker('ai_writer')" style="background:#6c5ce7; border:none; width:50px; border-radius:10px; cursor:pointer; color:white;">📂</button>
+            </div>
+            
+            <button class="ai-btn" onclick="runAiWriter()">⚡ Generate File</button>
+        </div>
+
+        <!-- Feature 2: Folder Insight -->
+        <div class="ai-box">
+            <div class="ai-title">🕵️ Folder Insight (Analisa Isi)</div>
+            <label>Pilih Folder untuk Dianalisa:</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" id="aiAnalyzeId" placeholder="ID Folder" style="margin-bottom:0;">
+                <button onclick="openDestPicker('ai_analyze')" style="background:#6c5ce7; border:none; width:50px; border-radius:10px; cursor:pointer; color:white;">📂</button>
+            </div>
+            <button class="ai-btn" style="background: linear-gradient(135deg, #f0932b 0%, #eb4d4b 100%);" onclick="runAiAnalyze()">🔍 Analisa Struktur Folder</button>
+            
+            <div id="aiResultArea" class="ai-result"></div>
+        </div>
+    </div>
 
     <!-- NEW: STATS BAR (Timer & ETA) -->
     <div id="statsBar" class="stats-bar">
@@ -304,11 +349,22 @@
     let timerInterval = null;
     let selectedFiles = [];
 
+    // --- INIT ---
+    window.onload = function() {
+        // Load API Key from LocalStorage
+        const savedKey = localStorage.getItem('gemini_api_key');
+        if(savedKey) document.getElementById('geminiKey').value = savedKey;
+        
+        document.getElementById('geminiKey').addEventListener('change', function() {
+            localStorage.setItem('gemini_api_key', this.value);
+        });
+    };
+
     // --- UI HELPERS ---
     function switchTab(mode) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btnTab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-        ['clone', 'upload', 'search'].forEach(m => document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display = (m===mode?'block':'none'));
+        ['clone', 'upload', 'search', 'ai'].forEach(m => document.getElementById('panel'+m.charAt(0).toUpperCase()+m.slice(1)).style.display = (m===mode?'block':'none'));
     }
     
     function toggleAdvanced() {
@@ -568,7 +624,26 @@
     async function loadSavedRemotes(){const c=document.getElementById('destPickerContent');const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h=`<div class="picker-container"><div class="picker-list-area">`;if(d.list)d.list.forEach(i=>{if(i.type==='server')h+=`<div class="browse-row" onclick="browseRemoteDest('${i.url}','root','${i.label}')"><div class="browse-icon">☁️</div><div class="browse-name">${i.label}</div><div class="browse-meta">(${i.email})</div></div>`});h+=`</div></div>`;c.innerHTML=h;}
     async function browseRemoteDest(u,pid,l){const c=document.getElementById('destPickerContent');c.innerHTML='Loading...';const r=await fetch(u,{method:'POST',body:JSON.stringify({action:'browse_remote',parentId:pid})});const d=await r.json();if(d.status==='success'){let h=`<div class="picker-container"><div class="picker-header-sticky"><div>${l} > ${d.currentName}</div>${d.parentId?`<span onclick="browseRemoteDest('${u}','${d.parentId}','${l}')" style="cursor:pointer;color:yellow;">⬅ Back</span>`:`<span onclick="switchDestTab('remote')" style="cursor:pointer;">⬅ Accounts</span>`}</div><div class="picker-list-area">`;d.items.forEach(f=>{if(f.type==='folder')h+=`<div class="browse-row"><div class="browse-icon">📁</div><div class="browse-name" onclick="browseRemoteDest('${u}','${f.id}','${l}')">${f.name}</div><div class="browse-action"><button class="btn-mini-del" onclick="deleteInsidePicker('${f.id}','folder','${f.name.replace(/'/g,"")}','remote','${pid}','${u}','${l}')">🗑️</button></div></div>`});h+=`</div><div style="padding:10px;background:#2f3542;"><button onclick="selectDest('${u}','${d.currentName}',true,'${d.currentId}','${l}')" style="width:100%;padding:8px;background:#f0932b;border:none;color:white;border-radius:5px;">Pilih Remote Ini</button></div></div>`;c.innerHTML=h;}}
     async function createLocalFolder(pid){const{value:n}=await Swal.fire({title:'Nama Folder',input:'text',background:'#1a1a2e',color:'#fff'});if(n){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'create_folder_tool',parentId:pid,name:n,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}}
-    async function selectDest(val,name,isRemote,remoteId,label){Swal.close();if(activePickerMode==='clone'){if(isRemote){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:document.getElementById('accessPin').value,targetUrl:val,targetId:remoteId})});const d=await r.json();if(d.status==='success')document.getElementById('destUrl').value=d.folderUrl;}else{document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${val}`;}}else if(activePickerMode==='upload'){if(isRemote){uploadTargetUrl=val;document.getElementById('uploadDestId').value=remoteId;document.getElementById('uploadTargetLabel').style.display='block';}else{uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=val;document.getElementById('uploadTargetLabel').style.display='none';}}else{document.getElementById('searchLocId').value=val;document.getElementById('searchLocName').value=name;}Swal.fire('Set',name,'success');}
+    async function selectDest(val,name,isRemote,remoteId,label){
+        Swal.close();
+        
+        // --- ROUTING UNTUK BERBAGAI MODE ---
+        if(activePickerMode==='clone'){
+            if(isRemote){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'connect_remote_dest',pin:document.getElementById('accessPin').value,targetUrl:val,targetId:remoteId})});const d=await r.json();if(d.status==='success')document.getElementById('destUrl').value=d.folderUrl;}else{document.getElementById('destUrl').value=`https://drive.google.com/drive/folders/${val}`;}
+        }
+        else if(activePickerMode==='upload'){
+            if(isRemote){uploadTargetUrl=val;document.getElementById('uploadDestId').value=remoteId;document.getElementById('uploadTargetLabel').style.display='block';}else{uploadTargetUrl=SCRIPT_URL;document.getElementById('uploadDestId').value=val;document.getElementById('uploadTargetLabel').style.display='none';}
+        }
+        else if(activePickerMode.startsWith('ai_')) {
+             if(activePickerMode === 'ai_writer') document.getElementById('aiDestId').value = val;
+             else if(activePickerMode === 'ai_analyze') document.getElementById('aiAnalyzeId').value = val;
+        }
+        else{
+            document.getElementById('searchLocId').value=val;document.getElementById('searchLocName').value=name;
+        }
+        Swal.fire('Set',name,'success');
+    }
+    
     async function deleteInsidePicker(id,type,name,mode,pid,rUrl,rLabel){const r=await Swal.fire({title:'Hapus?',text:name,icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'});if(r.isConfirmed){if(mode==='local'){await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type,pin:document.getElementById('accessPin').value})});loadLocalPicker(pid);}else{await fetch(rUrl,{method:'POST',body:JSON.stringify({action:'delete_item',id:id,type:type})});browseRemoteDest(rUrl,pid,rLabel);}Swal.fire('Terhapus','','success');}}
 
     // --- UPLOAD & SEARCH (FIXED) ---
@@ -613,6 +688,61 @@
         } catch(e) {
             document.getElementById('searchResults').innerHTML = `<div style="padding:10px;color:#ff4757;">Error: ${e.message}</div>`;
         }
+    }
+
+    // --- AI FUNCTIONS (NEW) ---
+    async function runAiWriter() {
+        const key = document.getElementById('geminiKey').value;
+        if(!key) return Swal.fire('Stop', 'Masukkan API Key dulu!', 'warning');
+        
+        const prompt = document.getElementById('aiPrompt').value;
+        const fname = document.getElementById('aiFileName').value;
+        const dest = document.getElementById('aiDestId').value;
+        
+        if(!prompt) return Swal.fire('Info', 'Isi perintah/prompt dulu', 'info');
+        
+        Swal.showLoading();
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                // FIX: Added pin parameter to pass backend validation
+                body: JSON.stringify({ action: 'gemini_ai', mode: 'generate_file', apiKey: key, prompt: prompt, fileName: fname, destId: dest, pin: document.getElementById('accessPin').value })
+            });
+            const d = await res.json();
+            if(d.status === 'success') {
+                Swal.fire('Sukses', `File dibuat di: ${d.folderName}`, 'success');
+                addLog(`✨ AI Generated: ${d.name}`, 'success');
+            } else {
+                Swal.fire('Gagal', d.message, 'error');
+            }
+        } catch(e) { Swal.fire('Error', e.message, 'error'); }
+    }
+
+    async function runAiAnalyze() {
+        const key = document.getElementById('geminiKey').value;
+        if(!key) return Swal.fire('Stop', 'Masukkan API Key dulu!', 'warning');
+        
+        const folderId = document.getElementById('aiAnalyzeId').value;
+        if(!folderId) return Swal.fire('Info', 'Pilih folder dulu', 'info');
+        
+        const resDiv = document.getElementById('aiResultArea');
+        resDiv.style.display = 'block';
+        resDiv.innerText = "⏳ Sedang menganalisa file-file dalam folder...";
+        
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                // FIX: Added pin parameter to pass backend validation
+                body: JSON.stringify({ action: 'gemini_ai', mode: 'analyze_folder', apiKey: key, destId: folderId, pin: document.getElementById('accessPin').value })
+            });
+            const d = await res.json();
+            if(d.status === 'success') {
+                resDiv.innerText = d.analysis;
+                addLog(`✨ AI Analisa: ${d.folderName}`, 'success');
+            } else {
+                resDiv.innerText = "Error: " + d.message;
+            }
+        } catch(e) { resDiv.innerText = "Error: " + e.message; }
     }
 
     function addToQueue(u,n){const t=document.getElementById('folderUrls');t.value+=(t.value?'\n':'')+u;switchTab('clone');Swal.fire('Added',n,'success');}
