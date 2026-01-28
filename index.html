@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.8 (FIXED: Delete Saved Remote Account Added)
+  VERSION: 20.9 (UI UPDATE: Show Name & Email in Saved Items List)
   ============================================================================
 -->
 <html lang="id">
@@ -72,7 +72,7 @@
 
 <div class="container" id="mainContainer" style="display:none;">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.8)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.9)</p>
     
     <div class="tab-nav">
         <button class="tab-btn active" onclick="switchTab('clone')">☁️ Clone</button>
@@ -186,7 +186,7 @@
     }
     const urlInput = document.getElementById('folderUrls');
     urlInput.addEventListener('input', performRemoteDetection);
-    urlInput.addEventListener('change', performRemoteDetection); // Added Change Event
+    urlInput.addEventListener('change', performRemoteDetection);
     urlInput.addEventListener('paste', () => setTimeout(performRemoteDetection, 100));
 
     // --- BUTTON HANDLER ---
@@ -277,7 +277,7 @@
     async function checkSmartLink(d=false){
         const text = document.getElementById('folderUrls').value;
         const u = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
-        performRemoteDetection(); // Trigger detection manually
+        performRemoteDetection();
         const p=document.getElementById('accessPin').value; 
         if(!u||!p)return Swal.fire('Err','Link/PIN?','error'); 
         Swal.fire({title:d?'Deep Scanning...':'Checking...',didOpen:()=>Swal.showLoading(),background:'#1a1a2e',color:'#fff'});
@@ -319,30 +319,21 @@
     async function openSavedItems(){const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'get_remote_accounts',pin:document.getElementById('accessPin').value})});const d=await r.json();let h='<div style="max-height:250px;overflow-y:auto;">';if(d.list)d.list.forEach(i=>{
         h += `
         <div class="picker-item" style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="flex:1; cursor:pointer;" onclick="insertSaved('${i.url}')">🔗 ${i.label}</div>
+            <div style="flex:1; cursor:pointer; text-align:left;" onclick="insertSaved('${i.url}')">
+                <div style="font-weight:bold; color:#fff;">🔗 ${i.label}</div>
+                <div style="font-size:0.75rem; color:#aaa; margin-left:20px;">${i.email || '-'}</div>
+            </div>
             <button class="btn-mini-del" onclick="deleteSavedRemote('${i.id}', '${i.label}')">🗑️</button>
         </div>`;
     });h+='</div>';Swal.fire({title:'Saved',html:h});}
-    
+
     async function deleteSavedRemote(id, label) {
         const r = await Swal.fire({ title: 'Hapus?', text: `Hapus link ${label}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' });
         if (r.isConfirmed) {
             Swal.showLoading();
-            const res = await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    action: 'delete_remote_account', 
-                    id: id, 
-                    pin: document.getElementById('accessPin').value 
-                }) 
-            });
+            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete_remote_account', id: id, pin: document.getElementById('accessPin').value }) });
             const d = await res.json();
-            if (d.status === 'success') {
-                Swal.close();
-                openSavedItems(); // Refresh list immediately
-            } else {
-                Swal.fire('Gagal', d.message, 'error');
-            }
+            if (d.status === 'success') { Swal.close(); openSavedItems(); } else { Swal.fire('Gagal', d.message, 'error'); }
         }
     }
 
