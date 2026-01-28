@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.9 (UI UPDATE: Show Name & Email in Saved Items List)
+  VERSION: 20.10 (FIXED: "isDeep is not defined" Error Solved)
   ============================================================================
 -->
 <html lang="id">
@@ -72,7 +72,7 @@
 
 <div class="container" id="mainContainer" style="display:none;">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.9)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.10)</p>
     
     <div class="tab-nav">
         <button class="tab-btn active" onclick="switchTab('clone')">☁️ Clone</button>
@@ -176,7 +176,7 @@
         } else { Swal.fire('Error', 'PIN Salah', 'error'); }
     }
 
-    // --- REMOTE DETECTION (FIXED) ---
+    // --- REMOTE DETECTION ---
     function performRemoteDetection() {
         const text = document.getElementById('folderUrls').value;
         const match = text.match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/i);
@@ -273,19 +273,22 @@
         }
     }
 
-    // --- SMART CHECK ---
+    // --- SMART CHECK (FIXED VARIABLE NAME) ---
     async function checkSmartLink(d=false){
         const text = document.getElementById('folderUrls').value;
         const u = text.match(/https?:\/\/(drive|docs)\.google\.com\/[-\w\/.]+/);
         performRemoteDetection();
         const p=document.getElementById('accessPin').value; 
         if(!u||!p)return Swal.fire('Err','Link/PIN?','error'); 
+        
         Swal.fire({title:d?'Deep Scanning...':'Checking...',didOpen:()=>Swal.showLoading(),background:'#1a1a2e',color:'#fff'});
+        
         try{
             const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'check_stats',url:u[0],pin:p,deepScan:d})});
             const res=await r.json();
             if(res.status==='success'){
-                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;"><h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3><table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Access</td><td>${res.access}</td></tr><tr><td>Size</td><td style="color:#00d2ff;font-weight:bold;">${res.stats.size}</td></tr>${isDeep?`<tr><td>Files</td><td>${res.stats.files}</td></tr>`:''}</table>${res.type==='folder'&&!d?'<br><button onclick="checkSmartLink(true)" style="width:100%; padding:8px; background:#f0932b; border:none; color:white; border-radius:5px; cursor:pointer;">🕵️ Deep Scan Size</button>':''}</div>`;
+                // Fixed: replaced isDeep with d in template literal
+                let html=`<div style="text-align:left;background:rgba(255,255,255,0.1);padding:10px;border-radius:5px;"><h3>${res.type==='folder'?'📁':'📄'} ${res.name}</h3><table class="check-table"><tr><td>Owner</td><td>${res.ownerEmail}</td></tr><tr><td>Access</td><td>${res.access}</td></tr><tr><td>Size</td><td style="color:#00d2ff;font-weight:bold;">${res.stats.size}</td></tr>${d?`<tr><td>Files</td><td>${res.stats.files}</td></tr>`:''}</table>${res.type==='folder'&&!d?'<br><button onclick="checkSmartLink(true)" style="width:100%; padding:8px; background:#f0932b; border:none; color:white; border-radius:5px; cursor:pointer;">🕵️ Deep Scan Size</button>':''}</div>`;
                 Swal.fire({title:'Info',html:html,background:'#1a1a2e',color:'#fff',showCancelButton:true,confirmButtonText:'Clone Now'}).then((r)=>{if(r.isConfirmed) startCloning();});
             } else Swal.fire('Err',res.message,'error');
         }catch(e){Swal.fire('Err',e.message,'error');}
@@ -337,7 +340,6 @@
         }
     }
 
-    // [FIX: AUTO DETECT TRIGGER]
     function insertSaved(u){
         const t=document.getElementById('folderUrls');
         t.value += (t.value ? '\n' : '') + u;
