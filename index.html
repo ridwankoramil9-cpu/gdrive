@@ -2,7 +2,7 @@
 <!-- 
   ============================================================================
   G-DRIVE ULTIMATE PRO - FRONTEND
-  VERSION: 20.12 (Added: Select All Button in Remote Browser)
+  VERSION: 20.13 (Added: Clear Button for Source Links)
   ============================================================================
 -->
 <html lang="id">
@@ -168,7 +168,7 @@
 <!-- 2. MAIN APP -->
 <div class="container" id="mainContainer">
     <h1>G-Drive Ultimate</h1>
-    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.12)</p>
+    <p style="text-align:center; color:#aaa; font-size:0.8rem; margin-bottom:20px;">Full Integrated System (v20.13)</p>
     
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
@@ -187,6 +187,8 @@
            <div style="display:flex; gap:5px;">
                <button onclick="openSavedItems()" style="font-size:0.75rem; background:#e1b12c; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">📂 Saved</button>
                <button onclick="saveCurrentLink()" style="font-size:0.75rem; background:#0984e3; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">💾 Save</button>
+               <!-- ADDED: Clear Button -->
+               <button onclick="clearSourceLinks()" style="font-size:0.75rem; background:#ff4757; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; color:white;">🧹 Clear</button>
            </div>
            <button onclick="checkSmartLink()" style="font-size:0.75rem; background:#6c5ce7; border:none; padding:5px 15px; border-radius:5px; cursor:pointer; color:white; font-weight:bold; box-shadow:0 0 10px rgba(108, 92, 231, 0.4);">🔍 Smart Check</button>
         </div>
@@ -312,6 +314,12 @@
     function toggleAdvanced() {
         const sec = document.getElementById('advSec');
         sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // ADDED: CLEAR SOURCE FUNCTION
+    function clearSourceLinks() {
+        document.getElementById('folderUrls').value = '';
+        performRemoteDetection(); // Reset remote panel visibility
     }
 
     async function unlockSite() {
